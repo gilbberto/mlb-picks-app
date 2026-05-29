@@ -1027,6 +1027,17 @@ def main():
             else:
                 ml_ap = 1 - ml_hp
 
+            # Calibrate ML probabilities based on validation data
+            try:
+                from bankroll import calibrate_ml
+                if ml_hp is not None:
+                    cal_hp = calibrate_ml(ml_hp)
+                    cal_ap = 1.0 - cal_hp
+                else:
+                    cal_hp, cal_ap = None, None
+            except ImportError:
+                cal_hp, cal_ap = ml_hp, ml_ap
+
             over_prob = norm_cdf(exp_total - 8.5, 0, total_std)
             ov_verdict = "Over" if over_prob > 0.5 else "Under"
             ov_pct = round(max(over_prob, 1 - over_prob) * 100, 1)
@@ -1036,6 +1047,8 @@ def main():
                 "home_abbrev": ha, "away_abbrev": aa,
                 "ml_home_prob": round(ml_hp*100,1),
                 "ml_away_prob": round(ml_ap*100,1),
+                "ml_home_prob_cal": round(cal_hp*100, 1) if cal_hp else None,
+                "ml_away_prob_cal": round(cal_ap*100, 1) if cal_ap else None,
                 "status": sd, "game_id": g.get("gamePk",""),
                 "advanced_used": adv_used, "espn_data": bool(espn_std),
                 "exp_total": exp_total, "total_std": total_std,
@@ -1061,17 +1074,20 @@ def main():
                     tgt = hn if ml_hp > 0.50 else an
                     ml_price, ml_book, _ = extract_market_odds(og, "h2h", tgt)
                     if ml_price:
-                        ev_ml = compute_ev(max(ml_hp, ml_ap)*100, ml_price)
+                        # Use calibrated prob for edge calculation
+                        cal_prob = max(cal_hp, cal_ap) if cal_hp else max(ml_hp, ml_ap)
+                        ev_ml = compute_ev(cal_prob*100, ml_price)
                         mp = american_to_prob(ml_price)
-                        edge = round(max(ml_hp, ml_ap)*100 - (mp*100 if mp else 0), 1) if mp else None
+                        edge = round(cal_prob*100 - (mp*100 if mp else 0), 1) if mp else None
                         pick_entry["moneyline"] = {
-                            "pick": tgt, "prob": max(ml_hp, ml_ap)*100,
+                            "pick": tgt, "prob": cal_prob*100,
+                            "raw_prob": max(ml_hp, ml_ap)*100,
                             "ev": ev_ml, "odds": ml_price, "book": ml_book, "edge": edge,
                         }
                         l, lc = ev_label(ev_ml)
                         if l in ("🔥 HIGH VALUE", "✅ VALUE"): border = lc
                     else:
-                        pick_entry["moneyline"] = {"pick": tgt, "prob": max(ml_hp, ml_ap)*100, "ev": None, "odds": "N/A", "book": "", "edge": None}
+                        pick_entry["moneyline"] = {"pick": tgt, "prob": max(cal_hp, cal_ap)*100 if cal_hp else max(ml_hp, ml_ap)*100, "raw_prob": max(ml_hp, ml_ap)*100, "ev": None, "odds": "N/A", "book": "", "edge": None}
 
                     # Spread odds — favorite -1.5
                     spr_price, spr_book, _ = extract_market_odds(og, "spreads", spr_fav_team)
@@ -1118,12 +1134,16 @@ def main():
                     else:
                         pick_entry["total"] = {"pick": ov_verdict, "prob": ov_pct, "detail": f"~{exp_total:.1f}", "ev": None, "odds": "N/A", "book": ""}
                 else:
-                    pick_entry["moneyline"] = {"pick": hn if ml_hp > 0.50 else an, "prob": max(ml_hp, ml_ap)*100, "ev": None, "odds": "N/A", "book": "", "edge": None}
+                    cal_p = max(cal_hp, cal_ap) if cal_hp else max(ml_hp, ml_ap)
+                    raw_p = max(ml_hp, ml_ap)
+                    pick_entry["moneyline"] = {"pick": hn if ml_hp > 0.50 else an, "prob": cal_p*100, "raw_prob": raw_p*100, "ev": None, "odds": "N/A", "book": "", "edge": None}
                     pick_entry["spread_minus"] = {"pick": spr_fav_team, "prob": spr_fav_prob*100, "detail": "-1.5", "ev": None, "odds": "N/A", "book": ""}
                     pick_entry["spread_plus"] = {"pick": spr_dog_team, "prob": spr_dog_prob*100, "detail": "+1.5", "ev": None, "odds": "N/A", "book": ""}
                     pick_entry["total"] = {"pick": ov_verdict, "prob": ov_pct, "detail": f"~{exp_total:.1f}", "ev": None, "odds": "N/A", "book": ""}
             else:
-                pick_entry["moneyline"] = {"pick": hn if ml_hp > 0.50 else an, "prob": max(ml_hp, ml_ap)*100, "ev": None, "odds": "N/A", "book": "", "edge": None}
+                cal_p = max(cal_hp, cal_ap) if cal_hp else max(ml_hp, ml_ap)
+                raw_p = max(ml_hp, ml_ap)
+                pick_entry["moneyline"] = {"pick": hn if ml_hp > 0.50 else an, "prob": cal_p*100, "raw_prob": raw_p*100, "ev": None, "odds": "N/A", "book": "", "edge": None}
                 pick_entry["spread_minus"] = {"pick": spr_fav_team, "prob": spr_fav_prob*100, "detail": "-1.5", "ev": None, "odds": "N/A", "book": ""}
                 pick_entry["spread_plus"] = {"pick": spr_dog_team, "prob": spr_dog_prob*100, "detail": "+1.5", "ev": None, "odds": "N/A", "book": ""}
                 pick_entry["total"] = {"pick": ov_verdict, "prob": ov_pct, "detail": f"~{exp_total:.1f}", "ev": None, "odds": "N/A", "book": ""}

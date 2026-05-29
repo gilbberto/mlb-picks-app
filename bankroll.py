@@ -26,8 +26,28 @@ TEAM_NAMES = {
     "TB": "Tampa Bay Rays", "TEX": "Texas Rangers",
     "TOR": "Toronto Blue Jays", "WSH": "Washington Nationals",
 }
-# Reverse mapping: full name -> abbreviation
 REV_TEAM = {v.lower(): k for k, v in TEAM_NAMES.items()}
+
+# ─── Calibration ───
+# Based on 249 validation games: model is conservative above 55%
+def calibrate_ml(prob):
+    """Calibrate ML probability from validation data.
+    Returns adjusted probability closer to real win rate."""
+    if prob < 0.50:
+        return 1.0 - calibrate_ml(1.0 - prob)
+    # Piecewise linear based on calibration data
+    if prob < 0.525:
+        return prob - 0.035
+    if prob < 0.575:
+        t = (prob - 0.525) / (0.575 - 0.525)
+        return prob - 0.035 * (1.0 - t)
+    if prob < 0.625:
+        t = (prob - 0.575) / (0.625 - 0.575)
+        return prob + 0.097 * t
+    if prob < 0.675:
+        t = (prob - 0.625) / (0.675 - 0.625)
+        return prob + 0.097 * (1.0 - t) + 0.148 * t
+    return prob + 0.148
 
 # ─── Kelly Criterion ───
 def american_to_prob(odds):
