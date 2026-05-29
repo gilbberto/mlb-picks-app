@@ -1,11 +1,33 @@
 """
-bankroll.py — Kelly Criterion sizing + P&L tracker.
+bankroll.py — Kelly Criterion sizing + P&L tracker + auto-settlement.
 Lee/escribe picks.json para llevar control de resultados.
 """
-import json, os
-from datetime import datetime
+import json, os, requests
+from datetime import datetime, timedelta, timezone
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "picks.json")
+MLB_API = "https://statsapi.mlb.com/api/v1"
+
+# Team name mapping: abbreviation -> full name (MLB API)
+TEAM_NAMES = {
+    "ARI": "Arizona Diamondbacks", "ATL": "Atlanta Braves",
+    "BAL": "Baltimore Orioles", "BOS": "Boston Red Sox",
+    "CHC": "Chicago Cubs", "CWS": "Chicago White Sox",
+    "CIN": "Cincinnati Reds", "CLE": "Cleveland Guardians",
+    "COL": "Colorado Rockies", "DET": "Detroit Tigers",
+    "HOU": "Houston Astros", "KC": "Kansas City Royals",
+    "LAA": "Los Angeles Angels", "LAD": "Los Angeles Dodgers",
+    "MIA": "Miami Marlins", "MIL": "Milwaukee Brewers",
+    "MIN": "Minnesota Twins", "NYM": "New York Mets",
+    "NYY": "New York Yankees", "OAK": "Oakland Athletics",
+    "PHI": "Philadelphia Phillies", "PIT": "Pittsburgh Pirates",
+    "SD": "San Diego Padres", "SF": "San Francisco Giants",
+    "SEA": "Seattle Mariners", "STL": "St. Louis Cardinals",
+    "TB": "Tampa Bay Rays", "TEX": "Texas Rangers",
+    "TOR": "Toronto Blue Jays", "WSH": "Washington Nationals",
+}
+# Reverse mapping: full name -> abbreviation
+REV_TEAM = {v.lower(): k for k, v in TEAM_NAMES.items()}
 
 # ─── Kelly Criterion ───
 def american_to_prob(odds):
@@ -58,13 +80,20 @@ def save_picks(data):
     with open(DB_PATH, "w") as f:
         json.dump(data, f, indent=2)
 
-def add_pick(date, game, market, model_prob, odds, stake, bankroll, label=""):
+def add_pick(date, game, market, model_prob, odds, stake, bankroll, label="", team=""):
     data = load_picks()
+    # Parse team abbreviation from "AWAY @ HOME" if team not given
+    if not team and " @ " in game:
+        parts = game.split(" @ ")
+        if market in ("ML", "RL"):
+            # Default to first team (away) if not specified
+            team = parts[0]
     pick = {
         "id": len(data["history"]) + 1,
         "date": date,
         "game": game,
         "market": market,
+        "team": team,
         "model_prob": round(model_prob, 3),
         "odds": odds,
         "stake": round(stake, 2),
@@ -124,6 +153,83 @@ def today_checks():
     data = load_picks()
     pending = [p for p in data["history"] if not p.get("settled")]
     return pending
+
+# ─── Auto-Settlement ───
+def _fetch_mlb_games(date_str):
+    """Get completed MLB games for a given date."""
+    url = f"{MLB_API}/schedule?date={date_str}&sportId=1&hydrate=linescore,team"
+    try:
+        r = requests.get(url, timeout=15)
+        if r.status_code != 200: return []
+        games = []
+        for d in r.json().get("dates", []):
+            for g in d.get("games", []):
+                if g.get("status", {}).get("codedState") != "F":
+                    continue
+                away = g["teams"]["away"]
+                home = g["teams"]["home"]
+                away_name = away["team"]["name"]
+                home_name = home["team"]["name"]
+                away_abbr = REV_TEAM.get(away_name.lower(), away_name)
+                home_abbr = REV_TEAM.get(home_name.lower(), home_name)
+                games.append({
+                    "away_abbr": away_abbr,
+                    "home_abbr": home_abbr,
+                    "away_runs": away.get("score", 0),
+                    "home_runs": home.get("score", 0),
+                    "label": f"{away_abbr} @ {home_abbr}",
+                })
+        return games
+    except:
+        return []
+
+def auto_settle():
+    """Auto-settle pending picks against MLB API results."""
+    data = load_picks()
+    settled_count = 0
+    errors = []
+
+    # Collect unique dates with pending picks
+    pending_dates = set()
+    for p in data["history"]:
+        if not p.get("settled") and p.get("date"):
+            pending_dates.add(p["date"])
+
+    for date_str in sorted(pending_dates):
+        games = _fetch_mlb_games(date_str)
+        for p in data["history"]:
+            if p.get("settled") or p.get("date") != date_str:
+                continue
+            game_label = p.get("game", "")
+            market = p.get("market", "")
+            team = p.get("team", "")
+
+            # Find matching game
+            match = None
+            for g in games:
+                if g["label"] == game_label:
+                    match = g
+                    break
+            if not match:
+                continue
+
+            try:
+                won = None
+                if market == "ML":
+                    if not team: continue
+                    if team == match["away_abbr"]:
+                        won = match["away_runs"] > match["home_runs"]
+                    elif team == match["home_abbr"]:
+                        won = match["home_runs"] > match["away_runs"]
+
+                if won is not None:
+                    profit = settle_pick(p["id"], won)
+                    if profit is not None:
+                        settled_count += 1
+            except Exception as e:
+                errors.append(f"Pick #{p['id']}: {e}")
+
+    return settled_count, errors
 
 if __name__ == "__main__":
     # Demo / test
