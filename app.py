@@ -14,6 +14,63 @@ if not load_dotenv():
 
 st.set_page_config(page_title="MLB Picks AI", page_icon="⚾", layout="wide", initial_sidebar_state="expanded")
 
+# ─── Dark mode + Mobile CSS ───
+st.markdown("""
+<style>
+    /* Force dark background */
+    .stApp, .main, .block-container, .stApp > header {
+        background-color: #0a0a0a !important;
+    }
+    .stApp, .stMarkdown, .stText, p, h1, h2, h3, h4, h5, h6, label, span, div {
+        color: #e0e0e0 !important;
+    }
+    a { color: #58a6ff !important; }
+    /* Cards */
+    div[data-testid="column"] {
+        background: #1a1a1a;
+        border-radius: 12px;
+        padding: 12px;
+        margin: 4px 0;
+        border: 1px solid #2a2a2a;
+    }
+    /* Sidebar */
+    section[data-testid="stSidebar"] { background-color: #111 !important; }
+    section[data-testid="stSidebar"] * { color: #ccc !important; }
+    /* Metrics */
+    div[data-testid="stMetric"] {
+        background: #1a1a1a;
+        border-radius: 10px;
+        padding: 8px 12px;
+        border: 1px solid #2a2a2a;
+    }
+    div[data-testid="stMetric"] label, div[data-testid="stMetric"] div {
+        color: #e0e0e0 !important;
+    }
+    /* DataFrames */
+    div[data-testid="stDataFrame"] { background: #1a1a1a !important; }
+    div[data-testid="stDataFrame"] td, div[data-testid="stDataFrame"] th {
+        color: #e0e0e0 !important;
+        background: #1a1a1a !important;
+    }
+    /* Expanders */
+    div[data-testid="stExpander"] { background: #1a1a1a !important; border: 1px solid #2a2a2a !important; }
+    /* Dividers */
+    hr { border-color: #2a2a2a !important; }
+    /* Mobile responsiveness */
+    @media (max-width: 640px) {
+        .block-container { padding: 8px 4px !important; }
+        div[data-testid="column"] { padding: 8px !important; }
+        h1 { font-size: 22px !important; }
+        h2 { font-size: 18px !important; }
+        h3 { font-size: 15px !important; }
+        div[data-testid="stMetric"] { padding: 4px 8px !important; }
+    }
+    /* Spinner */
+    div[data-testid="stSpinner"] { color: #58a6ff !important; }
+    /* Viewport — ya incluido por Streamlit */
+</style>
+""", unsafe_allow_html=True)
+
 try:
     ODDS_API_KEY = st.secrets.get("ODDS_API_KEY", "")
 except Exception:
