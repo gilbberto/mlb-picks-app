@@ -1122,47 +1122,69 @@ def main():
     try:
         from bankroll import recommend_stake
         recs = []
-        seen_matchups = set()
+        # Helper: compute edge from entry if it has odds + prob
+        def get_edge(entry):
+            if not entry or not entry.get("odds") or entry["odds"] in ("N/A", "—", ""):
+                return None
+            try:
+                odds = int(str(entry["odds"]).replace("$",""))
+            except:
+                return None
+            if odds == 0: return None
+            ip = american_to_prob(odds)
+            if ip is None: return None
+            prob = entry.get("prob", 0) / 100.0
+            return round((prob - ip) * 100, 1)
+
         for p in picks:
-            ml = p.get("moneyline", {})
-            edge_val = ml.get("edge")
-            if edge_val is not None and edge_val > 2:
-                game_label = f"{p['away_abbrev']} @ {p['home_abbrev']}"
-                odds_str = ml.get("odds", "N/A")
+            gl = f"{p['away_abbrev']} @ {p['home_abbrev']}"
+
+            for mkt_key, label in [("moneyline", "ML"), ("spread_minus", "RL -1.5"),
+                                   ("spread_plus", "RL +1.5"), ("total", None)]:
+                entry = p.get(mkt_key)
+                if not entry: continue
+                mkt_label = label or entry.get("detail", "O/U")
+                edge = entry.get("edge") if mkt_key == "moneyline" else get_edge(entry)
+                if edge is None or edge <= 2: continue
+
+                pick_team = entry.get("pick", "")
+                prob = entry.get("prob", 0)
+                odds_str = entry.get("odds", "N/A")
                 odds_int = 0
                 try: odds_int = int(str(odds_str).replace("$",""))
                 except: pass
-                stake, units, label = recommend_stake(ml.get("prob", 50)/100, odds_int, bankroll=1000)
-                key = game_label
-                if key not in seen_matchups:
-                    seen_matchups.add(key)
-                    recs.append({
-                        "game": game_label,
-                        "pick": ml.get("pick", ""),
-                        "prob": ml.get("prob", 0),
-                        "odds": odds_str,
-                        "edge": edge_val,
-                        "stake": stake,
-                        "units": units,
-                        "label": label,
-                    })
+
+                stake, units, stake_label = recommend_stake(prob/100, odds_int, bankroll=1000)
+
+                recs.append({
+                    "game": gl,
+                    "market": mkt_label,
+                    "pick": pick_team,
+                    "prob": prob,
+                    "odds": odds_str,
+                    "edge": edge,
+                    "stake": stake,
+                    "units": units,
+                    "stake_label": stake_label,
+                })
+
         if recs:
             recs.sort(key=lambda x: x["edge"], reverse=True)
             st.divider()
             st.markdown("## 🏆 Recomendaciones del Día")
-            st.caption("Picks con mejor edge, ordenados por valor. Basado en Kelly Criterion (25% fraccional, bankroll $1,000).")
+            st.caption("Picks con mejor edge (ML, RL y O/U). Basado en Kelly Criterion (25% fraccional, bankroll $1,000).")
             cols = st.columns(min(len(recs), 4))
             for i, r in enumerate(recs[:4]):
                 with cols[i]:
                     st.markdown(f"**{r['game']}**")
-                    st.markdown(f"🎯 {r['pick']} ({r['prob']:.0f}%)")
+                    st.markdown(f"📊 {r['market']} — 🎯 {r['pick']} ({r['prob']:.0f}%)")
                     c = "🔥" if r["edge"] > 8 else "⭐" if r["edge"] > 5 else "✅"
                     st.markdown(f"Edge: {c} **{r['edge']:+.1f}%**")
                     st.markdown(f"Cuota: {r['odds']}")
                     if r["stake"] > 0:
                         st.markdown(f"Inversión: **${r['stake']:.0f}** ({r['units']}u)")
-                    if r["label"] != "No bet":
-                        st.markdown(f"Confianza: {r['label']}")
+                    if r["stake_label"] not in ("No bet", ""):
+                        st.markdown(f"Confianza: {r['stake_label']}")
                     if i < len(recs[:4]) - 1:
                         st.divider()
     except ImportError:
