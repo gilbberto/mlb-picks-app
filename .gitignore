@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.env
+picks.json
+*.egg-info/
+.DS_Store
