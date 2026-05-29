@@ -1217,7 +1217,7 @@ def main():
             gl = f"{p['away_abbrev']} @ {p['home_abbrev']}"
 
             for mkt_key, label in [("moneyline", "ML"), ("spread_minus", "RL -1.5"),
-                                   ("spread_plus", "RL +1.5"), ("total", None)]:
+                                   ("spread_plus", "RL +1.5"), ("total", "O/U")]:
                 entry = p.get(mkt_key)
                 if not entry: continue
                 mkt_label = label or entry.get("detail", "O/U")
