@@ -31,23 +31,24 @@ REV_TEAM = {v.lower(): k for k, v in TEAM_NAMES.items()}
 # ─── Calibration ───
 # Based on 249 validation games: model is conservative above 55%
 def calibrate_ml(prob):
-    """Calibrate ML probability from validation data.
+    """Calibrate ML probability from validation data (retrained model, 845 games).
     Returns adjusted probability closer to real win rate."""
     if prob < 0.50:
         return 1.0 - calibrate_ml(1.0 - prob)
-    # Piecewise linear based on calibration data
-    if prob < 0.525:
-        return prob - 0.035
+    # Piecewise linear based on new calibration (253 val games, retrained model)
+    # Buckets: 50-55→52.8%, 55-60→55.1%, 60-65→72.3%, 65-70→100%
+    if prob < 0.55:
+        return prob + 0.006
     if prob < 0.575:
-        t = (prob - 0.525) / (0.575 - 0.525)
-        return prob - 0.035 * (1.0 - t)
-    if prob < 0.625:
-        t = (prob - 0.575) / (0.625 - 0.575)
-        return prob + 0.097 * t
-    if prob < 0.675:
-        t = (prob - 0.625) / (0.675 - 0.625)
-        return prob + 0.097 * (1.0 - t) + 0.148 * t
-    return prob + 0.148
+        t = (prob - 0.55) / (0.575 - 0.55)
+        return prob + 0.006 * (1.0 - t) + (-0.024) * t
+    if prob < 0.60:
+        t = (prob - 0.575) / (0.60 - 0.575)
+        return prob - 0.024 * (1.0 - t) + 0.105 * t
+    if prob < 0.65:
+        t = (prob - 0.60) / (0.65 - 0.60)
+        return prob + 0.105 * (1.0 - t) + 0.334 * t
+    return min(prob + 0.334, 0.95)
 
 # ─── Kelly Criterion ───
 def american_to_prob(odds):

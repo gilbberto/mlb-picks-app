@@ -579,7 +579,29 @@ def predict_totals(hf, af, hs, aws, h_adv=None, a_adv=None, park_factor=1.0):
 
 # ─── UI ───
 
-def render_card(pick, key_suffix=""):
+def _log_pick_fn(pick, mkt_key, mkt_label, entry):
+    """Helper to log a pick to the tracker."""
+    try:
+        from bankroll import add_pick, load_picks, recommend_stake
+        data = load_picks()
+        bk = data["bankroll"]
+        gl = f"{pick['away_abbrev']} @ {pick['home_abbrev']}"
+        odds_str = entry.get("odds", "N/A")
+        try: odds_int = int(str(odds_str).replace("$",""))
+        except: odds_int = 0
+        prob = entry.get("prob", 50) / 100.0
+        stake, units, slabel = recommend_stake(prob, odds_int, bankroll=bk)
+        if stake <= 0:
+            st.warning("⚠️ Kelly no recomienda apostar aquí")
+            return
+        pick_team = entry.get("pick", "")
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        add_pick(today, gl, mkt_label, prob, odds_int, stake, bk, slabel, pick_team)
+        st.success(f"✅ Pick registrado: {pick_team} ({gl}) — ${stake:.0f} @ {odds_str}")
+    except Exception as e:
+        st.error(f"Error al registrar: {e}")
+
+def render_card(pick, key_suffix="", game_idx=0):
     hn = pick["home_team"]
     an = pick["away_team"]
     hp = pick["ml_home_prob"]
@@ -628,7 +650,7 @@ def render_card(pick, key_suffix=""):
             edge = p.get("edge")
             recommended = ev is not None and ev > 0
 
-            col_a, col_b, col_c, col_d, col_e = st.columns([1.3, 0.8, 0.7, 0.7, 0.8])
+            col_a, col_b, col_c, col_d, col_e = st.columns([1.2, 0.7, 0.7, 0.7, 0.8])
             with col_a:
                 rec_tag = " ⭐" if recommended else ""
                 st.markdown(f"**{mkt_icon} {mkt_label}{rec_tag}**  \n`{pick_name}` {detail}")
@@ -639,8 +661,18 @@ def render_card(pick, key_suffix=""):
             with col_d:
                 st.markdown(f"`{odds}`" if odds and odds != "N/A" else "")
             with col_e:
-                if recommended:
-                    st.markdown("<span style='color:#ffcc00'>⭐ Recomendado</span>", unsafe_allow_html=True)
+                gid = pick.get("game_id", "")
+                btn_key = f"log_{gid}_{mkt_key}_{game_idx}"
+                already_logged = st.session_state.get(btn_key, False)
+                if already_logged:
+                    st.markdown("<span style='color:#00cc66'>✅</span>", unsafe_allow_html=True)
+                elif edge is not None and edge > 2:
+                    if st.button("📝", key=btn_key, help="Registrar pick en tracker"):
+                        _log_pick_fn(pick, mkt_key, mkt_label, entry)
+                        st.session_state[btn_key] = True
+                        st.rerun()
+                elif recommended:
+                    st.markdown("<span style='color:#ffcc00'>⭐</span>", unsafe_allow_html=True)
                 elif edge is not None:
                     ec = "#00cc66" if edge > 5 else "#88cc00" if edge > 2 else "#cccc00"
                     st.markdown(f"<span style='color:{ec}'>{edge:+.1f}%</span>", unsafe_allow_html=True)
@@ -864,7 +896,7 @@ def main():
     with st.sidebar:
         st.image("https://img.icons8.com/fluency/96/baseball.png", width=55)
         st.markdown("### ⚾ MLB Picks AI")
-        st.markdown("**Modelo:** Log5 · Pythagorean · Sabermetrics")
+        st.markdown("**Modelo:** RandomForest + Monte Carlo (27 vars)")
         st.markdown("**3 mercados:** Moneyline · Run Line · Over/Under")
         st.divider()
         min_conf = st.selectbox("Filtrar por confianza", ["Todas","🔥 HIGH VALUE","✅ VALUE","⚠️ LOW VALUE"], index=0)
@@ -887,12 +919,9 @@ def main():
         st.markdown("#### 📊 Metodología")
         with st.expander("Ver"):
             st.markdown("""
-            **Log5**: Probabilidad de que A venza a B según sus % de victorias.
-            **Pythagorean**: Estima win% desde carreras anotadas/permitidas.
-            **Run Line**: Probabilidad de cubrir -1.5 vía margen esperado.
-            **Over/Under**: Total esperado de carreras con ajuste de pitcheo.
-
-            **Pesos Moneyline**: Log5 30%, Pythagorean 25%, Forma 15%, OPS 12%, WHIP 12%, Sabermetrics 6%.
+            **RandomForest + Monte Carlo**: 27 features (Elo, forma, OPS/WHIP/ERA, park factor, pitcher real).
+            **Calibración ML**: Ajuste lineal por tramos según validación vs 249 juegos.
+            **Kelly Criterion**: 25% fraccional para sizing de apuestas.
 
             **Value**: Cuando la prob del modelo supera la prob implícita de la cuota.
             """)
@@ -1183,8 +1212,8 @@ def main():
 
     if len(upcoming) > 0:
         st.markdown(f"### 📋 Picks del Día ({len(upcoming)} juegos)")
-        for _, r in upcoming.iterrows():
-            render_card(r)
+        for idx, (_, r) in enumerate(upcoming.iterrows()):
+            render_card(r, game_idx=idx)
 
     # ── Parlays ──
     parlays = generate_parlays(picks)
