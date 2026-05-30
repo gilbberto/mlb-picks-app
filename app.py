@@ -1379,8 +1379,6 @@ def main():
             st.info("💡 Aún no has registrado picks. Usa el botón **📝** en las tarjetas o recomendaciones para empezar.")
     except ImportError:
         pass
-    except Exception:
-        pass
 
     st.divider()
     with st.expander("🔬 Tabla detallada"):
