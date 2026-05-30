@@ -598,14 +598,14 @@ def _log_pick_fn(pick, mkt_key, mkt_label, entry):
         prob = entry.get("prob", 50) / 100.0
         stake, units, slabel = recommend_stake(prob, odds_int, bankroll=bk)
         if stake <= 0:
-            st.warning("⚠️ Kelly no recomienda apostar aquí")
+            st.warning(f"⚠️ Kelly no recomienda: prob={prob:.0%} odds={odds_int}")
             return
         pick_team = entry.get("pick", "")
         today = datetime.now(TZ).strftime("%Y-%m-%d")
-        add_pick(today, gl, mkt_label, prob, odds_int, stake, bk, slabel, pick_team)
-        st.success(f"✅ Pick registrado: {pick_team} ({gl}) — ${stake:.0f} @ {odds_str}")
+        pid = add_pick(today, gl, mkt_label, prob, odds_int, stake, bk, slabel, pick_team)
+        st.success(f"✅ Pick #{pid} registrado: {pick_team} ({gl}) — ${stake:.0f} @ {odds_str}")
     except Exception as e:
-        st.error(f"Error al registrar: {e}")
+        st.error(f"Error al registrar pick: {type(e).__name__}: {e}")
 
 def render_card(pick, key_suffix="", game_idx=0):
     hn = pick["home_team"]
@@ -676,7 +676,6 @@ def render_card(pick, key_suffix="", game_idx=0):
                     if st.button("📝", key=btn_key, help="Registrar pick en tracker"):
                         _log_pick_fn(pick, mkt_key, mkt_label, entry)
                         st.session_state[btn_key] = True
-                        st.rerun()
                 elif recommended:
                     st.markdown("<span style='color:#ffcc00'>⭐</span>", unsafe_allow_html=True)
                 elif edge is not None:
@@ -1309,12 +1308,9 @@ def main():
                         if st.button("📝 Registrar", key=btn_key, help="Guardar en tracker", type="secondary"):
                             _log_pick_fn(r["pick_dict"], r["mkt_key"], r["market"], r["entry"])
                             st.session_state[btn_key] = True
-                            st.rerun()
                     else:
                         st.markdown("<span style='color:#00cc66'>✅ Registrado</span>", unsafe_allow_html=True)
     except ImportError:
-        pass
-    except Exception:
         pass
 
     # ── Mis Picks Registrados ──
