@@ -636,14 +636,21 @@ def render_card(pick, key_suffix="", game_idx=0):
             pitcher_line += f"  \n`🏟️` {venue}"
         badge = f" ⭐ **{rec_count}**" if rec_count else ""
         cgs = pick.get("coded_game_state", "")
+        game_dt = pick.get("game_dt")
+        now_tz = datetime.now(TZ)
         status_label = ""
         status_col = ""
         if cgs == "I":
             status_label = "🔴 EN VIVO "
             status_col = "#ff4444"
-        elif cgs == "P" and pick.get("status","").lower() in ("pre-game","warmup"):
-            status_label = "⏳ POR INICIAR "
-            status_col = "#ffaa00"
+        elif cgs != "F" and game_dt is not None:
+            mins_to_start = (game_dt - now_tz).total_seconds() / 60.0
+            if 0 <= mins_to_start <= 15:
+                status_label = "⏳ POR INICIAR "
+                status_col = "#ffaa00"
+            elif cgs == "P" and pick.get("status","").lower() in ("pre-game","warmup"):
+                status_label = "⏳ POR INICIAR "
+                status_col = "#ffaa00"
         score_str = f"**{pick['final']}** " if pick.get("final") else ""
         time_str = f"🕐 {pick['game_time']}  " if pick.get("game_time") else ""
         st.markdown(f"### {time_str}{status_label}{score_str}**{an}** @ **{hn}**" + "".join(f" `{s}`" for s in srcs) + badge + pitcher_line)
@@ -1113,11 +1120,14 @@ def main():
             ov_pct = round(max(over_prob, 1 - over_prob) * 100, 1)
 
             gd = g.get("gameDate","")
+            game_dt = None
+            game_time_str = ""
             try:
                 utc_dt = datetime.fromisoformat(gd.replace("Z","+00:00"))
-                game_time_str = utc_dt.astimezone(TZ).strftime("%I:%M %p").lstrip("0")
+                game_dt = utc_dt.astimezone(TZ)
+                game_time_str = game_dt.strftime("%I:%M %p").lstrip("0")
             except:
-                game_time_str = ""
+                pass
 
             pick_entry = {
                 "home_team": hn, "away_team": an,
@@ -1126,7 +1136,7 @@ def main():
                 "ml_away_prob": round(ml_ap*100,1),
                 "ml_home_prob_cal": round(cal_hp*100, 1) if cal_hp else None,
                 "ml_away_prob_cal": round(cal_ap*100, 1) if cal_ap else None,
-                "status": sd, "coded_game_state": sc, "game_id": g.get("gamePk",""), "game_time": game_time_str,
+                "status": sd, "coded_game_state": sc, "game_id": g.get("gamePk",""), "game_time": game_time_str, "game_dt": game_dt,
                 "advanced_used": adv_used, "espn_data": bool(espn_std),
                 "exp_total": exp_total, "total_std": total_std,
                 "spr_fav_team": spr_fav_team, "spr_fav_prob": spr_fav_prob,
@@ -1389,7 +1399,14 @@ def main():
                 key = f"{aa} @ {ha}"
                 sc = g.get("status",{}).get("codedGameState","")
                 sd = g.get("status",{}).get("detailedState","")
-                game_status[key] = (sc, sd)
+                gd = g.get("gameDate","")
+                gt = None
+                try:
+                    utc_dt = datetime.fromisoformat(gd.replace("Z","+00:00"))
+                    gt = utc_dt.astimezone(TZ)
+                except:
+                    pass
+                game_status[key] = (sc, sd, gt)
             except:
                 pass
 
@@ -1409,11 +1426,18 @@ def main():
                 else:
                     gk = p.get("game", "")
                     if gk in game_status:
-                        sc, sd = game_status[gk]
+                        sc, sd, gt = game_status[gk]
                         if sc == "I":
                             r_icon = "🔴 En Vivo"
-                        elif sc == "P" and sd.lower() in ("pre-game","warmup"):
-                            r_icon = "⏳ Por Iniciar"
+                        elif sc != "F" and gt is not None:
+                            now_tz = datetime.now(TZ)
+                            mins_to_start = (gt - now_tz).total_seconds() / 60.0
+                            if 0 <= mins_to_start <= 15:
+                                r_icon = "⏳ Por Iniciar"
+                            elif sc == "P" and sd.lower() in ("pre-game","warmup"):
+                                r_icon = "⏳ Por Iniciar"
+                            else:
+                                r_icon = "⏳ Pendiente"
                         else:
                             r_icon = "⏳ Pendiente"
                     else:
