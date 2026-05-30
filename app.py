@@ -645,9 +645,13 @@ def render_card(pick, key_suffix="", game_idx=0):
             status_col = "#ff4444"
         elif cgs != "F" and game_dt is not None:
             mins_to_start = (game_dt - now_tz).total_seconds() / 60.0
-            if 0 <= mins_to_start <= 15:
-                status_label = "⏳ POR INICIAR "
-                status_col = "#ffaa00"
+            if -30 <= mins_to_start <= 15:
+                if mins_to_start >= 0:
+                    status_label = "⏳ POR INICIAR "
+                    status_col = "#ffaa00"
+                else:
+                    status_label = "🔴 EN VIVO "
+                    status_col = "#ff4444"
         score_str = f"**{pick['final']}** " if pick.get("final") else ""
         time_str = f"🕐 {pick['game_time']}  " if pick.get("game_time") else ""
         st.markdown(f"### {time_str}{status_label}{score_str}**{an}** @ **{hn}**" + "".join(f" `{s}`" for s in srcs) + badge + pitcher_line)
@@ -1004,8 +1008,9 @@ def main():
     c1, c2, c3 = st.columns(3)
     live_count = sum(1 for g in games if g.get("status",{}).get("codedGameState") == "I")
     soon_count = 0
+    alive_count = 0
     for g in games:
-        if g.get("status",{}).get("codedGameState") in ("F","I"):
+        if g.get("status",{}).get("codedGameState") == "F":
             continue
         gd = g.get("gameDate","")
         try:
@@ -1013,11 +1018,13 @@ def main():
             mins = (gt - datetime.now(TZ)).total_seconds() / 60.0
             if 0 <= mins <= 15:
                 soon_count += 1
+            elif -30 <= mins < 0:
+                alive_count += 1
         except:
             pass
     with c1: st.metric("Juegos", len(games))
     with c2: st.metric("Temporada", CURRENT_SEASON)
-    with c3: st.metric("En vivo / Por iniciar", f"🔴{live_count} ⏳{soon_count}" if live_count or soon_count else "0")
+    with c3: st.metric("En vivo / Por iniciar", f"🔴{live_count + alive_count} ⏳{soon_count}" if live_count or soon_count or alive_count else "0")
 
     with st.spinner("📡 Cargando datos..."):
         odds_raw = fetch_odds()
@@ -1449,8 +1456,11 @@ def main():
                         elif sc != "F" and gt is not None:
                             now_tz = datetime.now(TZ)
                             mins_to_start = (gt - now_tz).total_seconds() / 60.0
-                            if 0 <= mins_to_start <= 15:
-                                r_icon = "⏳ Por Iniciar"
+                            if -30 <= mins_to_start <= 15:
+                                if mins_to_start >= 0:
+                                    r_icon = "⏳ Por Iniciar"
+                                else:
+                                    r_icon = "🔴 En Vivo"
                             else:
                                 r_icon = "⏳ Pendiente"
                         else:
