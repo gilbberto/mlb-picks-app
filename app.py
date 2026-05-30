@@ -1287,7 +1287,9 @@ def main():
     # ── Recomendaciones ──
     recs = []
     try:
-        from bankroll import recommend_stake
+        from bankroll import recommend_stake, load_picks
+        bk_data = load_picks()
+        actual_bankroll = bk_data["bankroll"]
         # Helper: compute edge from entry if it has odds + prob
         def get_edge(entry):
             if not entry or not entry.get("odds") or entry["odds"] in ("N/A", "—", ""):
@@ -1320,7 +1322,7 @@ def main():
                 try: odds_int = int(str(odds_str).replace("$",""))
                 except: pass
 
-                stake, units, stake_label = recommend_stake(prob/100, odds_int, bankroll=1000)
+                stake, units, stake_label = recommend_stake(prob/100, odds_int, bankroll=actual_bankroll)
 
                 recs.append({
                     "game": gl,
@@ -1341,7 +1343,7 @@ def main():
             recs.sort(key=lambda x: x["edge"], reverse=True)
             st.divider()
             st.markdown("## 🏆 Recomendaciones del Día")
-            st.caption("Picks con mejor edge (ML, RL y O/U). Basado en Kelly Criterion (25% fraccional, bankroll $1,000).")
+            st.caption(f"Picks con mejor edge (ML, RL y O/U). Basado en Kelly Criterion (25% fraccional, bankroll ${actual_bankroll:,.0f}).")
             cols = st.columns(min(len(recs), 4))
             for i, r in enumerate(recs[:4]):
                 with cols[i]:
