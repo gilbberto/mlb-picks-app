@@ -1317,37 +1317,42 @@ def main():
     except Exception:
         pass
 
-    # ── Resultados ──
+    # ── Mis Picks Registrados ──
     try:
         from bankroll import get_pnl, load_picks
         pnl = get_pnl()
-        if pnl["total"] > 0 or pnl["open"] > 0:
-            st.divider()
-            st.markdown("## 📊 Resultados")
+        data = load_picks()
+        st.divider()
+        st.markdown("## 📋 Mis Picks Registrados")
+        if data["history"]:
             mc1, mc2, mc3, mc4 = st.columns(4)
             mc1.metric("Bankroll", f"${pnl['bankroll']:.0f}")
             mc2.metric("Profit", f"${pnl['profit']:+.0f}", delta=f"{pnl['roi']:+.0f}%")
             mc3.metric("Record", f"{pnl['wins']}-{pnl['losses']}", delta=f"{pnl['pct']}%")
             mc4.metric("Pendientes", pnl["open"])
-            # History table
-            data = load_picks()
-            if data["history"]:
-                rows = []
-                for p in reversed(data["history"]):
-                    rows.append({
-                        "Fecha": p.get("date", ""),
-                        "Juego": p.get("game", ""),
-                        "Mercado": p.get("market", ""),
-                        "Prob": f"{p.get('model_prob', 0):.0%}",
-                        "Cuota": f"${p.get('odds', 0):+d}",
-                        "Stake": f"${p.get('stake', 0):.0f}",
-                        "Result": "✅" if p.get("result") == "W" else "❌" if p.get("result") == "L" else "⏳",
-                        "Profit": f"${p.get('profit', 0):+.0f}" if p.get("profit") is not None else "—",
-                    })
-                if rows:
-                    st.dataframe(rows, use_container_width=True, hide_index=True)
-                    total_profit = sum(p.get("profit", 0) for p in data["history"] if p.get("profit"))
-                    st.caption(f"Profit total: **${total_profit:.2f}**")
+            rows = []
+            for p in reversed(data["history"]):
+                result = p.get("result")
+                if result == "W": r_icon = "✅ Ganado"
+                elif result == "L": r_icon = "❌ Perdido"
+                else: r_icon = "⏳ Pendiente"
+                rows.append({
+                    "Fecha": p.get("date", ""),
+                    "Juego": p.get("game", ""),
+                    "Mercado": p.get("market", ""),
+                    "Pick": p.get("team", ""),
+                    "Prob": f"{p.get('model_prob', 0):.0%}",
+                    "Cuota": f"${p.get('odds', 0):+d}",
+                    "Stake": f"${p.get('stake', 0):.0f}",
+                    "Estado": r_icon,
+                    "Profit": f"${p.get('profit', 0):+.0f}" if p.get("profit") is not None else "—",
+                })
+            st.dataframe(rows, use_container_width=True, hide_index=True)
+            total_profit = sum(p.get("profit", 0) for p in data["history"] if p.get("profit"))
+            green = total_profit >= 0
+            st.markdown(f"Profit total: <span style='color:{'#00cc66' if green else '#ff4444'}'><b>${total_profit:+.2f}</b></span>", unsafe_allow_html=True)
+        else:
+            st.info("💡 Aún no has registrado picks. Usa el botón **📝** en las tarjetas o recomendaciones para empezar.")
     except ImportError:
         pass
     except Exception:
