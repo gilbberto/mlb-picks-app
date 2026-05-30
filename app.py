@@ -635,7 +635,9 @@ def render_card(pick, key_suffix="", game_idx=0):
         if venue:
             pitcher_line += f"  \n`🏟️` {venue}"
         badge = f" ⭐ **{rec_count}**" if rec_count else ""
-        st.markdown(f"### **{an}** @ **{hn}**" + "".join(f" `{s}`" for s in srcs) + badge + pitcher_line)
+        live_badge = "🔴 " if pick.get("coded_game_state") == "I" else ""
+        score_str = f"**{pick['final']}** " if pick.get("final") else ""
+        st.markdown(f"### {live_badge}{score_str}**{an}** @ **{hn}**" + "".join(f" `{s}`" for s in srcs) + badge + pitcher_line)
         mkt_list = [("moneyline", "Moneyline", "💰")]
         mkt_list += [("spread_minus", "RL -1.5", "📏"), ("spread_plus", "RL +1.5", "📏")]
         mkt_list += [("total", "O/U", "📈")]
@@ -987,9 +989,10 @@ def main():
         return
 
     c1, c2, c3 = st.columns(3)
+    live_count = sum(1 for g in games if g.get("status",{}).get("codedGameState") == "I")
     with c1: st.metric("Juegos", len(games))
     with c2: st.metric("Temporada", CURRENT_SEASON)
-    with c3: st.metric("Estado", "🟢 En vivo" if any(g.get("status",{}).get("codedGameState") in ("P","I","F") for g in games) else "⏳ Pendiente")
+    with c3: st.metric("En vivo", f"🔴 {live_count}" if live_count else "0")
 
     with st.spinner("📡 Cargando datos..."):
         odds_raw = fetch_odds()
@@ -1106,7 +1109,7 @@ def main():
                 "ml_away_prob": round(ml_ap*100,1),
                 "ml_home_prob_cal": round(cal_hp*100, 1) if cal_hp else None,
                 "ml_away_prob_cal": round(cal_ap*100, 1) if cal_ap else None,
-                "status": sd, "game_id": g.get("gamePk",""),
+                "status": sd, "coded_game_state": sc, "game_id": g.get("gamePk",""),
                 "advanced_used": adv_used, "espn_data": bool(espn_std),
                 "exp_total": exp_total, "total_std": total_std,
                 "spr_fav_team": spr_fav_team, "spr_fav_prob": spr_fav_prob,
@@ -1118,6 +1121,8 @@ def main():
             }
 
             if sc == "F":
+                pick_entry["final"] = f"{t['away']['score']} - {t['home']['score']}"
+            elif sc == "I" and t.get("away",{}).get("score") is not None:
                 pick_entry["final"] = f"{t['away']['score']} - {t['home']['score']}"
             else:
                 pick_entry["final"] = None
