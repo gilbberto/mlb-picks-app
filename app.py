@@ -900,7 +900,7 @@ def main():
         pass
 
     with st.sidebar:
-        st.image("https://www.mlbstatic.com/league-logos/mlb.svg", width=55)
+        st.image("https://www.mlbstatic.com/team-logos/league-on-dark/1.svg", width=55)
         st.markdown("### MLB Picks AI")
         st.markdown("**Modelo:** RandomForest + Monte Carlo (27 vars)")
         st.markdown("**3 mercados:** Moneyline · Run Line · Over/Under")
@@ -949,7 +949,7 @@ def main():
     st.markdown("""
     <div style="text-align:center;padding:16px 0 6px;">
         <div style="display:flex;align-items:center;justify-content:center;gap:12px;">
-            <img src="https://www.mlbstatic.com/league-logos/mlb.svg" style="height:42px;filter:brightness(1.2);">
+            <img src="https://www.mlbstatic.com/team-logos/league-on-dark/1.svg" style="height:42px;">
             <h1 style="font-size:40px;margin:0;letter-spacing:-1px;">MLB Picks AI</h1>
         </div>
         <p style="color:#888;font-size:15px;margin-top:4px;">
