@@ -645,7 +645,8 @@ def render_card(pick, key_suffix="", game_idx=0):
             status_label = "⏳ POR INICIAR "
             status_col = "#ffaa00"
         score_str = f"**{pick['final']}** " if pick.get("final") else ""
-        st.markdown(f"### {status_label}{score_str}**{an}** @ **{hn}**" + "".join(f" `{s}`" for s in srcs) + badge + pitcher_line)
+        time_str = f"🕐 {pick['game_time']}  " if pick.get("game_time") else ""
+        st.markdown(f"### {time_str}{status_label}{score_str}**{an}** @ **{hn}**" + "".join(f" `{s}`" for s in srcs) + badge + pitcher_line)
         mkt_list = [("moneyline", "Moneyline", "💰")]
         mkt_list += [("spread_minus", "RL -1.5", "📏"), ("spread_plus", "RL +1.5", "📏")]
         mkt_list += [("total", "O/U", "📈")]
@@ -1111,6 +1112,13 @@ def main():
             ov_verdict = "Over" if over_prob > 0.5 else "Under"
             ov_pct = round(max(over_prob, 1 - over_prob) * 100, 1)
 
+            gd = g.get("gameDate","")
+            try:
+                utc_dt = datetime.fromisoformat(gd.replace("Z","+00:00"))
+                game_time_str = utc_dt.astimezone(TZ).strftime("%I:%M %p").lstrip("0")
+            except:
+                game_time_str = ""
+
             pick_entry = {
                 "home_team": hn, "away_team": an,
                 "home_abbrev": ha, "away_abbrev": aa,
@@ -1118,7 +1126,7 @@ def main():
                 "ml_away_prob": round(ml_ap*100,1),
                 "ml_home_prob_cal": round(cal_hp*100, 1) if cal_hp else None,
                 "ml_away_prob_cal": round(cal_ap*100, 1) if cal_ap else None,
-                "status": sd, "coded_game_state": sc, "game_id": g.get("gamePk",""),
+                "status": sd, "coded_game_state": sc, "game_id": g.get("gamePk",""), "game_time": game_time_str,
                 "advanced_used": adv_used, "espn_data": bool(espn_std),
                 "exp_total": exp_total, "total_std": total_std,
                 "spr_fav_team": spr_fav_team, "spr_fav_prob": spr_fav_prob,
