@@ -1375,6 +1375,11 @@ def main():
             total_profit = sum(p.get("profit", 0) for p in data["history"] if p.get("profit"))
             green = total_profit >= 0
             st.markdown(f"Profit total: <span style='color:{'#00cc66' if green else '#ff4444'}'><b>${total_profit:+.2f}</b></span>", unsafe_allow_html=True)
+            if st.button("🗑️ Limpiar historial", key="clear_all", type="secondary"):
+                from bankroll import save_picks
+                save_picks({"bankroll": 1000, "history": []})
+                st.session_state.clear()
+                st.toast("✅ Historial limpiado", icon="🗑️")
         else:
             st.info("💡 Aún no has registrado picks. Usa el botón **📝** en las tarjetas o recomendaciones para empezar.")
     except ImportError:
