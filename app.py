@@ -666,19 +666,36 @@ def render_card(pick, key_suffix="", game_idx=0):
             with col_d:
                 st.markdown(f"`{odds}`" if odds and odds != "N/A" else "")
             with col_e:
-                log_key = f"{game_idx}_{mkt_key}"
-                if st.session_state.get(f"logged_{log_key}", False):
-                    st.markdown("<span style='color:#00cc66'>✅</span>", unsafe_allow_html=True)
-                elif edge is not None and edge > 2:
-                    url = f"?log={log_key}"
-                    st.markdown(f"<a href='{url}' target='_self' style='color:#00cc66;text-decoration:none;font-size:16px;font-weight:bold;'>📝</a>", unsafe_allow_html=True)
-                elif recommended:
-                    st.markdown("<span style='color:#ffcc00'>⭐</span>", unsafe_allow_html=True)
-                elif edge is not None:
-                    ec = "#00cc66" if edge > 5 else "#88cc00" if edge > 2 else "#cccc00"
-                    st.markdown(f"<span style='color:{ec}'>{edge:+.1f}%</span>", unsafe_allow_html=True)
-                elif book:
-                    st.markdown(f"{book}" if book else "")
+                    log_key = f"lg_{pick.get('game_id','')}_{mkt_key}"
+                    if st.session_state.get(log_key, False):
+                        st.markdown("<span style='color:#00cc66'>✅</span>", unsafe_allow_html=True)
+                    elif edge is not None and edge > 2:
+                        if st.button("📝", key=log_key):
+                            try:
+                                from bankroll import add_pick, load_picks, recommend_stake
+                                d = load_picks(); bk = d["bankroll"]
+                                gl = f"{pick['away_abbrev']} @ {pick['home_abbrev']}"
+                                os_ = entry.get("odds","N/A")
+                                oi = int(str(os_).replace("$","")) if os_ not in ("N/A","—","") else 0
+                                pv = entry.get("prob",50)/100.0
+                                sk,_,sl = recommend_stake(pv, oi, bankroll=bk)
+                                if sk > 0:
+                                    pt = entry.get("pick","")
+                                    ts = datetime.now(TZ).strftime("%Y-%m-%d")
+                                    add_pick(ts, gl, mkt_label, pv, oi, sk, bk, sl, pt)
+                                    st.session_state[log_key] = True
+                                    st.toast(f"✅ {pt} registrado", icon="📝")
+                                else:
+                                    st.toast("⚠️ Kelly = 0", icon="⚠️")
+                            except Exception as ex:
+                                st.toast(f"❌ {ex}", icon="🚨")
+                    elif recommended:
+                        st.markdown("<span style='color:#ffcc00'>⭐</span>", unsafe_allow_html=True)
+                    elif edge is not None:
+                        ec = "#00cc66" if edge > 5 else "#88cc00" if edge > 2 else "#cccc00"
+                        st.markdown(f"<span style='color:{ec}'>{edge:+.1f}%</span>", unsafe_allow_html=True)
+                    elif book:
+                        st.markdown(f"{book}" if book else "")
         st.markdown(f"*Prob: {hn} {hp:.0f}% / {an} {ap:.0f}%*")
         st.divider()
 
@@ -1298,62 +1315,30 @@ def main():
                         st.markdown(f"Inversión: **${r['stake']:.0f}** ({r['units']}u)")
                     if r["stake_label"] not in ("No bet", ""):
                         st.markdown(f"Confianza: {r['stake_label']}")
-                    log_key = f"rec_{i}_{r['mkt_key']}"
-                    if st.session_state.get(f"logged_{log_key}", False):
+                    log_key = f"rg_{i}_{r['mkt_key']}"
+                    if st.session_state.get(log_key, False):
                         st.markdown("<span style='color:#00cc66'>✅ Registrado</span>", unsafe_allow_html=True)
                     else:
-                        url = f"?log={log_key}"
-                        st.markdown(f"<a href='{url}' style='color:#00cc66;text-decoration:none;display:inline-block;margin-top:4px;'>📝 Registrar</a>", unsafe_allow_html=True)
+                        if st.button("📝 Registrar", key=log_key, type="secondary"):
+                            try:
+                                from bankroll import add_pick, load_picks, recommend_stake
+                                d = load_picks(); bk = d["bankroll"]
+                                gl = f"{r['pick_dict']['away_abbrev']} @ {r['pick_dict']['home_abbrev']}"
+                                os_ = r["odds"]
+                                oi = int(str(os_).replace("$","")) if os_ not in ("N/A","—","") else 0
+                                pv = r["prob"]/100.0
+                                sk,_,sl = recommend_stake(pv, oi, bankroll=bk)
+                                if sk > 0:
+                                    pt = r["pick"]
+                                    ts = datetime.now(TZ).strftime("%Y-%m-%d")
+                                    add_pick(ts, gl, r["market"], pv, oi, sk, bk, sl, pt)
+                                    st.session_state[log_key] = True
+                                    st.toast(f"✅ {pt} registrado", icon="📝")
+                                else:
+                                    st.toast("⚠️ Kelly = 0", icon="⚠️")
+                            except Exception as ex:
+                                st.toast(f"❌ {ex}", icon="🚨")
     except ImportError:
-        pass
-
-    # ── Pending log processing (via query params) ──
-    try:
-        from bankroll import load_picks, add_pick, recommend_stake
-        qp = st.query_params
-        log_cmd = qp.get("log", "")
-        if log_cmd and "_" in log_cmd:
-            parts = log_cmd.split("_", 1)
-            prefix = parts[0]; mkt = parts[1]
-            target_pick = None
-            target_mkt_key = mkt
-            if prefix.startswith("rec"):
-                # rec_{i}_{mkt_key} → use recommendations index
-                try:
-                    ri = int(prefix[3:])
-                    if ri < len(recs):
-                        target_pick = recs[ri]["pick_dict"]
-                        target_mkt_key = recs[ri]["mkt_key"]
-                except: pass
-            else:
-                # {game_idx}_{mkt_key}
-                try:
-                    gi = int(prefix)
-                    if gi < len(picks):
-                        target_pick = picks[gi]
-                except: pass
-            if target_pick:
-                entry = target_pick.get(target_mkt_key)
-                if entry:
-                    data = load_picks()
-                    bk = data["bankroll"]
-                    gl = f"{target_pick['away_abbrev']} @ {target_pick['home_abbrev']}"
-                    odds_str = entry.get("odds", "N/A")
-                    try: odds_int = int(str(odds_str).replace("$",""))
-                    except: odds_int = 0
-                    prob = entry.get("prob", 50) / 100.0
-                    stake, units, slabel = recommend_stake(prob, odds_int, bankroll=bk)
-                    if stake > 0:
-                        pick_team = entry.get("pick", "")
-                        today_s = datetime.now(TZ).strftime("%Y-%m-%d")
-                        labs = {"moneyline":"ML","spread_minus":"RL-1.5","spread_plus":"RL+1.5","total":"O/U"}
-                        pid = add_pick(today_s, gl, labs.get(target_mkt_key,target_mkt_key), prob, odds_int, stake, bk, slabel, pick_team)
-                        st.toast(f"✅ Pick #{pid}: {pick_team} ${stake:.0f}", icon="📝")
-                        st.session_state[f"logged_{log_cmd}"] = True
-                    else:
-                        st.toast("⚠️ Kelly = 0, no se apuesta", icon="⚠️")
-            qp.clear()
-    except Exception:
         pass
 
     # ── Mis Picks Registrados ──
