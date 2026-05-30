@@ -648,9 +648,6 @@ def render_card(pick, key_suffix="", game_idx=0):
             if 0 <= mins_to_start <= 15:
                 status_label = "⏳ POR INICIAR "
                 status_col = "#ffaa00"
-            elif cgs == "P" and pick.get("status","").lower() in ("pre-game","warmup"):
-                status_label = "⏳ POR INICIAR "
-                status_col = "#ffaa00"
         score_str = f"**{pick['final']}** " if pick.get("final") else ""
         time_str = f"🕐 {pick['game_time']}  " if pick.get("game_time") else ""
         st.markdown(f"### {time_str}{status_label}{score_str}**{an}** @ **{hn}**" + "".join(f" `{s}`" for s in srcs) + badge + pitcher_line)
@@ -1006,10 +1003,21 @@ def main():
 
     c1, c2, c3 = st.columns(3)
     live_count = sum(1 for g in games if g.get("status",{}).get("codedGameState") == "I")
-    pre_count = sum(1 for g in games if g.get("status",{}).get("detailedState","").lower() in ("pre-game","warmup"))
+    soon_count = 0
+    for g in games:
+        if g.get("status",{}).get("codedGameState") in ("F","I"):
+            continue
+        gd = g.get("gameDate","")
+        try:
+            gt = datetime.fromisoformat(gd.replace("Z","+00:00")).astimezone(TZ)
+            mins = (gt - datetime.now(TZ)).total_seconds() / 60.0
+            if 0 <= mins <= 15:
+                soon_count += 1
+        except:
+            pass
     with c1: st.metric("Juegos", len(games))
     with c2: st.metric("Temporada", CURRENT_SEASON)
-    with c3: st.metric("En vivo / Por iniciar", f"🔴{live_count} ⏳{pre_count}" if live_count or pre_count else "0")
+    with c3: st.metric("En vivo / Por iniciar", f"🔴{live_count} ⏳{soon_count}" if live_count or soon_count else "0")
 
     with st.spinner("📡 Cargando datos..."):
         odds_raw = fetch_odds()
@@ -1442,8 +1450,6 @@ def main():
                             now_tz = datetime.now(TZ)
                             mins_to_start = (gt - now_tz).total_seconds() / 60.0
                             if 0 <= mins_to_start <= 15:
-                                r_icon = "⏳ Por Iniciar"
-                            elif sc == "P" and sd.lower() in ("pre-game","warmup"):
                                 r_icon = "⏳ Por Iniciar"
                             else:
                                 r_icon = "⏳ Pendiente"
