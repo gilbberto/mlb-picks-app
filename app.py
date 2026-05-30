@@ -8,6 +8,12 @@ import pickle
 import math
 from dotenv import load_dotenv
 
+try:
+    from zoneinfo import ZoneInfo
+    TZ = ZoneInfo("America/Chihuahua")
+except Exception:
+    TZ = timezone(timedelta(hours=-6))  # fallback: UTC-6 fijo
+
 load_dotenv()
 if not load_dotenv():
     pass
@@ -110,7 +116,7 @@ C = {
 
 @st.cache_data(ttl=600)
 def fetch_todays_schedule():
-    today = datetime.now(timezone.utc).strftime("%m/%d/%Y")
+    today = datetime.now(TZ).strftime("%m/%d/%Y")
     url = f"{MLB_API_BASE}/schedule?sportId=1&date={today}&hydrate=probablePitcher"
     resp = requests.get(url, timeout=10)
     resp.raise_for_status()
@@ -173,7 +179,7 @@ def fetch_pitcher_stats(pid):
 
 @st.cache_data(ttl=600)
 def fetch_recent_games(tid, ng=20):
-    today = datetime.now(timezone.utc)
+    today = datetime.now(TZ)
     end = today.strftime("%m/%d/%Y")
     start = (today - timedelta(days=45)).strftime("%m/%d/%Y")
     url = f"{MLB_API_BASE}/schedule?sportId=1&teamId={tid}&startDate={start}&endDate={end}"
@@ -595,7 +601,7 @@ def _log_pick_fn(pick, mkt_key, mkt_label, entry):
             st.warning("⚠️ Kelly no recomienda apostar aquí")
             return
         pick_team = entry.get("pick", "")
-        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        today = datetime.now(TZ).strftime("%Y-%m-%d")
         add_pick(today, gl, mkt_label, prob, odds_int, stake, bk, slabel, pick_team)
         st.success(f"✅ Pick registrado: {pick_team} ({gl}) — ${stake:.0f} @ {odds_str}")
     except Exception as e:
@@ -937,19 +943,22 @@ def main():
         except ImportError:
             pass
         st.divider()
-        st.caption(f"Actualizado: {datetime.now().strftime('%H:%M:%S')}")
+        st.caption(f"🕐 {datetime.now(TZ).strftime('%H:%M')} Chihuahua")
         st.caption("MLB Picks AI v3.0 · Solo informativo · No garantiza ganancias")
 
     st.markdown("""
     <div style="text-align:center;padding:16px 0 6px;">
-        <h1 style="font-size:40px;margin:0;letter-spacing:-1px;">⚾ MLB Picks AI</h1>
+        <div style="display:flex;align-items:center;justify-content:center;gap:12px;">
+            <img src="https://www.mlbstatic.com/league-logos/mlb.svg" style="height:42px;filter:brightness(1.2);">
+            <h1 style="font-size:40px;margin:0;letter-spacing:-1px;">MLB Picks AI</h1>
+        </div>
         <p style="color:#888;font-size:15px;margin-top:4px;">
             Predicciones: Moneyline · Run Line (-1.5) · Over/Under
         </p>
     </div>
     """, unsafe_allow_html=True)
 
-    today_str = datetime.now(timezone.utc).strftime("%A, %d %B %Y")
+    today_str = datetime.now(TZ).strftime("%A, %d %B %Y")
     st.markdown(f'<div style="text-align:center;margin-bottom:16px;"><span style="color:#888;font-size:13px;">{today_str}</span></div>', unsafe_allow_html=True)
 
     with st.spinner("🔄 Cargando juegos..."):
