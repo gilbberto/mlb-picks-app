@@ -1376,6 +1376,23 @@ def main():
         data = load_picks()
         st.divider()
         st.markdown("## 📋 Mis Picks Registrados")
+
+        # Build game status lookup from current schedule
+        game_status = {}
+        for g in games:
+            try:
+                t = g["teams"]
+                hid = t["home"]["team"]["id"]
+                aid = t["away"]["team"]["id"]
+                ha = ab_map.get(hid, "??")
+                aa = ab_map.get(aid, "??")
+                key = f"{aa} @ {ha}"
+                sc = g.get("status",{}).get("codedGameState","")
+                sd = g.get("status",{}).get("detailedState","")
+                game_status[key] = (sc, sd)
+            except:
+                pass
+
         if data["history"]:
             mc1, mc2, mc3, mc4 = st.columns(4)
             mc1.metric("Bankroll", f"${pnl['bankroll']:.0f}")
@@ -1385,9 +1402,22 @@ def main():
             rows = []
             for p in reversed(data["history"]):
                 result = p.get("result")
-                if result == "W": r_icon = "✅ Ganado"
-                elif result == "L": r_icon = "❌ Perdido"
-                else: r_icon = "⏳ Pendiente"
+                if result == "W":
+                    r_icon = "✅ Ganado"
+                elif result == "L":
+                    r_icon = "❌ Perdido"
+                else:
+                    gk = p.get("game", "")
+                    if gk in game_status:
+                        sc, sd = game_status[gk]
+                        if sc == "I":
+                            r_icon = "🔴 En Vivo"
+                        elif sc == "P" and sd.lower() in ("pre-game","warmup"):
+                            r_icon = "⏳ Por Iniciar"
+                        else:
+                            r_icon = "⏳ Pendiente"
+                    else:
+                        r_icon = "⏳ Pendiente"
                 rows.append({
                     "Fecha": p.get("date", ""),
                     "Juego": p.get("game", ""),
