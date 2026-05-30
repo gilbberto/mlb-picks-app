@@ -635,9 +635,17 @@ def render_card(pick, key_suffix="", game_idx=0):
         if venue:
             pitcher_line += f"  \n`🏟️` {venue}"
         badge = f" ⭐ **{rec_count}**" if rec_count else ""
-        live_badge = "🔴 " if pick.get("coded_game_state") == "I" else ""
+        cgs = pick.get("coded_game_state", "")
+        status_label = ""
+        status_col = ""
+        if cgs == "I":
+            status_label = "🔴 EN VIVO "
+            status_col = "#ff4444"
+        elif cgs == "P" and pick.get("status","").lower() in ("pre-game","warmup"):
+            status_label = "⏳ POR INICIAR "
+            status_col = "#ffaa00"
         score_str = f"**{pick['final']}** " if pick.get("final") else ""
-        st.markdown(f"### {live_badge}{score_str}**{an}** @ **{hn}**" + "".join(f" `{s}`" for s in srcs) + badge + pitcher_line)
+        st.markdown(f"### {status_label}{score_str}**{an}** @ **{hn}**" + "".join(f" `{s}`" for s in srcs) + badge + pitcher_line)
         mkt_list = [("moneyline", "Moneyline", "💰")]
         mkt_list += [("spread_minus", "RL -1.5", "📏"), ("spread_plus", "RL +1.5", "📏")]
         mkt_list += [("total", "O/U", "📈")]
@@ -990,9 +998,10 @@ def main():
 
     c1, c2, c3 = st.columns(3)
     live_count = sum(1 for g in games if g.get("status",{}).get("codedGameState") == "I")
+    pre_count = sum(1 for g in games if g.get("status",{}).get("detailedState","").lower() in ("pre-game","warmup"))
     with c1: st.metric("Juegos", len(games))
     with c2: st.metric("Temporada", CURRENT_SEASON)
-    with c3: st.metric("En vivo", f"🔴 {live_count}" if live_count else "0")
+    with c3: st.metric("En vivo / Por iniciar", f"🔴{live_count} ⏳{pre_count}" if live_count or pre_count else "0")
 
     with st.spinner("📡 Cargando datos..."):
         odds_raw = fetch_odds()
