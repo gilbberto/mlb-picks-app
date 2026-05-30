@@ -667,27 +667,35 @@ def render_card(pick, key_suffix="", game_idx=0):
                 st.markdown(f"`{odds}`" if odds and odds != "N/A" else "")
             with col_e:
                     log_key = f"lg_{pick.get('game_id','')}_{mkt_key}"
-                    btn = st.button("📝", key=log_key)
-                    if btn:
-                        try:
-                            from bankroll import add_pick, load_picks, recommend_stake
-                            d = load_picks(); bk = d["bankroll"]
-                            gl = f"{pick['away_abbrev']} @ {pick['home_abbrev']}"
-                            os_ = entry.get("odds","N/A")
-                            oi = int(str(os_).replace("$","")) if os_ not in ("N/A","—","") else 0
-                            pv = entry.get("prob",50)/100.0
-                            sk,_,sl = recommend_stake(pv, oi, bankroll=bk)
-                            if sk > 0:
-                                pt = entry.get("pick","")
-                                ts = datetime.now(TZ).strftime("%Y-%m-%d")
-                                add_pick(ts, gl, mkt_label, pv, oi, sk, bk, sl, pt)
-                                st.session_state[log_key] = True
-                            else:
-                                st.warning(f"⚠️ Kelly=0 para {entry.get('pick','')}")
-                        except Exception as ex:
-                            st.error(f"❌ Error: {ex}")
-                    elif st.session_state.get(log_key, False):
+                    if st.session_state.get(log_key, False):
                         st.markdown("<span style='color:#00cc66'>✅</span>", unsafe_allow_html=True)
+                    elif edge is not None and edge > 2:
+                        btn = st.button("📝", key=log_key)
+                        if btn:
+                            try:
+                                from bankroll import add_pick, load_picks, recommend_stake
+                                d = load_picks(); bk = d["bankroll"]
+                                gl = f"{pick['away_abbrev']} @ {pick['home_abbrev']}"
+                                os_ = entry.get("odds","N/A")
+                                oi = int(str(os_).replace("$","")) if os_ not in ("N/A","—","") else 0
+                                pv = entry.get("prob",50)/100.0
+                                sk,_,sl = recommend_stake(pv, oi, bankroll=bk)
+                                if sk > 0:
+                                    pt = entry.get("pick","")
+                                    ts = datetime.now(TZ).strftime("%Y-%m-%d")
+                                    add_pick(ts, gl, mkt_label, pv, oi, sk, bk, sl, pt)
+                                    st.session_state[log_key] = True
+                                else:
+                                    st.caption("⚠️ Kelly=0")
+                            except Exception as ex:
+                                st.caption(f"❌ {ex}")
+                    elif recommended:
+                        st.markdown("<span style='color:#ffcc00'>⭐</span>", unsafe_allow_html=True)
+                    elif edge is not None:
+                        ec = "#00cc66" if edge > 5 else "#88cc00" if edge > 2 else "#cccc00"
+                        st.markdown(f"<span style='color:{ec}'>{edge:+.1f}%</span>", unsafe_allow_html=True)
+                    elif book:
+                        st.markdown(f"{book}" if book else "")
                     elif recommended:
                         st.markdown("<span style='color:#ffcc00'>⭐</span>", unsafe_allow_html=True)
                     elif edge is not None:
@@ -1315,28 +1323,27 @@ def main():
                     if r["stake_label"] not in ("No bet", ""):
                         st.markdown(f"Confianza: {r['stake_label']}")
                     log_key = f"rg_{i}_{r['mkt_key']}"
-                    btn = st.button("📝 Registrar", key=log_key, type="secondary")
                     if st.session_state.get(f"done_{log_key}", False):
-                        st.success(f"✅ {r['pick']} guardado")
-                    if btn:
-                        try:
-                            from bankroll import add_pick, load_picks, recommend_stake
-                            d = load_picks(); bk = d["bankroll"]
-                            gl = f"{r['pick_dict']['away_abbrev']} @ {r['pick_dict']['home_abbrev']}"
-                            os_ = r["odds"]
-                            oi = int(str(os_).replace("$","")) if os_ not in ("N/A","—","") else 0
-                            pv = r["prob"]/100.0
-                            sk,_,sl = recommend_stake(pv, oi, bankroll=bk)
-                            if sk > 0:
-                                pt = r["pick"]
-                                ts = datetime.now(TZ).strftime("%Y-%m-%d")
-                                add_pick(ts, gl, r["market"], pv, oi, sk, bk, sl, pt)
-                                st.session_state[f"done_{log_key}"] = True
-                                st.success(f"✅ {pt} registrado en el tracker")
-                            else:
-                                st.warning(f"⚠️ Kelly=0 para {r['pick']} (prob={r['prob']:.0f}%, odds={r['odds']})")
-                        except Exception as ex:
-                            st.error(f"❌ Error: {ex}")
+                        st.markdown("<span style='color:#00cc66'>✅ Registrado</span>", unsafe_allow_html=True)
+                    else:
+                        if st.button("📝 Registrar", key=log_key, type="secondary"):
+                            try:
+                                from bankroll import add_pick, load_picks, recommend_stake
+                                d = load_picks(); bk = d["bankroll"]
+                                gl = f"{r['pick_dict']['away_abbrev']} @ {r['pick_dict']['home_abbrev']}"
+                                os_ = r["odds"]
+                                oi = int(str(os_).replace("$","")) if os_ not in ("N/A","—","") else 0
+                                pv = r["prob"]/100.0
+                                sk,_,sl = recommend_stake(pv, oi, bankroll=bk)
+                                if sk > 0:
+                                    pt = r["pick"]
+                                    ts = datetime.now(TZ).strftime("%Y-%m-%d")
+                                    add_pick(ts, gl, r["market"], pv, oi, sk, bk, sl, pt)
+                                    st.session_state[f"done_{log_key}"] = True
+                                else:
+                                    st.caption("⚠️ Kelly=0")
+                            except Exception as ex:
+                                st.caption(f"❌ {ex}")
     except ImportError:
         pass
 
