@@ -1272,6 +1272,9 @@ def main():
                     "stake": stake,
                     "units": units,
                     "stake_label": stake_label,
+                    "pick_dict": p,
+                    "mkt_key": mkt_key,
+                    "entry": entry,
                 })
 
         if recs:
@@ -1291,8 +1294,15 @@ def main():
                         st.markdown(f"Inversión: **${r['stake']:.0f}** ({r['units']}u)")
                     if r["stake_label"] not in ("No bet", ""):
                         st.markdown(f"Confianza: {r['stake_label']}")
-                    if i < len(recs[:4]) - 1:
-                        st.divider()
+                    btn_key = f"rec_log_{i}_{r.get('pick_dict',{}).get('game_id','')}"
+                    already = st.session_state.get(btn_key, False)
+                    if not already:
+                        if st.button("📝 Registrar", key=btn_key, help="Guardar en tracker", type="secondary"):
+                            _log_pick_fn(r["pick_dict"], r["mkt_key"], r["market"], r["entry"])
+                            st.session_state[btn_key] = True
+                            st.rerun()
+                    else:
+                        st.markdown("<span style='color:#00cc66'>✅ Registrado</span>", unsafe_allow_html=True)
     except ImportError:
         pass
     except Exception:
