@@ -1416,7 +1416,12 @@ def main():
             mc2.metric("Profit", f"${pnl['profit']:+.0f}", delta=f"{pnl['roi']:+.0f}%")
             mc3.metric("Record", f"{pnl['wins']}-{pnl['losses']}", delta=f"{pnl['pct']}%")
             mc4.metric("Pendientes", pnl["open"])
-            rows = []
+
+            # Header
+            hcols = st.columns([1, 1.5, 0.7, 1.2, 0.7, 0.7, 0.7, 1, 1.2, 0.5])
+            for hc, hl in zip(hcols, ["Fecha","Juego","Mercado","Pick","Prob","Cuota","Stake","Estado","Profit",""]):
+                hc.markdown(f"**{hl}**")
+            total_profit = 0
             for p in reversed(data["history"]):
                 result = p.get("result")
                 if result == "W":
@@ -1442,19 +1447,32 @@ def main():
                             r_icon = "⏳ Pendiente"
                     else:
                         r_icon = "⏳ Pendiente"
-                rows.append({
-                    "Fecha": p.get("date", ""),
-                    "Juego": p.get("game", ""),
-                    "Mercado": p.get("market", ""),
-                    "Pick": p.get("team", ""),
-                    "Prob": f"{p.get('model_prob', 0):.0%}",
-                    "Cuota": f"${p.get('odds', 0):+d}",
-                    "Stake": f"${p.get('stake', 0):.0f}",
-                    "Estado": r_icon,
-                    "Profit": f"${p.get('profit', 0):+.0f}" if p.get("profit") is not None else "—",
-                })
-            st.dataframe(rows, use_container_width=True, hide_index=True)
-            total_profit = sum(p.get("profit", 0) for p in data["history"] if p.get("profit"))
+                pid = p.get("id", 0)
+                profit = p.get("profit")
+                if profit is not None:
+                    total_profit += profit
+                profit_str = f"${profit:+.0f}" if profit is not None else "—"
+                prob_str = f"{p.get('model_prob', 0):.0%}"
+                odds_str = f"${p.get('odds', 0):+d}"
+                stake_str = f"${p.get('stake', 0):.0f}"
+
+                cols = st.columns([1, 1.5, 0.7, 1.2, 0.7, 0.7, 0.7, 1, 1.2, 0.5])
+                cols[0].markdown(f"`{p.get('date','')}`")
+                cols[1].markdown(f"{p.get('game','')}")
+                cols[2].markdown(f"{p.get('market','')}")
+                cols[3].markdown(f"{p.get('team','')}")
+                cols[4].markdown(f"{prob_str}")
+                cols[5].markdown(f"{odds_str}")
+                cols[6].markdown(f"{stake_str}")
+                cols[7].markdown(f"{r_icon}")
+                cols[8].markdown(f"{profit_str}")
+                if cols[9].button("❌", key=f"del_{pid}", help="Eliminar"):
+                    from bankroll import save_picks, load_picks
+                    d = load_picks()
+                    d["history"] = [x for x in d["history"] if x.get("id") != pid]
+                    save_picks(d)
+                    st.rerun()
+
             green = total_profit >= 0
             st.markdown(f"Profit total: <span style='color:{'#00cc66' if green else '#ff4444'}'><b>${total_profit:+.2f}</b></span>", unsafe_allow_html=True)
             if st.button("🗑️ Limpiar historial", key="clear_all", type="secondary"):
