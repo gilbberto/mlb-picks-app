@@ -645,13 +645,12 @@ def render_card(pick, key_suffix="", game_idx=0):
             status_col = "#ff4444"
         elif cgs != "F" and game_dt is not None:
             mins_to_start = (game_dt - now_tz).total_seconds() / 60.0
-            if -30 <= mins_to_start <= 15:
-                if mins_to_start >= 0:
-                    status_label = "⏳ POR INICIAR "
-                    status_col = "#ffaa00"
-                else:
-                    status_label = "🔴 EN VIVO "
-                    status_col = "#ff4444"
+            if 0 <= mins_to_start <= 15:
+                status_label = "⏳ POR INICIAR "
+                status_col = "#ffaa00"
+            elif mins_to_start < 0:
+                status_label = "🔴 EN VIVO "
+                status_col = "#ff4444"
         score_str = f"**{pick['final']}** " if pick.get("final") else ""
         time_str = f"🕐 {pick['game_time']}  " if pick.get("game_time") else ""
         st.markdown(f"### {time_str}{status_label}{score_str}**{an}** @ **{hn}**" + "".join(f" `{s}`" for s in srcs) + badge + pitcher_line)
@@ -1018,7 +1017,7 @@ def main():
             mins = (gt - datetime.now(TZ)).total_seconds() / 60.0
             if 0 <= mins <= 15:
                 soon_count += 1
-            elif -30 <= mins < 0:
+            elif mins < 0:
                 alive_count += 1
         except:
             pass
@@ -1456,11 +1455,10 @@ def main():
                         elif sc != "F" and gt is not None:
                             now_tz = datetime.now(TZ)
                             mins_to_start = (gt - now_tz).total_seconds() / 60.0
-                            if -30 <= mins_to_start <= 15:
-                                if mins_to_start >= 0:
-                                    r_icon = "⏳ Por Iniciar"
-                                else:
-                                    r_icon = "🔴 En Vivo"
+                            if 0 <= mins_to_start <= 15:
+                                r_icon = "⏳ Por Iniciar"
+                            elif mins_to_start < 0:
+                                r_icon = "🔴 En Vivo"
                             else:
                                 r_icon = "⏳ Pendiente"
                         else:
