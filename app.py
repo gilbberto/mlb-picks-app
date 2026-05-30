@@ -586,7 +586,7 @@ def predict_totals(hf, af, hs, aws, h_adv=None, a_adv=None, park_factor=1.0):
 # ─── UI ───
 
 def _log_pick_fn(pick, mkt_key, mkt_label, entry):
-    """Helper to log a pick to the tracker."""
+    """Helper to log a pick to the tracker. Returns True on success."""
     try:
         from bankroll import add_pick, load_picks, recommend_stake
         data = load_picks()
@@ -598,14 +598,13 @@ def _log_pick_fn(pick, mkt_key, mkt_label, entry):
         prob = entry.get("prob", 50) / 100.0
         stake, units, slabel = recommend_stake(prob, odds_int, bankroll=bk)
         if stake <= 0:
-            st.warning(f"⚠️ Kelly no recomienda: prob={prob:.0%} odds={odds_int}")
-            return
+            return False
         pick_team = entry.get("pick", "")
         today = datetime.now(TZ).strftime("%Y-%m-%d")
         pid = add_pick(today, gl, mkt_label, prob, odds_int, stake, bk, slabel, pick_team)
-        st.success(f"✅ Pick #{pid} registrado: {pick_team} ({gl}) — ${stake:.0f} @ {odds_str}")
+        return True
     except Exception as e:
-        st.error(f"Error al registrar pick: {type(e).__name__}: {e}")
+        return False
 
 def render_card(pick, key_suffix="", game_idx=0):
     hn = pick["home_team"]
@@ -674,8 +673,9 @@ def render_card(pick, key_suffix="", game_idx=0):
                     st.markdown("<span style='color:#00cc66'>✅</span>", unsafe_allow_html=True)
                 elif edge is not None and edge > 2:
                     if st.button("📝", key=btn_key, help="Registrar pick en tracker"):
-                        _log_pick_fn(pick, mkt_key, mkt_label, entry)
-                        st.session_state[btn_key] = True
+                        lst = st.session_state.get("pending_logs", [])
+                        lst.append({"pick": pick, "mkt_key": mkt_key, "mkt_label": mkt_label, "entry": entry, "btn_key": btn_key})
+                        st.session_state["pending_logs"] = lst
                 elif recommended:
                     st.markdown("<span style='color:#ffcc00'>⭐</span>", unsafe_allow_html=True)
                 elif edge is not None:
@@ -1306,11 +1306,27 @@ def main():
                     already = st.session_state.get(btn_key, False)
                     if not already:
                         if st.button("📝 Registrar", key=btn_key, help="Guardar en tracker", type="secondary"):
-                            _log_pick_fn(r["pick_dict"], r["mkt_key"], r["market"], r["entry"])
-                            st.session_state[btn_key] = True
+                            lst = st.session_state.get("pending_logs", [])
+                            lst.append({"pick": r["pick_dict"], "mkt_key": r["mkt_key"], "mkt_label": r["market"], "entry": r["entry"], "btn_key": btn_key})
+                            st.session_state["pending_logs"] = lst
                     else:
                         st.markdown("<span style='color:#00cc66'>✅ Registrado</span>", unsafe_allow_html=True)
     except ImportError:
+        pass
+
+    # ── Pending log processing ──
+    try:
+        from bankroll import get_pnl, load_picks
+        pending = st.session_state.pop("pending_logs", [])
+        for item in pending:
+            ok = _log_pick_fn(item["pick"], item["mkt_key"], item["mkt_label"], item["entry"])
+            if ok:
+                key = item.get("btn_key", "")
+                st.session_state[key] = True
+                st.toast(f"✅ Pick registrado: {item['entry'].get('pick','')}", icon="📝")
+            else:
+                st.toast("⚠️ No se pudo registrar (Kelly = 0)", icon="⚠️")
+    except Exception:
         pass
 
     # ── Mis Picks Registrados ──
