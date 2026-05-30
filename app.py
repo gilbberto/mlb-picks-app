@@ -900,8 +900,8 @@ def main():
         pass
 
     with st.sidebar:
-        st.image("https://img.icons8.com/fluency/96/baseball.png", width=55)
-        st.markdown("### ⚾ MLB Picks AI")
+        st.image("https://www.mlbstatic.com/league-logos/mlb.svg", width=55)
+        st.markdown("### MLB Picks AI")
         st.markdown("**Modelo:** RandomForest + Monte Carlo (27 vars)")
         st.markdown("**3 mercados:** Moneyline · Run Line · Over/Under")
         st.divider()
