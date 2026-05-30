@@ -1104,14 +1104,16 @@ def main():
             else:
                 ml_ap = 1 - ml_hp
 
-            # Calibrate ML probabilities based on validation data
+            # Calibrate ML and RL probabilities based on validation data
             try:
-                from bankroll import calibrate_ml
+                from bankroll import calibrate_ml, calibrate_rl
                 if ml_hp is not None:
                     cal_hp = calibrate_ml(ml_hp)
                     cal_ap = 1.0 - cal_hp
                 else:
                     cal_hp, cal_ap = None, None
+                spr_fav_prob = calibrate_rl(spr_fav_prob)
+                spr_dog_prob = 1.0 - spr_fav_prob
             except ImportError:
                 cal_hp, cal_ap = ml_hp, ml_ap
 

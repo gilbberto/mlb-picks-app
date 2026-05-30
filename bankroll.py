@@ -50,6 +50,29 @@ def calibrate_ml(prob):
         return prob + 0.105 * (1.0 - t) + 0.334 * t
     return min(prob + 0.334, 0.95)
 
+def calibrate_rl(prob):
+    """Calibrate RL -1.5 (favorite covers) probability.
+    253 val games, MAE 0.054. Bucket adjustments from actual vs predicted."""
+    if prob < 0.10:
+        return prob + 0.060
+    if prob < 0.15:
+        return prob - 0.024
+    if prob < 0.20:
+        return prob + 0.068
+    if prob < 0.25:
+        return prob - 0.018
+    if prob < 0.30:
+        return prob + 0.037
+    if prob < 0.35:
+        return prob + 0.195
+    if prob < 0.40:
+        return prob - 0.069
+    if prob < 0.45:
+        return prob - 0.020
+    if prob < 0.50:
+        return prob + 0.049
+    return prob
+
 # ─── Kelly Criterion ───
 def american_to_prob(odds):
     if odds is None or odds == 0: return None
