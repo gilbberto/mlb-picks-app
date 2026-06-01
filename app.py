@@ -1398,21 +1398,25 @@ def main():
             st.markdown("##### ✏️ Registrar Picks")
             from bankroll import recommend_stake, load_picks, add_pick
             bk_data = load_picks(); act_bk = bk_data["bankroll"]
+            mkt_cols = [("moneyline","ML"),("spread_minus","RL-1.5"),("spread_plus","RL+1.5"),("total","O/U")]
+            hdr = st.columns([1.5,1,1,1,1])
+            for ci, lbl in enumerate(["Juego","ML","RL-1.5","RL+1.5","O/U"]):
+                with hdr[ci]: st.markdown(f"**{lbl}**")
             for _, r in upcoming.iterrows():
                 gl = f"{r['away_abbrev']} @ {r['home_abbrev']}"
                 gid = r.get("game_id","")
-                mks = [(mk,ml) for mk,ml in [("moneyline","ML"),("spread_minus","RL-1.5"),("spread_plus","RL+1.5"),("total","O/U")] if r.get(mk)]
-                if not mks: continue
-                cs = st.columns([1.5]+[1.5]*len(mks))
-                with cs[0]:
-                    st.markdown(f"**{gl}**")
-                for ci,(mk_key,mk_lbl) in enumerate(mks):
+                cs = st.columns([1.5,1,1,1,1])
+                with cs[0]: st.markdown(f"**{gl}**")
+                for ci,(mk_key,mk_lbl) in enumerate(mkt_cols):
                     with cs[ci+1]:
+                        p_dat = r.get(mk_key)
+                        if not p_dat:
+                            st.markdown("—")
+                            continue
                         lk = f"lgs_{gid}_{mk_key}"
                         if st.session_state.get(lk, False):
                             st.markdown("<span style='color:#00cc66'>✅</span>", unsafe_allow_html=True)
                         else:
-                            p_dat = r[mk_key]
                             odds = p_dat.get("odds","N/A")
                             os_ = str(odds) if odds and odds!="N/A" else ""
                             oi = int(os_.replace("$","")) if os_ not in ("N/A","—","") else 0
