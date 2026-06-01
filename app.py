@@ -1340,8 +1340,62 @@ def main():
 
     if len(upcoming) > 0:
         st.markdown(f"### 📋 Picks del Día ({len(upcoming)} juegos)")
-        for idx, (_, r) in enumerate(upcoming.iterrows()):
-            render_card(r, game_idx=idx)
+        flat_rows = []
+        for _, r in upcoming.iterrows():
+            gl = f"{r['away_abbrev']} @ {r['home_abbrev']}"
+            t = r.get("game_time", "")
+            for mk, ml in [("moneyline","ML"),("spread_minus","RL-1.5"),("spread_plus","RL+1.5"),("total","O/U")]:
+                p = r.get(mk)
+                if not p: continue
+                flat_rows.append({
+                    "Juego": gl, "Hora": t, "M": ml,
+                    "Pick": p.get("pick","—"), "Prob": f"{p['prob']:.0f}%" if p.get("prob") else "",
+                    "Odds": p.get("odds","N/A"), "EV": f"{p['ev']:.1%}" if p.get("ev") is not None else "",
+                })
+        if flat_rows:
+            st.dataframe(pd.DataFrame(flat_rows), column_config={
+                "Juego": st.column_config.TextColumn("Juego", width="medium"),
+                "Hora": st.column_config.TextColumn("Hora", width="small"),
+                "M": st.column_config.TextColumn("M", width="small"),
+                "Pick": st.column_config.TextColumn("Pick", width="medium"),
+                "Prob": st.column_config.TextColumn("Prob", width="small"),
+                "Odds": st.column_config.TextColumn("Odds", width="small"),
+                "EV": st.column_config.TextColumn("EV", width="small"),
+            }, hide_index=True, use_container_width=True)
+            st.caption("Usa la sección 🏆 Recomendaciones para registrar tus picks.")
+            st.divider()
+            st.markdown("##### ✏️ Registrar Picks")
+            from bankroll import recommend_stake, load_picks, add_pick
+            bk_data = load_picks(); act_bk = bk_data["bankroll"]
+            for _, r in upcoming.iterrows():
+                gl = f"{r['away_abbrev']} @ {r['home_abbrev']}"
+                gid = r.get("game_id","")
+                mks = [(mk,ml) for mk,ml in [("moneyline","ML"),("spread_minus","RL-1.5"),("spread_plus","RL+1.5"),("total","O/U")] if r.get(mk)]
+                if not mks: continue
+                cs = st.columns([1.5]+[1.5]*len(mks))
+                with cs[0]:
+                    st.markdown(f"**{gl}**")
+                for ci,(mk_key,mk_lbl) in enumerate(mks):
+                    with cs[ci+1]:
+                        lk = f"lgs_{gid}_{mk_key}"
+                        if st.session_state.get(lk, False):
+                            st.markdown("<span style='color:#00cc66'>✅</span>", unsafe_allow_html=True)
+                        else:
+                            p_dat = r[mk_key]
+                            odds = p_dat.get("odds","N/A")
+                            os_ = str(odds) if odds and odds!="N/A" else ""
+                            oi = int(os_.replace("$","")) if os_ not in ("N/A","—","") else 0
+                            prob = p_dat.get("prob",0)/100.0
+                            stk,_,sl = recommend_stake(prob, oi, bankroll=act_bk)
+                            if stk > 0:
+                                if st.button(mk_lbl, key=lk):
+                                    ts = datetime.now(TZ).strftime("%Y-%m-%d")
+                                    add_pick(ts, gl, mk_lbl, prob, oi, stk, act_bk, sl,
+                                             p_dat.get("pick",""), p_dat.get("detail",""))
+                                    st.session_state[lk] = True
+                                    st.rerun()
+        else:
+            st.info("No hay picks disponibles para mostrar.")
 
     # ── Parlays ──
     parlays = generate_parlays(picks)
