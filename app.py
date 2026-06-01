@@ -1416,8 +1416,8 @@ def main():
             recs = sorted(best_per_game.values(), key=lambda x: x["edge"], reverse=True)
             st.divider()
             st.markdown("## 🏆 Recomendaciones del Día")
-            st.caption(f"Mejor mercado por juego — Kelly Criterion (25% fraccional, bankroll ${actual_bankroll:,.0f}).")
-            for i, r in enumerate(recs):
+            st.caption(f"Top {min(len(recs),4)} de {len(recs)} — Kelly Criterion (25% fraccional, bankroll ${actual_bankroll:,.0f}).")
+            for i, r in enumerate(recs[:4]):
                 c1, c2, c3, c4, c5 = st.columns([1.5, 1.2, 0.8, 0.8, 0.8])
                 with c1:
                     st.markdown(f"**{r['game']}**  \n`{r['market']}` → {r['pick']}")
