@@ -742,15 +742,13 @@ def render_card(pick, key_suffix="", game_idx=0):
                             from bankroll import add_pick, load_picks, recommend_stake
                             d = load_picks(); bk = d["bankroll"]
                             gl = f"{pick['away_abbrev']} @ {pick['home_abbrev']}"
-                            os_ = entry.get("odds","N/A")
+                            os_ = str(odds) if odds and odds != "N/A" else ""
                             oi = int(str(os_).replace("$","")) if os_ not in ("N/A","—","") else 0
-                            pv = entry.get("prob",50)/100.0
+                            pv = prob_val/100.0 if prob_val is not None else 0.5
                             sk,_,sl = recommend_stake(pv, oi, bankroll=bk)
                             if sk > 0:
-                                pt = entry.get("pick","")
-                                dtl = entry.get("detail","")
                                 ts = datetime.now(TZ).strftime("%Y-%m-%d")
-                                add_pick(ts, gl, mkt_label, pv, oi, sk, bk, sl, pt, dtl)
+                                add_pick(ts, gl, mkt_label, pv, oi, sk, bk, sl, pick_name, detail)
                                 st.session_state[log_key] = True
                             else:
                                 st.caption("⚠️ Kelly=0")
@@ -1381,7 +1379,6 @@ def main():
                                    ("spread_plus", "RL +1.5"), ("total", "O/U")]:
                 entry = p.get(mkt_key)
                 if not entry: continue
-                mkt_label = label or entry.get("detail", "O/U")
                 edge = entry.get("edge") if mkt_key == "moneyline" else get_edge(entry)
                 if edge is None or edge <= 2: continue
 
@@ -1396,7 +1393,7 @@ def main():
 
                 recs.append({
                     "game": gl,
-                    "market": mkt_label,
+                    "market": label,
                     "pick": pick_team,
                     "prob": prob,
                     "odds": odds_str,
@@ -1413,24 +1410,25 @@ def main():
             recs.sort(key=lambda x: x["edge"], reverse=True)
             st.divider()
             st.markdown("## 🏆 Recomendaciones del Día")
-            st.caption(f"Picks con mejor edge (ML, RL y O/U). Basado en Kelly Criterion (25% fraccional, bankroll ${actual_bankroll:,.0f}).")
-            cols = st.columns(min(len(recs), 4))
-            for i, r in enumerate(recs[:4]):
-                with cols[i]:
-                    st.markdown(f"**{r['game']}**")
-                    st.markdown(f"📊 {r['market']} — 🎯 {r['pick']} ({r['prob']:.0f}%)")
+            st.caption(f"Picks con edge >2% — Kelly Criterion (25% fraccional, bankroll ${actual_bankroll:,.0f}).")
+            for i, r in enumerate(recs):
+                c1, c2, c3, c4, c5 = st.columns([1.5, 1.2, 0.8, 0.8, 0.8])
+                with c1:
+                    st.markdown(f"**{r['game']}**  \n`{r['market']}` → {r['pick']}")
+                with c2:
                     c = "🔥" if r["edge"] > 8 else "⭐" if r["edge"] > 5 else "✅"
-                    st.markdown(f"Edge: {c} **{r['edge']:+.1f}%**")
-                    st.markdown(f"Cuota: {r['odds']}")
+                    st.markdown(f"{c} Edge **{r['edge']:+.1f}%**  \nProb: {r['prob']:.0f}%")
+                with c3:
+                    st.markdown(f"`{r['odds']}`")
+                with c4:
                     if r["stake"] > 0:
-                        st.markdown(f"Inversión: **${r['stake']:.0f}** ({r['units']}u)")
-                    if r["stake_label"] not in ("No bet", ""):
-                        st.markdown(f"Confianza: {r['stake_label']}")
+                        st.markdown(f"**${r['stake']:.0f}**  \n{r['units']}u")
+                with c5:
                     log_key = f"rg_{i}_{r['mkt_key']}"
                     if st.session_state.get(f"done_{log_key}", False):
-                        st.markdown("<span style='color:#00cc66'>✅ Registrado</span>", unsafe_allow_html=True)
+                        st.markdown("<span style='color:#00cc66'>✅</span>", unsafe_allow_html=True)
                     else:
-                        if st.button("📝 Registrar", key=log_key, type="secondary"):
+                        if st.button("📝", key=log_key, help=f"Registrar {r['market']} {r['pick']}"):
                             try:
                                 from bankroll import add_pick, load_picks, recommend_stake
                                 d = load_picks(); bk = d["bankroll"]
@@ -1567,29 +1565,24 @@ def main():
                     hide_index=True,
                 )
 
-                # Delete pick — compact row with select + button
-                dc1, dc2, dc3 = st.columns([2, 1, 2])
-                with dc1:
-                    del_id = st.selectbox(
-                        "Eliminar pick #",
-                        options=[p.get("id", i+1) for i, p in enumerate(data["history"])],
-                        key="del_pick_sel",
-                        label_visibility="collapsed",
-                        placeholder="Eliminar pick #…",
-                    )
-                with dc2:
-                    if st.button("❌", key="del_pick_btn", use_container_width=True):
+                # Delete pick — per-row buttons
+                st.markdown("**Eliminar picks:**")
+                del_cols = st.columns(min(len(data["history"]), 5))
+                for i, p in enumerate(data["history"]):
+                    col = del_cols[i % len(del_cols)]
+                    pid = p.get("id", i + 1)
+                    lbl = f"#{pid} {p.get('game','')[:12]}"
+                    if col.button(lbl, key=f"del_{pid}", use_container_width=True):
                         from bankroll import save_picks, load_picks
                         d = load_picks()
-                        d["history"] = [x for x in d["history"] if x.get("id") != del_id]
+                        d["history"] = [x for x in d["history"] if x.get("id") != pid]
                         save_picks(d)
                         st.rerun()
-                with dc3:
-                    if st.button("🗑️ Limpiar todo", key="clear_all", type="secondary", use_container_width=True):
-                        from bankroll import save_picks
-                        save_picks({"bankroll": 1000, "history": []})
-                        st.session_state.clear()
-                        st.toast("✅ Historial limpiado", icon="🗑️")
+                if st.button("🗑️ Limpiar todo", key="clear_all", type="secondary"):
+                    from bankroll import save_picks
+                    save_picks({"bankroll": 1000, "history": []})
+                    st.session_state.clear()
+                    st.toast("✅ Historial limpiado", icon="🗑️")
 
             green = total_profit >= 0
             st.markdown(f"Profit total: <span style='color:{'#00cc66' if green else '#ff4444'}'><b>${total_profit:+.2f}</b></span>", unsafe_allow_html=True)
