@@ -31,11 +31,11 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python settle_and_notify.py
 
-      - name: Commit updated picks.json
+      - name: Commit updated files
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name "MLB Picks Bot"
           git config user.email "bot@mlb-picks.local"
-          git add picks.json
-          git diff --cached --quiet || (git commit -m "auto-settle: update picks.json" && git push)
+          git add picks.json game_starts_notified.json
+          git diff --cached --quiet || (git commit -m "auto-settle: update picks.json + game starts" && git push)
