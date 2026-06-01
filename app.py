@@ -1330,7 +1330,13 @@ def main():
                     if not p_dat:
                         row[base_ml] = "—"
                     else:
-                        ml = p_dat.get("pick", base_ml) if mk == "total" else base_ml
+                        pick_name = p_dat.get("pick", "")
+                        if mk == "total":
+                            ml = pick_name
+                        else:
+                            abb = (r["home_abbrev"] if pick_name == r.get("home_team","") else
+                                   r["away_abbrev"] if pick_name == r.get("away_team","") else "")
+                            ml = f"{abb} {base_ml}" if abb else base_ml
                         lk = f"lgs_{gid}_{mk}"
                         if st.session_state.get(lk, False):
                             row[base_ml] = "✅"
@@ -1360,7 +1366,13 @@ def main():
                         if not st.session_state.get(f"lgs_{gid}_{mk}", False):
                             p_dat = r.get(mk)
                             if p_dat:
-                                ml = p_dat.get("pick", base_ml) if mk == "total" else base_ml
+                                pick_name = p_dat.get("pick", "")
+                                if mk == "total":
+                                    ml = pick_name
+                                else:
+                                    abb = (r["home_abbrev"] if pick_name == r.get("home_team","") else
+                                           r["away_abbrev"] if pick_name == r.get("away_team","") else "")
+                                    ml = f"{abb} {base_ml}" if abb else base_ml
                                 odds = p_dat.get("odds","N/A")
                                 os_ = str(odds) if odds and odds!="N/A" else ""
                                 oi = int(os_.replace("$","")) if os_ not in ("N/A","—","") else 0
@@ -1375,14 +1387,14 @@ def main():
                                     if edge and edge > 2:
                                         flames = "🔥" if edge <= 5 else "🔥🔥" if edge <= 8 else "🔥🔥🔥"
                                     lbl = f"{flames}{ml}" if flames else ml
-                                    btns.append((mk, lbl))
+                                    btns.append((mk, base_ml, lbl))
                     if not btns: continue
                     cols = st.columns([1.5]+[1]*len(btns))
                     with cols[0]: st.markdown(f"**{gl}**")
-                    for ci,(mk,ml) in enumerate(btns):
+                    for ci,(mk,clean_ml,lbl) in enumerate(btns):
                         with cols[ci+1]:
                             lk = f"lgs_{gid}_{mk}"
-                            if st.button(ml, key=lk, use_container_width=True):
+                            if st.button(lbl, key=lk, use_container_width=True):
                                 p_dat = r[mk]
                                 odds = p_dat.get("odds","N/A")
                                 os_ = str(odds) if odds and odds!="N/A" else ""
@@ -1390,7 +1402,7 @@ def main():
                                 prob = p_dat.get("prob",0)/100.0
                                 stk,_,sl = recommend_stake(prob, oi, bankroll=act_bk)
                                 ts = datetime.now(TZ).strftime("%Y-%m-%d")
-                                add_pick(ts, gl, ml, prob, oi, stk, act_bk, sl,
+                                add_pick(ts, gl, clean_ml, prob, oi, stk, act_bk, sl,
                                          p_dat.get("pick",""), p_dat.get("detail",""))
                                 st.session_state[lk] = True
                                 st.rerun()
