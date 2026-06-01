@@ -1407,10 +1407,16 @@ def main():
                 })
 
         if recs:
-            recs.sort(key=lambda x: x["edge"], reverse=True)
+            # One recommendation per game (best edge)
+            best_per_game = {}
+            for r in recs:
+                g = r["game"]
+                if g not in best_per_game or r["edge"] > best_per_game[g]["edge"]:
+                    best_per_game[g] = r
+            recs = sorted(best_per_game.values(), key=lambda x: x["edge"], reverse=True)
             st.divider()
             st.markdown("## 🏆 Recomendaciones del Día")
-            st.caption(f"Picks con edge >2% — Kelly Criterion (25% fraccional, bankroll ${actual_bankroll:,.0f}).")
+            st.caption(f"Mejor mercado por juego — Kelly Criterion (25% fraccional, bankroll ${actual_bankroll:,.0f}).")
             for i, r in enumerate(recs):
                 c1, c2, c3, c4, c5 = st.columns([1.5, 1.2, 0.8, 0.8, 0.8])
                 with c1:
