@@ -1325,14 +1325,15 @@ def main():
                 gl = f"{r['away_abbrev']} @ {r['home_abbrev']}"
                 gid = r.get("game_id","")
                 row = {"Juego": gl}
-                for mk, ml in [("moneyline","ML"),("spread_minus","RL-1.5"),("spread_plus","RL+1.5"),("total","O/U")]:
+                for mk, base_ml in [("moneyline","ML"),("spread_minus","RL-1.5"),("spread_plus","RL+1.5"),("total","O/U")]:
                     p_dat = r.get(mk)
                     if not p_dat:
-                        row[ml] = "—"
+                        row[base_ml] = "—"
                     else:
+                        ml = p_dat.get("pick", base_ml) if mk == "total" else base_ml
                         lk = f"lgs_{gid}_{mk}"
                         if st.session_state.get(lk, False):
-                            row[ml] = "✅"
+                            row[base_ml] = "✅"
                         else:
                             odds = p_dat.get("odds","N/A")
                             os_ = str(odds) if odds and odds!="N/A" else ""
@@ -1347,7 +1348,7 @@ def main():
                             if edge and edge > 2:
                                 flames = "🔥" if edge <= 5 else "🔥🔥" if edge <= 8 else "🔥🔥🔥"
                             lbl = f"{flames} {ml}" if flames else ml
-                            row[ml] = lbl if stk > 0 else "—"
+                            row[base_ml] = lbl if stk > 0 else "—"
                 reg_rows.append(row)
             if reg_rows:
                 st.dataframe(pd.DataFrame(reg_rows), hide_index=True, use_container_width=True)
@@ -1355,10 +1356,11 @@ def main():
                     gl = f"{r['away_abbrev']} @ {r['home_abbrev']}"
                     gid = r.get("game_id","")
                     btns = []
-                    for mk, ml in [("moneyline","ML"),("spread_minus","RL-1.5"),("spread_plus","RL+1.5"),("total","O/U")]:
+                    for mk, base_ml in [("moneyline","ML"),("spread_minus","RL-1.5"),("spread_plus","RL+1.5"),("total","O/U")]:
                         if not st.session_state.get(f"lgs_{gid}_{mk}", False):
                             p_dat = r.get(mk)
                             if p_dat:
+                                ml = p_dat.get("pick", base_ml) if mk == "total" else base_ml
                                 odds = p_dat.get("odds","N/A")
                                 os_ = str(odds) if odds and odds!="N/A" else ""
                                 oi = int(os_.replace("$","")) if os_ not in ("N/A","—","") else 0
