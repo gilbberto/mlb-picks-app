@@ -1619,6 +1619,33 @@ def main():
             mc3.metric("Record", f"{pnl['wins']}-{pnl['losses']}", delta=f"{pnl['pct']}%")
             mc4.metric("Pendientes", pnl["open"])
 
+            # ── Win rate by market ──
+            settled = [p for p in data["history"] if p.get("result") in ("W", "L")]
+            if settled:
+                markets = {}
+                for p in settled:
+                    mkt = p.get("market", "?")
+                    if mkt not in markets:
+                        markets[mkt] = {"w": 0, "l": 0, "profit": 0.0}
+                    if p["result"] == "W":
+                        markets[mkt]["w"] += 1
+                    else:
+                        markets[mkt]["l"] += 1
+                    markets[mkt]["profit"] += p.get("profit", 0) or 0
+                mr = []
+                for mkt in ("ML", "RL -1.5", "RL +1.5", "O/U"):
+                    d = markets.get(mkt)
+                    if d and (d["w"] + d["l"]) > 0:
+                        tot = d["w"] + d["l"]
+                        pct = round(d["w"] / tot * 100)
+                        pf = d["profit"]
+                        icon = "🟢" if pf > 0 else "🔴" if pf < 0 else "⚪"
+                        mr.append(f"{icon} *{mkt}*: {d['w']}-{d['l']} ({pct}%) ${pf:+.0f}")
+                if mr:
+                    with st.expander("📊 Win rate por mercado", expanded=False):
+                        for line in mr:
+                            st.markdown(line)
+
             # Bankroll chart
             if len(data["history"]) >= 2:
                 try:
@@ -1717,6 +1744,30 @@ def main():
 
             green = total_profit >= 0
             st.markdown(f"Profit total: <span style='color:{'#00cc66' if green else '#ff4444'}'><b>${total_profit:+.2f}</b></span>", unsafe_allow_html=True)
+
+            # ── Model calibration ──
+            if settled:
+                bins = [(50, 55), (55, 60), (60, 65), (65, 70), (70, 100)]
+                cal_rows = []
+                for lo, hi in bins:
+                    pool = [p for p in settled if lo <= p.get("model_prob", 0.5) * 100 < hi]
+                    if not pool:
+                        continue
+                    wins = sum(1 for p in pool if p["result"] == "W")
+                    tot = len(pool)
+                    actual = round(wins / tot * 100)
+                    predicted = round((lo + hi) / 2)
+                    cal_rows.append({
+                        "Rango": f"{lo}-{hi}%",
+                        "Picks": tot,
+                        "Ganados": wins,
+                        "Real": f"{actual}%",
+                        "Esperado": f"{predicted}%",
+                        "Diff": f"{actual - predicted:+.0f}%",
+                    })
+                if cal_rows:
+                    with st.expander("📐 Calibración del modelo", expanded=False):
+                        st.dataframe(pd.DataFrame(cal_rows), hide_index=True, use_container_width=True)
         else:
             st.info("💡 Aún no has registrado picks. Usa el botón **📝** en las tarjetas o recomendaciones para empezar.")
     except ImportError:
