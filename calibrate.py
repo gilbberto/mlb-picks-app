@@ -119,13 +119,22 @@ def build_feature(game, pitcher=None):
         "tot": sf(game["teams"]["home"]["score"]) + sf(game["teams"]["away"]["score"]),
     }
 
-# ─── Load models ───
+# ─── Load models (XGBoost first, fallback RF) ───
 print("=== Loading models ===")
-with open(BASE + "rf_hw.pkl", "rb") as f: m_hw = pickle.load(f)
-with open(BASE + "rf_rd.pkl", "rb") as f: m_rd = pickle.load(f)
-with open(BASE + "rf_tot.pkl", "rb") as f: m_tot = pickle.load(f)
-with open(BASE + "rf_cols.pkl", "rb") as f: cols = pickle.load(f)
-print(f"  Models loaded. {len(cols)} features: {cols}")
+model_type = "RF"
+try:
+    import xgboost as xgb
+    with open(BASE + "xgb_hw.pkl", "rb") as f: m_hw = pickle.load(f)
+    with open(BASE + "xgb_rd.pkl", "rb") as f: m_rd = pickle.load(f)
+    with open(BASE + "xgb_tot.pkl", "rb") as f: m_tot = pickle.load(f)
+    with open(BASE + "xgb_cols.pkl", "rb") as f: cols = pickle.load(f)
+    model_type = "XGBoost"
+except Exception:
+    with open(BASE + "rf_hw.pkl", "rb") as f: m_hw = pickle.load(f)
+    with open(BASE + "rf_rd.pkl", "rb") as f: m_rd = pickle.load(f)
+    with open(BASE + "rf_tot.pkl", "rb") as f: m_tot = pickle.load(f)
+    with open(BASE + "rf_cols.pkl", "rb") as f: cols = pickle.load(f)
+print(f"  {model_type} models loaded. {len(cols)} features: {cols}")
 
 # ─── Fetch games ───
 print("\n=== Fetching completed games ===")
@@ -275,13 +284,9 @@ def bucket_report(data, prob_key, result_key, label):
     all_probs = [r[prob_key] for r in data]
     p_min, p_max = min(all_probs), max(all_probs)
     # Create dynamic buckets based on data range
-    if p_max - p_min < 0.3:
-        # Tight range: use 5% buckets covering full range
-        lo = int(p_min * 20) / 20.0
-        hi = int(p_max * 20 + 1) / 20.0
-        buckets = [(i/20, (i+1)/20) for i in range(int(lo*20), int(hi*20))]
-    else:
-        buckets = [(i/20, (i+1)/20) for i in range(10)]
+    lo = int(p_min * 20) / 20.0
+    hi = int(p_max * 20 + 1) / 20.0
+    buckets = [(i/20, (i+1)/20) for i in range(int(lo*20), int(hi*20))]
     print(f"\n  {label}  (probs: {p_min:.1%}–{p_max:.1%}, n={len(data)})")
     print(f"  {'Bucket':<14} {'N':>5} {'Actual':>8} {'Pred':>8} {'Diff':>8}")
     print(f"  {'-'*45}")

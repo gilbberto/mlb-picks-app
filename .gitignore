@@ -4,3 +4,4 @@ __pycache__/
 picks.json
 *.egg-info/
 .DS_Store
+pitcher_cache.json

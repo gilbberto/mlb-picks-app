@@ -83,24 +83,38 @@ except Exception:
     ODDS_API_KEY = os.getenv("ODDS_API_KEY", "")
 SHARPAPI_KEY = os.getenv("SHARPAPI_KEY", "")
 
-# ─── ML Models (RandomForest + Monte Carlo) ───
-_RF_MODELS_LOADED = False
+# ─── ML Models (XGBoost first, fallback RandomForest + Monte Carlo) ───
+_MODELS_LOADED = False
+_xgb_hw = _xgb_rd = _xgb_tot = None
 _rf_hw = _rf_rd = _rf_tot = None
-_rf_cols = None
+_cols = None
+_model_type = ""
 
-def load_rf_models():
-    global _rf_hw, _rf_rd, _rf_tot, _rf_cols, _RF_MODELS_LOADED
+def load_models():
+    global _xgb_hw, _xgb_rd, _xgb_tot, _rf_hw, _rf_rd, _rf_tot, _cols, _MODELS_LOADED, _model_type
     base = os.path.join(os.path.dirname(__file__), "")
+    # Try XGBoost first
     try:
-        with open(base + "rf_hw.pkl", "rb") as f: _rf_hw = pickle.load(f)
-        with open(base + "rf_rd.pkl", "rb") as f: _rf_rd = pickle.load(f)
-        with open(base + "rf_tot.pkl", "rb") as f: _rf_tot = pickle.load(f)
-        with open(base + "rf_cols.pkl", "rb") as f: _rf_cols = pickle.load(f)
-        _RF_MODELS_LOADED = True
+        import xgboost as xgb
+        with open(base + "xgb_hw.pkl", "rb") as f: _xgb_hw = pickle.load(f)
+        with open(base + "xgb_rd.pkl", "rb") as f: _xgb_rd = pickle.load(f)
+        with open(base + "xgb_tot.pkl", "rb") as f: _xgb_tot = pickle.load(f)
+        with open(base + "xgb_cols.pkl", "rb") as f: _cols = pickle.load(f)
+        _model_type = "XGBoost"
+        _MODELS_LOADED = True
     except Exception as e:
-        print(f"RF models not loaded: {e}")
+        print(f"XGBoost models not loaded: {e}, trying RF...")
+        try:
+            with open(base + "rf_hw.pkl", "rb") as f: _rf_hw = pickle.load(f)
+            with open(base + "rf_rd.pkl", "rb") as f: _rf_rd = pickle.load(f)
+            with open(base + "rf_tot.pkl", "rb") as f: _rf_tot = pickle.load(f)
+            with open(base + "rf_cols.pkl", "rb") as f: _cols = pickle.load(f)
+            _model_type = "RandomForest"
+            _MODELS_LOADED = True
+        except Exception as e2:
+            print(f"RF models also not loaded: {e2}")
 
-load_rf_models()
+load_models()
 
 MLB_API_BASE = "https://statsapi.mlb.com/api/v1"
 ESPN_API_BASE = "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb"
@@ -445,18 +459,23 @@ def build_rf_feature_row(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f):
 
 @st.cache_data(ttl=3600)
 def monte_carlo_predict(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f, n_sims=5000):
-    """Run Monte Carlo simulation using trained RF models. Returns dict."""
-    if not _RF_MODELS_LOADED:
+    """Run Monte Carlo simulation using trained models. Returns dict."""
+    if not _MODELS_LOADED:
         return {"ml_hp": None, "ml_ap": None,
                 "spr_fav_prob": None, "spr_dog_prob": None, "spr_exp_margin": None,
                 "exp_total": None, "total_std": 3.2}
 
     row = build_rf_feature_row(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f)
-    x = np.array([[row[c] for c in _rf_cols]])
+    x = np.array([[row[c] for c in _cols]])
 
-    hw_prob = _rf_hw.predict_proba(x)[0, 1]
-    exp_rdiff = _rf_rd.predict(x)[0]
-    exp_total = _rf_tot.predict(x)[0]
+    if _xgb_hw is not None:
+        hw_prob = _xgb_hw.predict_proba(x)[0, 1]
+        exp_rdiff = _xgb_rd.predict(x)[0]
+        exp_total = _xgb_tot.predict(x)[0]
+    else:
+        hw_prob = _rf_hw.predict_proba(x)[0, 1]
+        exp_rdiff = _rf_rd.predict(x)[0]
+        exp_total = _rf_tot.predict(x)[0]
 
     rdiff_sims = np.random.normal(exp_rdiff, 3.0, n_sims)
     total_sims = np.random.normal(exp_total, 3.2, n_sims)
@@ -940,7 +959,7 @@ def main():
     with st.sidebar:
         st.image("https://www.mlbstatic.com/team-logos/league-on-dark/1.svg", width=55)
         st.markdown("### MLB Picks AI")
-        st.markdown("**Modelo:** RandomForest + Monte Carlo (27 vars)")
+        st.markdown(f"**Modelo:** {_model_type} + Monte Carlo (27 vars)" if _model_type else "**Modelo:** No cargado")
         st.markdown("**3 mercados:** Moneyline · Run Line · Over/Under")
         st.divider()
         min_conf = st.selectbox("Filtrar por confianza", ["Todas","🔥 HIGH VALUE","✅ VALUE","⚠️ LOW VALUE"], index=0)
@@ -963,8 +982,9 @@ def main():
         st.markdown("#### 📊 Metodología")
         with st.expander("Ver"):
             st.markdown("""
-            **RandomForest + Monte Carlo**: 27 features (Elo, forma, OPS/WHIP/ERA, park factor, pitcher real).
-            **Calibración ML**: Ajuste lineal por tramos según validación vs 249 juegos.
+            **{_model_type} + Monte Carlo**: 27 features (Elo, forma, OPS/WHIP/ERA, park factor, pitcher real).
+            **Entrenado**: 2023–2026 (8,174 juegos, 1,385 pitcher-season stats).
+            **Calibración ML**: Ajuste lineal por tramos según validación.
             **Kelly Criterion**: 25% fraccional para sizing de apuestas.
 
             **Value**: Cuando la prob del modelo supera la prob implícita de la cuota.
