@@ -1339,7 +1339,12 @@ def main():
                             oi = int(os_.replace("$","")) if os_ not in ("N/A","—","") else 0
                             prob = p_dat.get("prob",0)/100.0
                             stk,_,_ = recommend_stake(prob, oi, bankroll=act_bk)
-                            row[ml] = ml if stk > 0 else "—"
+                            edge = None
+                            if oi != 0 and prob:
+                                ip = american_to_prob(oi)
+                                if ip: edge = round(prob*100 - ip*100, 1)
+                            lbl = f"🔥 {ml}" if (edge and edge > 2) else ml
+                            row[ml] = lbl if stk > 0 else "—"
                 reg_rows.append(row)
             if reg_rows:
                 st.dataframe(pd.DataFrame(reg_rows), hide_index=True, use_container_width=True)
@@ -1357,7 +1362,12 @@ def main():
                                 prob = p_dat.get("prob",0)/100.0
                                 stk,_,_ = recommend_stake(prob, oi, bankroll=act_bk)
                                 if stk > 0:
-                                    btns.append((mk, ml))
+                                    edge = None
+                                    if oi != 0 and prob:
+                                        ip = american_to_prob(oi)
+                                        if ip: edge = round(prob*100 - ip*100, 1)
+                                    lbl = f"🔥{ml}" if (edge and edge > 2) else ml
+                                    btns.append((mk, lbl))
                     if not btns: continue
                     cols = st.columns([1.5]+[1]*len(btns))
                     with cols[0]: st.markdown(f"**{gl}**")
