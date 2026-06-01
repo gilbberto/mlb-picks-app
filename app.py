@@ -863,37 +863,22 @@ def render_parlay(parlay, idx):
     payout_10 = round(10 * parlay["decimal_odds"] - 10, 2)
     payout_25 = round(25 * parlay["decimal_odds"] - 25, 2)
     payout_50 = round(50 * parlay["decimal_odds"] - 50, 2)
+    ev_parlay = parlay['joint_prob']*parlay['decimal_odds'] - 1
 
-    with st.container():
-        st.markdown(f"### {parlay['name']}")
-        st.caption(parlay["desc"])
-
-        cols = st.columns([2, 1, 1, 1, 1.5])
-        with cols[0]: st.markdown("**Partido**")
-        with cols[1]: st.markdown("**Mercado**")
-        with cols[2]: st.markdown("**Pick**")
-        with cols[3]: st.markdown("**Cuota**")
-        with cols[4]: st.markdown("**Prob**")
-
-        for leg in parlay["legs"]:
-            prob_pct = f"{leg['prob']*100:.0f}%"
-            detail_str = f" {leg['detail']}" if leg.get("detail") else ""
-            rec_star = " ⭐" if leg.get("ev") is not None and leg["ev"] > 0 else ""
-            c = st.columns([2, 1, 1, 1, 1.5])
-            with c[0]: st.markdown(f"{leg['matchup']}")
-            with c[1]: st.markdown(f"`{leg['market']}{rec_star}`")
-            with c[2]: st.markdown(f"**{leg['team']}**{detail_str}")
-            with c[3]: st.markdown(f"{leg['odds']}")
-            with c[4]: st.markdown(f"{prob_pct}")
-
-        st.divider()
-        cols2 = st.columns([2, 1, 1, 1])
-        with cols2[0]:
-            st.markdown(f"**Parlay {parlay['american']:+d}** | Dec: {parlay['decimal_odds']}x")
-        with cols2[1]:
-            st.markdown(f"**Prob combinada:** {parlay['joint_prob']*100:.1f}%")
-        with cols2[2]:
-            st.markdown(f"**Valor esperado:** {parlay['joint_prob']*parlay['decimal_odds'] - 1:.1%}")
+    rows = []
+    for leg in parlay["legs"]:
+        prob_pct = f"{leg['prob']*100:.0f}%"
+        detail_str = f" {leg['detail']}" if leg.get("detail") else ""
+        rows.append({
+            "Partido": leg['matchup'],
+            "Mercado": leg['market'],
+            "Pick": f"{leg['team']}{detail_str}",
+            "Cuota": leg['odds'],
+            "Prob": prob_pct,
+        })
+    st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
+    st.caption(f"**Parlay {parlay['american']:+d}** · Dec: {parlay['decimal_odds']}x · Prob: {parlay['joint_prob']*100:.1f}% · EV: {ev_parlay:.1%}  \n"
+               f"Apuesta $10 → ${payout_10:.2f}  |  $25 → ${payout_25:.2f}  |  $50 → ${payout_50:.2f}")
         with cols2[3]:
             st.markdown("")
 
@@ -1346,37 +1331,62 @@ def main():
             st.markdown("##### ✏️ Registrar Picks")
             from bankroll import recommend_stake, load_picks, add_pick
             bk_data = load_picks(); act_bk = bk_data["bankroll"]
-            mkt_cols = [("moneyline","ML"),("spread_minus","RL-1.5"),("spread_plus","RL+1.5"),("total","O/U")]
-            hdr = st.columns([1.5,1,1,1,1])
-            for ci, lbl in enumerate(["Juego","ML","RL-1.5","RL+1.5","O/U"]):
-                with hdr[ci]: st.markdown(f"**{lbl}**")
+            reg_rows = []
             for _, r in upcoming.iterrows():
                 gl = f"{r['away_abbrev']} @ {r['home_abbrev']}"
                 gid = r.get("game_id","")
-                cs = st.columns([1.5,1,1,1,1])
-                with cs[0]: st.markdown(f"**{gl}**")
-                for ci,(mk_key,mk_lbl) in enumerate(mkt_cols):
-                    with cs[ci+1]:
-                        p_dat = r.get(mk_key)
-                        if not p_dat:
-                            st.markdown("—")
-                            continue
-                        lk = f"lgs_{gid}_{mk_key}"
+                row = {"Juego": gl}
+                for mk, ml in [("moneyline","ML"),("spread_minus","RL-1.5"),("spread_plus","RL+1.5"),("total","O/U")]:
+                    p_dat = r.get(mk)
+                    if not p_dat:
+                        row[ml] = "—"
+                    else:
+                        lk = f"lgs_{gid}_{mk}"
                         if st.session_state.get(lk, False):
-                            st.markdown("<span style='color:#00cc66'>✅</span>", unsafe_allow_html=True)
+                            row[ml] = "✅"
                         else:
                             odds = p_dat.get("odds","N/A")
                             os_ = str(odds) if odds and odds!="N/A" else ""
                             oi = int(os_.replace("$","")) if os_ not in ("N/A","—","") else 0
                             prob = p_dat.get("prob",0)/100.0
-                            stk,_,sl = recommend_stake(prob, oi, bankroll=act_bk)
-                            if stk > 0:
-                                if st.button(mk_lbl, key=lk):
-                                    ts = datetime.now(TZ).strftime("%Y-%m-%d")
-                                    add_pick(ts, gl, mk_lbl, prob, oi, stk, act_bk, sl,
-                                             p_dat.get("pick",""), p_dat.get("detail",""))
-                                    st.session_state[lk] = True
-                                    st.rerun()
+                            stk,_,_ = recommend_stake(prob, oi, bankroll=act_bk)
+                            row[ml] = ml if stk > 0 else "—"
+                reg_rows.append(row)
+            if reg_rows:
+                st.dataframe(pd.DataFrame(reg_rows), hide_index=True, use_container_width=True)
+                for _, r in upcoming.iterrows():
+                    gl = f"{r['away_abbrev']} @ {r['home_abbrev']}"
+                    gid = r.get("game_id","")
+                    btns = []
+                    for mk, ml in [("moneyline","ML"),("spread_minus","RL-1.5"),("spread_plus","RL+1.5"),("total","O/U")]:
+                        if not st.session_state.get(f"lgs_{gid}_{mk}", False):
+                            p_dat = r.get(mk)
+                            if p_dat:
+                                odds = p_dat.get("odds","N/A")
+                                os_ = str(odds) if odds and odds!="N/A" else ""
+                                oi = int(os_.replace("$","")) if os_ not in ("N/A","—","") else 0
+                                prob = p_dat.get("prob",0)/100.0
+                                stk,_,_ = recommend_stake(prob, oi, bankroll=act_bk)
+                                if stk > 0:
+                                    btns.append((mk, ml))
+                    if not btns: continue
+                    row_cols = st.columns([1.5]+[1.2]*len(btns))
+                    with row_cols[0]: st.markdown(f"**{gl}**")
+                    for ci,(mk,ml) in enumerate(btns):
+                        with row_cols[ci+1]:
+                            lk = f"lgs_{gid}_{mk}"
+                            if st.button(ml, key=lk):
+                                p_dat = r[mk]
+                                odds = p_dat.get("odds","N/A")
+                                os_ = str(odds) if odds and odds!="N/A" else ""
+                                oi = int(os_.replace("$","")) if os_ not in ("N/A","—","") else 0
+                                prob = p_dat.get("prob",0)/100.0
+                                stk,_,sl = recommend_stake(prob, oi, bankroll=act_bk)
+                                ts = datetime.now(TZ).strftime("%Y-%m-%d")
+                                add_pick(ts, gl, ml, prob, oi, stk, act_bk, sl,
+                                         p_dat.get("pick",""), p_dat.get("detail",""))
+                                st.session_state[lk] = True
+                                st.rerun()
         else:
             st.info("No hay picks disponibles para mostrar.")
 
@@ -1456,24 +1466,23 @@ def main():
             st.divider()
             st.markdown("## 🏆 Recomendaciones del Día")
             st.caption(f"Top {min(len(recs),4)} de {len(recs)} — Kelly Criterion (25% fraccional, bankroll ${actual_bankroll:,.0f}).")
+            rec_table = []
             for i, r in enumerate(recs[:4]):
-                c1, c2, c3, c4, c5 = st.columns([1.5, 1.2, 0.8, 0.8, 0.8])
-                with c1:
-                    st.markdown(f"**{r['game']}**  \n`{r['market']}` → {r['pick']}")
-                with c2:
-                    c = "🔥" if r["edge"] > 8 else "⭐" if r["edge"] > 5 else "✅"
-                    st.markdown(f"{c} Edge **{r['edge']:+.1f}%**  \nProb: {r['prob']:.0f}%")
-                with c3:
-                    st.markdown(f"`{r['odds']}`")
-                with c4:
-                    if r["stake"] > 0:
-                        st.markdown(f"**${r['stake']:.0f}**  \n{r['units']}u")
-                with c5:
-                    log_key = f"rg_{i}_{r['mkt_key']}"
-                    if st.session_state.get(f"done_{log_key}", False):
-                        st.markdown("<span style='color:#00cc66'>✅</span>", unsafe_allow_html=True)
-                    else:
-                        if st.button("📝", key=log_key, help=f"Registrar {r['market']} {r['pick']}"):
+                icon = "🔥" if r["edge"] > 8 else "⭐" if r["edge"] > 5 else "✅"
+                rec_table.append({
+                    "Juego": r["game"], "Mercado": r["market"],
+                    "Pick": r["pick"], "Prob": f"{r['prob']:.0f}%",
+                    "Odds": r["odds"], "Edge": f"{icon} {r['edge']:+.1f}%",
+                    "Stake": f"${r['stake']:.0f}  {r['units']}u" if r["stake"] > 0 else "—",
+                })
+            st.dataframe(pd.DataFrame(rec_table), hide_index=True, use_container_width=True)
+            avail = [(i, r) for i, r in enumerate(recs[:4]) if not st.session_state.get(f"done_rg_{i}_{r['mkt_key']}", False)]
+            if avail:
+                cols = st.columns(len(avail))
+                for ci, (i, r) in enumerate(avail):
+                    with cols[ci]:
+                        lk = f"rg_{i}_{r['mkt_key']}"
+                        if st.button(f"📝 {r['game'][:7]} {r['market']}", key=lk):
                             try:
                                 from bankroll import add_pick, load_picks, recommend_stake
                                 d = load_picks(); bk = d["bankroll"]
@@ -1487,9 +1496,8 @@ def main():
                                     dtl = r.get("entry", {}).get("detail", "")
                                     ts = datetime.now(TZ).strftime("%Y-%m-%d")
                                     add_pick(ts, gl, r["market"], pv, oi, sk, bk, sl, pt, dtl)
-                                    st.session_state[f"done_{log_key}"] = True
-                                else:
-                                    st.caption("⚠️ Kelly=0")
+                                    st.session_state[f"done_{lk}"] = True
+                                    st.rerun()
                             except Exception as ex:
                                 st.caption(f"❌ {ex}")
     except ImportError:
