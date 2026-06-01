@@ -553,6 +553,13 @@ def send_telegram(msg):
                       json={"chat_id": cid, "text": msg, "parse_mode": "Markdown"}, timeout=10)
     except: pass
 
+def fmt_ou(pick_name, detail):
+    if not detail:
+        return pick_name
+    line = detail[1:] if len(detail) > 1 and detail[0] in "ou" else detail
+    return f"{pick_name} {line}"
+
+
 def notify_pick(gl, market, team, stake, odds, bankroll):
     try:
         s = f"📝 *Pick registrado*\n{gl} → {market} {team}\nApuesta: ${stake:.2f} @ {odds:+d}\nBankroll: ${bankroll:.2f}"
@@ -769,7 +776,7 @@ def render_card(pick, key_suffix="", game_idx=0):
             col_a, col_b, col_c = st.columns([1.4, 0.9, 1.0])
             with col_a:
                 rec_tag = " ⭐" if recommended else ""
-                detail_display = f" {detail}" if detail and mkt_label != "O/U" else ""
+                detail_display = f" {detail}" if detail else ""
                 st.markdown(f"**{mkt_icon} {mkt_label}{rec_tag}**  \n`{pick_name}`{detail_display}")
             with col_b:
                 line = f"**{prob_str}**" if prob_str else ""
@@ -917,7 +924,7 @@ def render_parlay(parlay, idx):
     rows = []
     for leg in parlay["legs"]:
         prob_pct = f"{leg['prob']*100:.0f}%"
-        detail_str = f" {leg['detail']}" if leg.get("detail") and leg.get("market") != "O/U" else ""
+        detail_str = f" {leg['detail']}" if leg.get("detail") else ""
         rows.append({
             "Partido": leg['matchup'],
             "Mercado": leg['market'],
@@ -1343,7 +1350,8 @@ def main():
                         if ip: edge = round(prob_val - ip * 100, 1)
                     except: pass
                 pick_name = p.get("pick","—")
-                display_pick = f"🔥 {pick_name}" if (edge is not None and edge > 2) else pick_name
+                display_name = fmt_ou(pick_name, p.get("detail","")) if mk == "total" else pick_name
+                display_pick = f"🔥 {display_name}" if (edge is not None and edge > 2) else display_name
                 flat_rows.append({
                     "Juego": gl, "Hora": t, "M": ml,
                     "Pick": display_pick,
@@ -1378,7 +1386,7 @@ def main():
                     else:
                         pick_name = p_dat.get("pick", "")
                         if mk == "total":
-                            ml = pick_name
+                            ml = fmt_ou(pick_name, p_dat.get("detail",""))
                         else:
                             abb = (r["home_abbrev"] if pick_name == r.get("home_team","") else
                                    r["away_abbrev"] if pick_name == r.get("away_team","") else "")
@@ -1414,7 +1422,7 @@ def main():
                             if p_dat:
                                 pick_name = p_dat.get("pick", "")
                                 if mk == "total":
-                                    ml = pick_name
+                                    ml = fmt_ou(pick_name, p_dat.get("detail",""))
                                 else:
                                     abb = (r["home_abbrev"] if pick_name == r.get("home_team","") else
                                            r["away_abbrev"] if pick_name == r.get("away_team","") else "")
@@ -1538,7 +1546,7 @@ def main():
                 icon = "🔥" if r["edge"] > 8 else "⭐" if r["edge"] > 5 else "✅"
                 rec_table.append({
                     "Juego": r["game"], "Mercado": r["market"],
-                    "Pick": r["pick"], "Prob": f"{r['prob']:.0f}%",
+                    "Pick": fmt_ou(r["pick"], r.get("entry",{}).get("detail","")), "Prob": f"{r['prob']:.0f}%",
                     "Odds": r["odds"], "Edge": f"{icon} {r['edge']:+.1f}%",
                     "Stake": f"${r['stake']:.0f}  {r['units']}u" if r["stake"] > 0 else "—",
                 })
@@ -1549,7 +1557,8 @@ def main():
                 for ci, (i, r) in enumerate(avail):
                     with cols[ci]:
                         lk = f"rg_{i}_{r['mkt_key']}"
-                        if st.button(f"📝 {r['game'][:7]} {r['market']}", key=lk):
+                        btn_pick = fmt_ou(r["pick"], r.get("entry",{}).get("detail",""))
+                        if st.button(f"📝 {r['game'][:7]} {btn_pick}", key=lk):
                             try:
                                 from bankroll import add_pick, load_picks, recommend_stake
                                 d = load_picks(); bk = d["bankroll"]
@@ -1670,7 +1679,7 @@ def main():
                     "Fecha": p.get("date",""),
                     "Juego": p.get("game",""),
                     "Mercado": p.get("market",""),
-                    "Pick": p.get("team",""),
+                    "Pick": fmt_ou(p.get("team",""), p.get("detail","")),
                     "Prob": prob_str,
                     "Cuota": odds_str,
                     "Stake": stake_str,
