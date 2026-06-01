@@ -1,7 +1,7 @@
 __pycache__/
 *.pyc
 .env
-picks.json
+# picks.json is tracked for GitHub Actions auto-settlement
 *.egg-info/
 .DS_Store
 pitcher_cache.json
