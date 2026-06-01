@@ -560,6 +560,29 @@ def notify_pick(gl, market, team, stake, odds, bankroll):
     except: pass
 
 
+# ─── GitHub sync ───
+
+def sync_picks_to_github():
+    try:
+        tok = st.secrets.get("GITHUB_TOKEN", os.environ.get("GITHUB_TOKEN", ""))
+        repo = st.secrets.get("REPO", os.environ.get("REPO", ""))
+        branch = st.secrets.get("BRANCH", os.environ.get("BRANCH", "main"))
+        if not tok or not repo: return
+        owner, repo_name = repo.split("/")
+        path = "picks.json"
+        with open(path, "r") as f:
+            content = f.read()
+        import base64
+        url = f"https://api.github.com/repos/{owner}/{repo_name}/contents/{path}"
+        headers = {"Authorization": f"Bearer {tok}", "Accept": "application/vnd.github+json"}
+        r = requests.get(url + f"?ref={branch}", headers=headers, timeout=10)
+        sha = r.json().get("sha", "") if r.ok else ""
+        data = {"message": "sync picks.json from app", "content": base64.b64encode(content.encode()).decode(), "branch": branch}
+        if sha: data["sha"] = sha
+        requests.put(url, json=data, headers=headers, timeout=10)
+    except: pass
+
+
 # ─── Modelos de predicción ───
 
 def predict_moneyline(hs, aws, hf, af, hname, aname, h_adv=None, a_adv=None, hpitch=None, apitch=None, elo_hp=None, park_factor=1.0):
@@ -671,6 +694,7 @@ def _log_pick_fn(pick, mkt_key, mkt_label, entry):
         today = datetime.now(TZ).strftime("%Y-%m-%d")
         pid = add_pick(today, gl, mkt_label, prob, odds_int, stake, bk, slabel, pick_team)
         notify_pick(gl, mkt_label, pick_team, stake, odds_int, bk)
+        sync_picks_to_github()
         return True
     except Exception as e:
         return False
@@ -772,6 +796,7 @@ def render_card(pick, key_suffix="", game_idx=0):
                                 ts = datetime.now(TZ).strftime("%Y-%m-%d")
                                 add_pick(ts, gl, mkt_label, pv, oi, sk, bk, sl, pick_name, detail)
                                 notify_pick(gl, mkt_label, pick_name, sk, oi, bk)
+                                sync_picks_to_github()
                                 st.session_state[log_key] = True
                             else:
                                 st.caption("⚠️ Kelly=0")
@@ -1425,6 +1450,7 @@ def main():
                                 add_pick(ts, gl, clean_ml, prob, oi, stk, act_bk, sl,
                                          p_dat.get("pick",""), p_dat.get("detail",""))
                                 notify_pick(gl, clean_ml, p_dat.get("pick",""), stk, oi, act_bk)
+                                sync_picks_to_github()
                                 st.session_state[lk] = True
                                 st.rerun()
         else:
@@ -1537,6 +1563,7 @@ def main():
                                     ts = datetime.now(TZ).strftime("%Y-%m-%d")
                                     add_pick(ts, gl, r["market"], pv, oi, sk, bk, sl, pt, dtl)
                                     notify_pick(gl, r["market"], pt, sk, oi, bk)
+                                    sync_picks_to_github()
                                     st.session_state[f"done_{lk}"] = True
                                     st.rerun()
                             except Exception as ex:
