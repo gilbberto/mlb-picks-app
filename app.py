@@ -1343,7 +1343,10 @@ def main():
                             if oi != 0 and prob:
                                 ip = american_to_prob(oi)
                                 if ip: edge = round(prob*100 - ip*100, 1)
-                            lbl = f"🔥 {ml}" if (edge and edge > 2) else ml
+                            flames = ""
+                            if edge and edge > 2:
+                                flames = "🔥" if edge <= 5 else "🔥🔥" if edge <= 8 else "🔥🔥🔥"
+                            lbl = f"{flames} {ml}" if flames else ml
                             row[ml] = lbl if stk > 0 else "—"
                 reg_rows.append(row)
             if reg_rows:
@@ -1366,7 +1369,10 @@ def main():
                                     if oi != 0 and prob:
                                         ip = american_to_prob(oi)
                                         if ip: edge = round(prob*100 - ip*100, 1)
-                                    lbl = f"🔥{ml}" if (edge and edge > 2) else ml
+                                    flames = ""
+                                    if edge and edge > 2:
+                                        flames = "🔥" if edge <= 5 else "🔥🔥" if edge <= 8 else "🔥🔥🔥"
+                                    lbl = f"{flames}{ml}" if flames else ml
                                     btns.append((mk, lbl))
                     if not btns: continue
                     cols = st.columns([1.5]+[1]*len(btns))
