@@ -200,6 +200,10 @@ def today_checks():
     return pending
 
 # ─── Auto-Settlement ───
+def _same_team(team, abbr, full_name):
+    """Check if team string matches abbreviation or full name."""
+    return team == abbr or team.lower() == full_name.lower()
+
 def _fetch_mlb_games(date_str):
     """Get completed MLB games for a given date."""
     url = f"{MLB_API}/schedule?date={date_str}&sportId=1&hydrate=linescore,team"
@@ -220,6 +224,8 @@ def _fetch_mlb_games(date_str):
                 games.append({
                     "away_abbr": away_abbr,
                     "home_abbr": home_abbr,
+                    "away_name": away_name,
+                    "home_name": home_name,
                     "away_runs": away.get("score", 0),
                     "home_runs": home.get("score", 0),
                     "label": f"{away_abbr} @ {home_abbr}",
@@ -262,15 +268,16 @@ def auto_settle():
                 won = None
                 if market == "ML":
                     if not team: continue
-                    if team == match["away_abbr"]:
+                    if _same_team(team, match["away_abbr"], match["away_name"]):
                         won = match["away_runs"] > match["home_runs"]
-                    elif team == match["home_abbr"]:
+                    elif _same_team(team, match["home_abbr"], match["home_name"]):
                         won = match["home_runs"] > match["away_runs"]
 
                 elif market in ("RL -1.5", "RL +1.5"):
                     if not team: continue
-                    team_runs = match["away_runs"] if team == match["away_abbr"] else match["home_runs"]
-                    opp_runs = match["home_runs"] if team == match["away_abbr"] else match["away_runs"]
+                    is_away = _same_team(team, match["away_abbr"], match["away_name"])
+                    team_runs = match["away_runs"] if is_away else match["home_runs"]
+                    opp_runs = match["home_runs"] if is_away else match["away_runs"]
                     diff = team_runs - opp_runs
                     if market == "RL -1.5":
                         won = diff >= 1.5
