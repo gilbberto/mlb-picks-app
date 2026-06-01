@@ -701,7 +701,7 @@ def render_card(pick, key_suffix="", game_idx=0):
         score_str = f"**{pick['final']}** " if pick.get("final") else ""
         time_str = f"🕐 {pick['game_time']}  " if pick.get("game_time") else ""
         st.markdown(f"### {time_str}{status_label}{score_str}**{an}** @ **{hn}**" + "".join(f" `{s}`" for s in srcs) + badge + pitcher_line)
-        mkt_list = [("moneyline", "Moneyline", "💰")]
+        mkt_list = [("moneyline", "ML", "💰")]
         mkt_list += [("spread_minus", "RL -1.5", "📏"), ("spread_plus", "RL +1.5", "📏")]
         mkt_list += [("total", "O/U", "📈")]
         for mkt_key, mkt_label, mkt_icon in mkt_list:
@@ -784,7 +784,7 @@ def generate_parlays(picks, top_n=3):
         if p.get("status") == "Final":
             continue
         gid = p.get("game_id", "")
-        for mkt_key, mkt_label in [("moneyline","ML"), ("spread_minus","RL-"), ("spread_plus","RL+"), ("total","O/U")]:
+        for mkt_key, mkt_label in [("moneyline","ML"), ("spread_minus","RL -1.5"), ("spread_plus","RL +1.5"), ("total","O/U")]:
             m = p.get(mkt_key, {})
             ev = m.get("ev")
             odds = m.get("odds")
@@ -797,7 +797,7 @@ def generate_parlays(picks, top_n=3):
 
             has_odds = odds is not None and odds != "N/A"
             has_ev = ev is not None and ev > 0
-            threshold = 45 if mkt_label in ("RL-","RL+") else 50
+            threshold = 45 if mkt_label in ("RL -1.5","RL +1.5") else 50
             has_confidence = prob >= threshold
 
             if not has_ev and not has_confidence:
@@ -843,8 +843,8 @@ def generate_parlays(picks, top_n=3):
             pool.sort(key=lambda x: x.get(sort_key, 0) or 0, reverse=True)
             mixed.append(pool[0])
             seen_g.add(pool[0]["game_id"])
-    # Pick best RL (either RL- or RL+) from remaining games
-    rl_pool = [l for l in legs if l["market"] in ("RL-","RL+") and l["game_id"] not in seen_g]
+    # Pick best RL (either RL -1.5 or RL +1.5) from remaining games
+    rl_pool = [l for l in legs if l["market"] in ("RL -1.5","RL +1.5") and l["game_id"] not in seen_g]
     if rl_pool:
         rl_pool.sort(key=lambda x: x.get(sort_key, 0) or 0, reverse=True)
         mixed.append(rl_pool[0])
