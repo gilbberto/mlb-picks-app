@@ -102,14 +102,9 @@ st.markdown("""
     }
     /* Spinner */
     div[data-testid="stSpinner"] { color: #58a6ff !important; }
-    /* Button text visible in dark mode */
-    .stButton button { color: #e0e0e0 !important; border: 1px solid #444 !important; }
-    .stButton button:hover { color: #fff !important; border-color: #888 !important; }
-    /* Registrar table - compact columns without card padding */
-    .reg-row div[data-testid="column"] { padding: 2px !important; margin: 0 !important; background: transparent !important; border: none !important; }
-    .reg-row div[data-testid="column"]:first-child { text-align: left !important; }
-    .reg-row div[data-testid="column"] { text-align: center !important; }
-    .reg-header div[data-testid="column"] { padding: 4px 2px !important; font-weight: bold; }
+    /* Action buttons: blue accent */
+    .stButton button { color: #58a6ff !important; border-color: #58a6ff !important; background: #0d1b2a !important; }
+    .stButton button:hover { background: #1a3a5c !important; color: #7cbfff !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -1325,45 +1320,62 @@ def main():
             st.markdown("##### ✏️ Registrar Picks")
             from bankroll import recommend_stake, load_picks, add_pick
             bk_data = load_picks(); act_bk = bk_data["bankroll"]
-            mkt_map = [("moneyline","ML"),("spread_minus","RL-1.5"),("spread_plus","RL+1.5"),("total","O/U")]
-            # Header
-            st.markdown('<div class="reg-row reg-header">', unsafe_allow_html=True)
-            hdr = st.columns([1.5,1,1,1,1])
-            for ci, lbl in enumerate(["Juego","ML","RL-1.5","RL+1.5","O/U"]):
-                with hdr[ci]: st.markdown(lbl)
-            st.markdown('</div>', unsafe_allow_html=True)
-            # Rows
+            reg_rows = []
             for _, r in upcoming.iterrows():
                 gl = f"{r['away_abbrev']} @ {r['home_abbrev']}"
                 gid = r.get("game_id","")
-                st.markdown('<div class="reg-row">', unsafe_allow_html=True)
-                cols = st.columns([1.5,1,1,1,1])
-                with cols[0]: st.markdown(f"**{gl}**")
-                for ci,(mk,ml) in enumerate(mkt_map):
-                    with cols[ci+1]:
-                        p_dat = r.get(mk)
-                        if not p_dat:
-                            st.markdown("—")
+                row = {"Juego": gl}
+                for mk, ml in [("moneyline","ML"),("spread_minus","RL-1.5"),("spread_plus","RL+1.5"),("total","O/U")]:
+                    p_dat = r.get(mk)
+                    if not p_dat:
+                        row[ml] = "—"
+                    else:
+                        lk = f"lgs_{gid}_{mk}"
+                        if st.session_state.get(lk, False):
+                            row[ml] = "✅"
                         else:
+                            odds = p_dat.get("odds","N/A")
+                            os_ = str(odds) if odds and odds!="N/A" else ""
+                            oi = int(os_.replace("$","")) if os_ not in ("N/A","—","") else 0
+                            prob = p_dat.get("prob",0)/100.0
+                            stk,_,_ = recommend_stake(prob, oi, bankroll=act_bk)
+                            row[ml] = ml if stk > 0 else "—"
+                reg_rows.append(row)
+            if reg_rows:
+                st.dataframe(pd.DataFrame(reg_rows), hide_index=True, use_container_width=True)
+                for _, r in upcoming.iterrows():
+                    gl = f"{r['away_abbrev']} @ {r['home_abbrev']}"
+                    gid = r.get("game_id","")
+                    btns = []
+                    for mk, ml in [("moneyline","ML"),("spread_minus","RL-1.5"),("spread_plus","RL+1.5"),("total","O/U")]:
+                        if not st.session_state.get(f"lgs_{gid}_{mk}", False):
+                            p_dat = r.get(mk)
+                            if p_dat:
+                                odds = p_dat.get("odds","N/A")
+                                os_ = str(odds) if odds and odds!="N/A" else ""
+                                oi = int(os_.replace("$","")) if os_ not in ("N/A","—","") else 0
+                                prob = p_dat.get("prob",0)/100.0
+                                stk,_,_ = recommend_stake(prob, oi, bankroll=act_bk)
+                                if stk > 0:
+                                    btns.append((mk, ml))
+                    if not btns: continue
+                    cols = st.columns([1.5]+[1]*len(btns))
+                    with cols[0]: st.markdown(f"**{gl}**")
+                    for ci,(mk,ml) in enumerate(btns):
+                        with cols[ci+1]:
                             lk = f"lgs_{gid}_{mk}"
-                            if st.session_state.get(lk, False):
-                                st.markdown("✅")
-                            else:
+                            if st.button(ml, key=lk, use_container_width=True):
+                                p_dat = r[mk]
                                 odds = p_dat.get("odds","N/A")
                                 os_ = str(odds) if odds and odds!="N/A" else ""
                                 oi = int(os_.replace("$","")) if os_ not in ("N/A","—","") else 0
                                 prob = p_dat.get("prob",0)/100.0
                                 stk,_,sl = recommend_stake(prob, oi, bankroll=act_bk)
-                                if stk > 0:
-                                    if st.button(ml, key=lk, use_container_width=True):
-                                        ts = datetime.now(TZ).strftime("%Y-%m-%d")
-                                        add_pick(ts, gl, ml, prob, oi, stk, act_bk, sl,
-                                                 p_dat.get("pick",""), p_dat.get("detail",""))
-                                        st.session_state[lk] = True
-                                        st.rerun()
-                                else:
-                                    st.markdown("—")
-                st.markdown('</div>', unsafe_allow_html=True)
+                                ts = datetime.now(TZ).strftime("%Y-%m-%d")
+                                add_pick(ts, gl, ml, prob, oi, stk, act_bk, sl,
+                                         p_dat.get("pick",""), p_dat.get("detail",""))
+                                st.session_state[lk] = True
+                                st.rerun()
         else:
             st.info("No hay picks disponibles para mostrar.")
 
