@@ -769,7 +769,8 @@ def render_card(pick, key_suffix="", game_idx=0):
             col_a, col_b, col_c = st.columns([1.4, 0.9, 1.0])
             with col_a:
                 rec_tag = " ⭐" if recommended else ""
-                st.markdown(f"**{mkt_icon} {mkt_label}{rec_tag}**  \n`{pick_name}` {detail}")
+                detail_display = f" {detail}" if detail and mkt_label != "O/U" else ""
+                st.markdown(f"**{mkt_icon} {mkt_label}{rec_tag}**  \n`{pick_name}`{detail_display}")
             with col_b:
                 line = f"**{prob_str}**" if prob_str else ""
                 if ev is not None:
@@ -916,7 +917,7 @@ def render_parlay(parlay, idx):
     rows = []
     for leg in parlay["legs"]:
         prob_pct = f"{leg['prob']*100:.0f}%"
-        detail_str = f" {leg['detail']}" if leg.get("detail") else ""
+        detail_str = f" {leg['detail']}" if leg.get("detail") and leg.get("market") != "O/U" else ""
         rows.append({
             "Partido": leg['matchup'],
             "Mercado": leg['market'],
