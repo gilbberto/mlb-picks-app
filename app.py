@@ -542,6 +542,24 @@ def ev_label(ev):
     return "❌ NO VALUE", C["no_value"]
 
 
+# ─── Telegram ───
+
+def send_telegram(msg):
+    try:
+        tok = st.secrets.get("TELEGRAM_TOKEN", os.environ.get("TELEGRAM_TOKEN", ""))
+        cid = st.secrets.get("TELEGRAM_CHAT_ID", os.environ.get("TELEGRAM_CHAT_ID", ""))
+        if not tok or not cid: return
+        requests.post(f"https://api.telegram.org/bot{tok}/sendMessage",
+                      json={"chat_id": cid, "text": msg, "parse_mode": "Markdown"}, timeout=10)
+    except: pass
+
+def notify_pick(gl, market, team, stake, odds, bankroll):
+    try:
+        s = f"📝 *Pick registrado*\n{gl} → {market} {team}\nApuesta: ${stake:.2f} @ {odds:+d}\nBankroll: ${bankroll:.2f}"
+        send_telegram(s)
+    except: pass
+
+
 # ─── Modelos de predicción ───
 
 def predict_moneyline(hs, aws, hf, af, hname, aname, h_adv=None, a_adv=None, hpitch=None, apitch=None, elo_hp=None, park_factor=1.0):
@@ -652,6 +670,7 @@ def _log_pick_fn(pick, mkt_key, mkt_label, entry):
         pick_team = entry.get("pick", "")
         today = datetime.now(TZ).strftime("%Y-%m-%d")
         pid = add_pick(today, gl, mkt_label, prob, odds_int, stake, bk, slabel, pick_team)
+        notify_pick(gl, mkt_label, pick_team, stake, odds_int, bk)
         return True
     except Exception as e:
         return False
@@ -752,6 +771,7 @@ def render_card(pick, key_suffix="", game_idx=0):
                             if sk > 0:
                                 ts = datetime.now(TZ).strftime("%Y-%m-%d")
                                 add_pick(ts, gl, mkt_label, pv, oi, sk, bk, sl, pick_name, detail)
+                                notify_pick(gl, mkt_label, pick_name, sk, oi, bk)
                                 st.session_state[log_key] = True
                             else:
                                 st.caption("⚠️ Kelly=0")
@@ -1404,6 +1424,7 @@ def main():
                                 ts = datetime.now(TZ).strftime("%Y-%m-%d")
                                 add_pick(ts, gl, clean_ml, prob, oi, stk, act_bk, sl,
                                          p_dat.get("pick",""), p_dat.get("detail",""))
+                                notify_pick(gl, clean_ml, p_dat.get("pick",""), stk, oi, act_bk)
                                 st.session_state[lk] = True
                                 st.rerun()
         else:
@@ -1515,6 +1536,7 @@ def main():
                                     dtl = r.get("entry", {}).get("detail", "")
                                     ts = datetime.now(TZ).strftime("%Y-%m-%d")
                                     add_pick(ts, gl, r["market"], pv, oi, sk, bk, sl, pt, dtl)
+                                    notify_pick(gl, r["market"], pt, sk, oi, bk)
                                     st.session_state[f"done_{lk}"] = True
                                     st.rerun()
                             except Exception as ex:
