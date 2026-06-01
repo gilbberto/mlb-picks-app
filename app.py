@@ -981,7 +981,7 @@ def main():
         st.divider()
         st.markdown("#### 📊 Metodología")
         with st.expander("Ver"):
-            st.markdown("""
+            st.markdown(f"""
             **{_model_type} + Monte Carlo**: 27 features (Elo, forma, OPS/WHIP/ERA, park factor, pitcher real).
             **Entrenado**: 2023–2026 (8,174 juegos, 1,385 pitcher-season stats).
             **Calibración ML**: Ajuste lineal por tramos según validación.
