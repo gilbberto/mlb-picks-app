@@ -16,6 +16,22 @@
       "profit": null,
       "label": "\ud83d\udd25 High",
       "settled": false
+    },
+    {
+      "id": 2,
+      "date": "2026-06-01",
+      "game": "DET @ TB",
+      "market": "RL +1.5",
+      "team": "Tampa Bay Rays",
+      "detail": "+1.5",
+      "model_prob": 0.777,
+      "odds": 130,
+      "stake": 151.37,
+      "bankroll_before": 1000,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ]
 }
