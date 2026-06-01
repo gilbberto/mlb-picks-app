@@ -1341,16 +1341,47 @@ def main():
     if len(upcoming) > 0:
         st.markdown(f"### 📋 Picks del Día ({len(upcoming)} juegos)")
         flat_rows = []
+        now_tz = datetime.now(TZ)
         for _, r in upcoming.iterrows():
             gl = f"{r['away_abbrev']} @ {r['home_abbrev']}"
-            t = r.get("game_time", "")
+            cgs = r.get("coded_game_state", "")
+            game_dt = r.get("game_dt")
+            score = r.get("final", "")
+            time_str = r.get("game_time", "")
+            if cgs == "I" and score:
+                t = f"🔴 {score}"
+            elif cgs == "I":
+                t = "🔴 EN VIVO"
+            elif game_dt is not None:
+                mins = (game_dt - now_tz).total_seconds() / 60.0
+                if 0 <= mins <= 15:
+                    t = f"⏳ {time_str}"
+                elif mins < 0:
+                    t = f"🔴 {score}" if score else "🔴 EN VIVO"
+                else:
+                    t = time_str
+            else:
+                t = time_str
             for mk, ml in [("moneyline","ML"),("spread_minus","RL-1.5"),("spread_plus","RL+1.5"),("total","O/U")]:
                 p = r.get(mk)
                 if not p: continue
+                odds_val = p.get("odds","N/A")
+                prob_val = p.get("prob")
+                edge = None
+                if prob_val and odds_val not in ("N/A","—",""):
+                    try:
+                        oi = int(str(odds_val).replace("$",""))
+                        ip = american_to_prob(oi)
+                        if ip: edge = round(prob_val - ip * 100, 1)
+                    except: pass
+                pick_name = p.get("pick","—")
+                display_pick = f"🔥 {pick_name}" if (edge is not None and edge > 2) else pick_name
                 flat_rows.append({
                     "Juego": gl, "Hora": t, "M": ml,
-                    "Pick": p.get("pick","—"), "Prob": f"{p['prob']:.0f}%" if p.get("prob") else "",
-                    "Odds": p.get("odds","N/A"), "EV": f"{p['ev']:.1%}" if p.get("ev") is not None else "",
+                    "Pick": display_pick,
+                    "Prob": f"{prob_val:.0f}%" if prob_val else "",
+                    "Odds": odds_val,
+                    "EV": f"{p['ev']:.1%}" if p.get("ev") is not None else "",
                 })
         if flat_rows:
             st.dataframe(pd.DataFrame(flat_rows), column_config={
