@@ -209,7 +209,7 @@ def _fetch_mlb_games(date_str):
         games = []
         for d in r.json().get("dates", []):
             for g in d.get("games", []):
-                if g.get("status", {}).get("codedState") != "F":
+                if g.get("status", {}).get("codedGameState") != "F":
                     continue
                 away = g["teams"]["away"]
                 home = g["teams"]["home"]

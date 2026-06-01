@@ -948,13 +948,17 @@ def main():
     # ── Auto-settlement al iniciar ──
     try:
         from bankroll import auto_settle
-        settled, _ = auto_settle()
+        settled, errors = auto_settle()
         if settled > 0:
             st.success(f"✅ {settled} picks liquidados automáticamente contra resultados MLB")
+        if errors:
+            with st.expander(f"⚠️ {len(errors)} errores de liquidación"):
+                for e in errors:
+                    st.caption(e)
     except ImportError:
         pass
-    except Exception:
-        pass
+    except Exception as _ae:
+        st.caption(f"⚠️ Auto-settle: {type(_ae).__name__}")
 
     with st.sidebar:
         st.image("https://www.mlbstatic.com/team-logos/league-on-dark/1.svg", width=55)
