@@ -4,6 +4,7 @@ Usage: python3 settle_and_notify.py
 Envs: TELEGRAM_TOKEN, TELEGRAM_CHAT_ID
 """
 import os, sys, json
+from datetime import datetime
 sys.path.insert(0, os.path.dirname(__file__))
 from bankroll import auto_settle, load_picks, get_pnl, REV_TEAM, MLB_API
 import requests
@@ -26,20 +27,27 @@ def send_telegram(msg):
     except Exception as e:
         print(f"  Error Telegram: {e}")
 
-def load_notified():
+def load_state():
     try:
         with open(NOTIFIED_PATH) as f:
-            return set(json.load(f))
+            return json.load(f)
     except:
-        return set()
+        return {"notified_starts": [], "scores": {}}
 
-def save_notified(games):
+def save_state(state):
     with open(NOTIFIED_PATH, "w") as f:
-        json.dump(sorted(games), f)
+        json.dump(state, f, indent=2)
 
-def check_game_starts():
+def inning_icon(state):
+    if state == "Top": return "🔝"
+    if state == "Bottom": return "🔽"
+    return ""
+
+def check_game_starts_and_scores():
     print("=== Verificando juegos en vivo ===")
-    notified = load_notified()
+    state = load_state()
+    notified_starts = set(state.get("notified_starts", []))
+    scores = state.get("scores", {})
     today = datetime.now().strftime("%Y-%m-%d")
 
     url = f"{MLB_API}/schedule?date={today}&sportId=1&hydrate=linescore,team"
@@ -52,32 +60,63 @@ def check_game_starts():
         print(f"  Error MLB API: {e}")
         return
 
-    new_live = []
+
+
     for d in r.json().get("dates", []):
         for g in d.get("games", []):
-            state = g.get("status", {}).get("codedGameState", "")
-            if state not in ("L", "I"):
+            state_code = g.get("status", {}).get("codedGameState", "")
+            if state_code not in ("L", "I"):
                 continue
             gid = str(g["gamePk"])
-            if gid in notified:
-                continue
-            away = g["teams"]["away"]["team"]["name"]
-            home = g["teams"]["home"]["team"]["name"]
-            away_abbr = REV_TEAM.get(away.lower(), away)
-            home_abbr = REV_TEAM.get(home.lower(), home)
-            new_live.append((gid, away_abbr, home_abbr, away, home))
+            away = g["teams"]["away"]
+            home = g["teams"]["home"]
+            away_name = away["team"]["name"]
+            home_name = home["team"]["name"]
+            away_abbr = REV_TEAM.get(away_name.lower(), away_name)
+            home_abbr = REV_TEAM.get(home_name.lower(), home_name)
+            label = f"{away_abbr} @ {home_abbr}"
+            away_runs = away.get("score", 0)
+            home_runs = home.get("score", 0)
 
-    if not new_live:
-        print("  Sin juegos nuevos en vivo")
-        return
+            linescore = g.get("linescore") or {}
+            inning = linescore.get("currentInning")
+            inn_state = linescore.get("inningState", "")
+            inn_ord = linescore.get("currentInningOrdinal", f"{inning or ''}")
 
-    for gid, away_abbr, home_abbr, away_name, home_name in new_live:
-        msg = f"⚾ *JUEGO INICIADO*\n{away_abbr} @ {home_abbr}\n{away_name} vs {home_name}"
-        print(f"  {away_abbr} @ {home_abbr} — notificando")
-        send_telegram(msg)
-        notified.add(gid)
+            # Game start notification
+            if gid not in notified_starts:
+                msg = f"⚾ *JUEGO INICIADO*\n{label}"
+                print(f"  {label} — notificando inicio")
+                send_telegram(msg)
+                notified_starts.add(gid)
 
-    save_notified(notified)
+            # Score change detection
+            prev = scores.get(gid)
+            if prev is None or prev.get("away") != away_runs or prev.get("home") != home_runs:
+                if prev is not None:
+                    # Determine which team(s) scored
+                    parts = []
+                    if away_runs > prev.get("away", 0):
+                        diff = away_runs - prev.get("away", 0)
+                        parts.append(f"{away_abbr} ({'+' if diff > 0 else ''}{diff})")
+                    if home_runs > prev.get("home", 0):
+                        diff = home_runs - prev.get("home", 0)
+                        parts.append(f"{home_abbr} ({'+' if diff > 0 else ''}{diff})")
+                    who = ", ".join(parts)
+                    icon = inning_icon(inn_state)
+                    inn_display = f"{icon} {inn_ord}" if inn_ord else ""
+                    msg = f"⚾ *CARRERA!* {label}\n{away_abbr} {away_runs} - {home_runs} {home_abbr}"
+                    if inn_display:
+                        msg += f"  ({inn_display})"
+                    if who:
+                        msg += f"\nAnotó: {who}"
+                    print(f"  {label} — {away_runs}-{home_runs} (cambio)")
+                    send_telegram(msg)
+                scores[gid] = {"away": away_runs, "home": home_runs}
+
+    state["notified_starts"] = list(notified_starts)
+    state["scores"] = scores
+    save_state(state)
 
 def main():
     print("=== Auto-Settlement + Telegram ===")
@@ -113,7 +152,7 @@ def main():
         print(f"\nMensaje:\n{msg}")
         send_telegram(msg)
 
-    check_game_starts()
+    check_game_starts_and_scores()
 
 if __name__ == "__main__":
     main()
