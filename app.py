@@ -63,17 +63,45 @@ st.markdown("""
     /* Dividers */
     hr { border-color: #2a2a2a !important; }
     /* Mobile responsiveness */
-    @media (max-width: 640px) {
-        .block-container { padding: 8px 4px !important; }
-        div[data-testid="column"] { padding: 8px !important; }
-        h1 { font-size: 22px !important; }
-        h2 { font-size: 18px !important; }
-        h3 { font-size: 15px !important; }
-        div[data-testid="stMetric"] { padding: 4px 8px !important; }
+    @media (max-width: 768px) {
+        .block-container { padding: 6px 2px !important; max-width: 100% !important; }
+        div[data-testid="column"] { padding: 6px !important; }
+        h1 { font-size: 20px !important; }
+        h2 { font-size: 16px !important; }
+        h3 { font-size: 14px !important; }
+        p, li, .stMarkdown, span, div { font-size: 13px !important; }
+        div[data-testid="stMetric"] { padding: 4px 6px !important; }
+        div[data-testid="stMetric"] label { font-size: 11px !important; }
+        div[data-testid="stMetric"] div { font-size: 16px !important; }
+        /* Make buttons touch-friendly */
+        button, .stButton button { min-height: 36px !important; font-size: 13px !important; }
+        /* Card containers scroll horizontally if needed */
+        div[data-testid="column"] > div { overflow-x: auto !important; }
+        /* DataFrames full width with scroll */
+        div[data-testid="stDataFrame"] { width: 100% !important; overflow-x: auto !important; }
+        div[data-testid="stDataFrame"] td, div[data-testid="stDataFrame"] th {
+            font-size: 12px !important; padding: 2px 4px !important; white-space: nowrap !important;
+        }
+        /* Smaller emoji in headings */
+        h1 img, h2 img { height: 28px !important; }
+        /* Expanders more compact */
+        div[data-testid="stExpander"] details { padding: 4px !important; }
+        /* Reduce chart height */
+        div[data-testid="stAltairChart"] { max-height: 160px !important; }
+    }
+    @media (max-width: 480px) {
+        .block-container { padding: 4px 1px !important; }
+        div[data-testid="column"] { padding: 4px !important; margin: 2px 0 !important; }
+        p, .stMarkdown, span, div { font-size: 12px !important; }
+        button, .stButton button { min-height: 40px !important; font-size: 12px !important; }
+        h3 { font-size: 13px !important; }
+        div[data-testid="stMetric"] div { font-size: 14px !important; }
+        div[data-testid="stDataFrame"] td, div[data-testid="stDataFrame"] th {
+            font-size: 11px !important; padding: 1px 3px !important;
+        }
     }
     /* Spinner */
     div[data-testid="stSpinner"] { color: #58a6ff !important; }
-    /* Viewport — ya incluido por Streamlit */
 </style>
 """, unsafe_allow_html=True)
 
@@ -692,55 +720,49 @@ def render_card(pick, key_suffix="", game_idx=0):
             edge = p.get("edge")
             recommended = ev is not None and ev > 0
 
-            col_a, col_b, col_c, col_d, col_e = st.columns([1.2, 0.7, 0.7, 0.7, 0.8])
+            col_a, col_b, col_c = st.columns([1.4, 0.9, 1.0])
             with col_a:
                 rec_tag = " ⭐" if recommended else ""
                 st.markdown(f"**{mkt_icon} {mkt_label}{rec_tag}**  \n`{pick_name}` {detail}")
             with col_b:
-                st.markdown(f"**{prob_str}**" if prob_str else "")
+                line = f"**{prob_str}**" if prob_str else ""
+                if ev is not None:
+                    line += f"  \n{ev_str}"
+                st.markdown(line if line else "")
             with col_c:
-                st.markdown(f"**{ev_str}**" if ev is not None else "")
-            with col_d:
-                st.markdown(f"`{odds}`" if odds and odds != "N/A" else "")
-            with col_e:
-                    log_key = f"lg_{pick.get('game_id','')}_{mkt_key}"
-                    if st.session_state.get(log_key, False):
-                        st.markdown("<span style='color:#00cc66'>✅</span>", unsafe_allow_html=True)
-                    elif edge is not None and edge > 2:
-                        btn = st.button("📝", key=log_key)
-                        if btn:
-                            try:
-                                from bankroll import add_pick, load_picks, recommend_stake
-                                d = load_picks(); bk = d["bankroll"]
-                                gl = f"{pick['away_abbrev']} @ {pick['home_abbrev']}"
-                                os_ = entry.get("odds","N/A")
-                                oi = int(str(os_).replace("$","")) if os_ not in ("N/A","—","") else 0
-                                pv = entry.get("prob",50)/100.0
-                                sk,_,sl = recommend_stake(pv, oi, bankroll=bk)
-                                if sk > 0:
-                                    pt = entry.get("pick","")
-                                    dtl = entry.get("detail","")
-                                    ts = datetime.now(TZ).strftime("%Y-%m-%d")
-                                    add_pick(ts, gl, mkt_label, pv, oi, sk, bk, sl, pt, dtl)
-                                    st.session_state[log_key] = True
-                                else:
-                                    st.caption("⚠️ Kelly=0")
-                            except Exception as ex:
-                                st.caption(f"❌ {ex}")
-                    elif recommended:
-                        st.markdown("<span style='color:#ffcc00'>⭐</span>", unsafe_allow_html=True)
-                    elif edge is not None:
-                        ec = "#00cc66" if edge > 5 else "#88cc00" if edge > 2 else "#cccc00"
-                        st.markdown(f"<span style='color:{ec}'>{edge:+.1f}%</span>", unsafe_allow_html=True)
-                    elif book:
-                        st.markdown(f"{book}" if book else "")
-                    elif recommended:
-                        st.markdown("<span style='color:#ffcc00'>⭐</span>", unsafe_allow_html=True)
-                    elif edge is not None:
-                        ec = "#00cc66" if edge > 5 else "#88cc00" if edge > 2 else "#cccc00"
-                        st.markdown(f"<span style='color:{ec}'>{edge:+.1f}%</span>", unsafe_allow_html=True)
-                    elif book:
-                        st.markdown(f"{book}" if book else "")
+                if odds and odds != "N/A":
+                    st.markdown(f"`{odds}`")
+                log_key = f"lg_{pick.get('game_id','')}_{mkt_key}"
+                if st.session_state.get(log_key, False):
+                    st.markdown("<span style='color:#00cc66'>✅</span>", unsafe_allow_html=True)
+                elif edge is not None and edge > 2:
+                    btn = st.button("📝", key=log_key)
+                    if btn:
+                        try:
+                            from bankroll import add_pick, load_picks, recommend_stake
+                            d = load_picks(); bk = d["bankroll"]
+                            gl = f"{pick['away_abbrev']} @ {pick['home_abbrev']}"
+                            os_ = entry.get("odds","N/A")
+                            oi = int(str(os_).replace("$","")) if os_ not in ("N/A","—","") else 0
+                            pv = entry.get("prob",50)/100.0
+                            sk,_,sl = recommend_stake(pv, oi, bankroll=bk)
+                            if sk > 0:
+                                pt = entry.get("pick","")
+                                dtl = entry.get("detail","")
+                                ts = datetime.now(TZ).strftime("%Y-%m-%d")
+                                add_pick(ts, gl, mkt_label, pv, oi, sk, bk, sl, pt, dtl)
+                                st.session_state[log_key] = True
+                            else:
+                                st.caption("⚠️ Kelly=0")
+                        except Exception as ex:
+                            st.caption(f"❌ {ex}")
+                elif recommended:
+                    st.markdown("<span style='color:#ffcc00'>⭐</span>", unsafe_allow_html=True)
+                elif edge is not None:
+                    ec = "#00cc66" if edge > 5 else "#88cc00" if edge > 2 else "#cccc00"
+                    st.markdown(f"<span style='color:{ec}'>{edge:+.1f}%</span>", unsafe_allow_html=True)
+                elif book:
+                    st.markdown(f"{book}" if book else "")
         st.markdown(f"*Prob: {hn} {hp:.0f}% / {an} {ap:.0f}%*")
         st.divider()
 
@@ -1488,11 +1510,8 @@ def main():
                 except:
                     pass
 
-            # Header
-            hcols = st.columns([1, 1.5, 0.7, 1.2, 0.7, 0.7, 0.7, 1, 1.2, 0.5])
-            for hc, hl in zip(hcols, ["Fecha","Juego","Mercado","Pick","Prob","Cuota","Stake","Estado","Profit",""]):
-                hc.markdown(f"**{hl}**")
             total_profit = 0
+            rows = []
             for p in reversed(data["history"]):
                 result = p.get("result")
                 if result == "W":
@@ -1518,7 +1537,7 @@ def main():
                             r_icon = "⏳ Pendiente"
                     else:
                         r_icon = "⏳ Pendiente"
-                pid = p.get("id", 0)
+
                 profit = p.get("profit")
                 if profit is not None:
                     total_profit += profit
@@ -1527,30 +1546,53 @@ def main():
                 odds_str = f"${p.get('odds', 0):+d}"
                 stake_str = f"${p.get('stake', 0):.0f}"
 
-                cols = st.columns([1, 1.5, 0.7, 1.2, 0.7, 0.7, 0.7, 1, 1.2, 0.5])
-                cols[0].markdown(f"`{p.get('date','')}`")
-                cols[1].markdown(f"{p.get('game','')}")
-                cols[2].markdown(f"{p.get('market','')}")
-                cols[3].markdown(f"{p.get('team','')}")
-                cols[4].markdown(f"{prob_str}")
-                cols[5].markdown(f"{odds_str}")
-                cols[6].markdown(f"{stake_str}")
-                cols[7].markdown(f"{r_icon}")
-                cols[8].markdown(f"{profit_str}")
-                if cols[9].button("❌", key=f"del_{pid}", help="Eliminar"):
-                    from bankroll import save_picks, load_picks
-                    d = load_picks()
-                    d["history"] = [x for x in d["history"] if x.get("id") != pid]
-                    save_picks(d)
-                    st.rerun()
+                rows.append({
+                    "Fecha": p.get("date",""),
+                    "Juego": p.get("game",""),
+                    "Mercado": p.get("market",""),
+                    "Pick": p.get("team",""),
+                    "Prob": prob_str,
+                    "Cuota": odds_str,
+                    "Stake": stake_str,
+                    "Estado": r_icon,
+                    "Profit": profit_str,
+                })
+
+            # Dataframe con scroll horizontal
+            if rows:
+                _df = pd.DataFrame(rows)
+                st.dataframe(
+                    _df,
+                    use_container_width=True,
+                    hide_index=True,
+                )
+
+                # Delete pick — compact row with select + button
+                dc1, dc2, dc3 = st.columns([2, 1, 2])
+                with dc1:
+                    del_id = st.selectbox(
+                        "Eliminar pick #",
+                        options=[p.get("id", i+1) for i, p in enumerate(data["history"])],
+                        key="del_pick_sel",
+                        label_visibility="collapsed",
+                        placeholder="Eliminar pick #…",
+                    )
+                with dc2:
+                    if st.button("❌", key="del_pick_btn", use_container_width=True):
+                        from bankroll import save_picks, load_picks
+                        d = load_picks()
+                        d["history"] = [x for x in d["history"] if x.get("id") != del_id]
+                        save_picks(d)
+                        st.rerun()
+                with dc3:
+                    if st.button("🗑️ Limpiar todo", key="clear_all", type="secondary", use_container_width=True):
+                        from bankroll import save_picks
+                        save_picks({"bankroll": 1000, "history": []})
+                        st.session_state.clear()
+                        st.toast("✅ Historial limpiado", icon="🗑️")
 
             green = total_profit >= 0
             st.markdown(f"Profit total: <span style='color:{'#00cc66' if green else '#ff4444'}'><b>${total_profit:+.2f}</b></span>", unsafe_allow_html=True)
-            if st.button("🗑️ Limpiar historial", key="clear_all", type="secondary"):
-                from bankroll import save_picks
-                save_picks({"bankroll": 1000, "history": []})
-                st.session_state.clear()
-                st.toast("✅ Historial limpiado", icon="🗑️")
         else:
             st.info("💡 Aún no has registrado picks. Usa el botón **📝** en las tarjetas o recomendaciones para empezar.")
     except ImportError:
