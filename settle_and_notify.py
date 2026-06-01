@@ -39,6 +39,8 @@ def main():
 
     if count == 0:
         print("  Sin cambios — salteando notificación")
+        if os.environ.get("GITHUB_EVENT_NAME") == "workflow_dispatch":
+            send_telegram("⚾ *MLB Picks Bot* ✅ Activo — sin juegos nuevos liquidados.")
         return
 
     after = load_picks()
