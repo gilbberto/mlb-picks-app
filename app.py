@@ -1021,7 +1021,7 @@ def main():
 
     with st.spinner("🔄 Cargando juegos..."):
         games = fetch_todays_schedule()
-    if not games:
+    if games is None or games == []:
         st.warning("No hay juegos hoy.")
         return
 
@@ -1282,8 +1282,11 @@ def main():
 
     try:
         df = pd.DataFrame(picks)
-    except Exception:
-        st.warning("⚠️ Error generando tabla de picks")
+    except Exception as _e:
+        st.warning(f"⚠️ Error generando tabla ({type(_e).__name__})")
+        _show_dbg = st.checkbox("Ver detalle del error", value=False, key="dbg_picks")
+        if _show_dbg:
+            st.exception(_e)
         return
 
     ev_filter_map = {
