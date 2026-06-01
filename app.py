@@ -834,59 +834,7 @@ def generate_parlays(picks, top_n=3):
 
     parlays = []
 
-    # Parlay 1: Mixed markets (best ML + best RL + best O/U from different games)
-    mixed = []
-    seen_g = set()
-    for mkt_key in ["moneyline", "total"]:
-        pool = [l for l in legs if l["market"] == {"moneyline":"ML","total":"O/U"}[mkt_key] and l["game_id"] not in seen_g]
-        if pool:
-            pool.sort(key=lambda x: x.get(sort_key, 0) or 0, reverse=True)
-            mixed.append(pool[0])
-            seen_g.add(pool[0]["game_id"])
-    # Pick best RL (either RL -1.5 or RL +1.5) from remaining games
-    rl_pool = [l for l in legs if l["market"] in ("RL -1.5","RL +1.5") and l["game_id"] not in seen_g]
-    if rl_pool:
-        rl_pool.sort(key=lambda x: x.get(sort_key, 0) or 0, reverse=True)
-        mixed.append(rl_pool[0])
-        seen_g.add(rl_pool[0]["game_id"])
-    if len(mixed) == 3:
-        dec = 1.0
-        jp = 1.0
-        for leg in mixed:
-            dec *= leg["decimal"]
-            jp *= leg["prob"]
-        parlays.append({
-            "name": "⚡ Top Picks",
-            "desc": "Mejor Moneyline + Run Line + O/U (distintos juegos)",
-            "legs": mixed,
-            "decimal_odds": round(dec, 2),
-            "joint_prob": jp,
-            "american": int(round((dec - 1) * 100)) if dec >= 2 else int(round(-100 / (dec - 1))),
-        })
-
-    # Parlay 2: Highest probability legs (any market, different games)
-    legs_by_prob = sorted(legs, key=lambda x: x["prob"], reverse=True)
-    selected, seen = [], set()
-    for leg in legs_by_prob:
-        if leg["game_id"] not in seen and len(selected) < 3:
-            selected.append(leg)
-            seen.add(leg["game_id"])
-    if len(selected) == 3:
-        dec = 1.0
-        jp = 1.0
-        for leg in selected:
-            dec *= leg["decimal"]
-            jp *= leg["prob"]
-        parlays.append({
-            "name": "✅ High Confidence",
-            "desc": "3 picks con mayor probabilidad individual (distintos juegos)",
-            "legs": selected,
-            "decimal_odds": round(dec, 2),
-            "joint_prob": jp,
-            "american": int(round((dec - 1) * 100)) if dec >= 2 else int(round(-100 / (dec - 1))),
-        })
-
-    # Parlay 3: Best value (EV) — only when real odds exist
+    # Parlay: Best value (EV) — only when real odds exist
     if has_any_ev:
         selected, seen = [], set()
         for leg in legs:
@@ -1437,7 +1385,7 @@ def main():
     if parlays:
         st.divider()
         st.markdown("## 🎯 Parlays Recomendados")
-        st.caption("Combinaciones de 3 picks con mejor valor. Todos deben ganar para pagar el parlay.")
+        st.caption("Top 3 picks por valor esperado. Todos deben ganar para pagar el parlay.")
         for i, parlay in enumerate(parlays):
             render_parlay(parlay, i)
 
