@@ -1280,7 +1280,11 @@ def main():
     if not picks:
         return
 
-    df = pd.DataFrame(picks)
+    try:
+        df = pd.DataFrame(picks)
+    except Exception:
+        st.warning("⚠️ Error generando tabla de picks")
+        return
 
     ev_filter_map = {
         "🔥 HIGH VALUE": lambda x: x is not None and x > 0.15,
