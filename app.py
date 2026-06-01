@@ -878,21 +878,7 @@ def render_parlay(parlay, idx):
         })
     st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
     st.caption(f"**Parlay {parlay['american']:+d}** · Dec: {parlay['decimal_odds']}x · Prob: {parlay['joint_prob']*100:.1f}% · EV: {ev_parlay:.1%}  \n"
-               f"Apuesta $10 → ${payout_10:.2f}  |  $25 → ${payout_25:.2f}  |  $50 → ${payout_50:.2f}")
-        with cols2[3]:
-            st.markdown("")
-
-        with st.expander("💰 Ver ganancias potenciales"):
-            st.markdown(f"""
-            | Apuesta | Ganancia | Total retorno |
-            |---------|----------|--------------|
-            | $10 | ${payout_10:.2f} | ${10 + payout_10:.2f} |
-            | $25 | ${payout_25:.2f} | ${25 + payout_25:.2f} |
-            | $50 | ${payout_50:.2f} | ${50 + payout_50:.2f} |
-            | $100 | ${round(100*parlay['decimal_odds']-100,2):.2f} | ${round(100*parlay['decimal_odds'],2):.2f} |
-            """)
-
-        st.divider()
+               f"$10 → ${payout_10:.2f}  |  $25 → ${payout_25:.2f}  |  $50 → ${payout_50:.2f}")
 
 
 # ─── Main ───
