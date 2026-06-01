@@ -1373,6 +1373,8 @@ def main():
             return round((prob - ip) * 100, 1)
 
         for p in picks:
+            if p.get("status") == "Final":
+                continue
             gl = f"{p['away_abbrev']} @ {p['home_abbrev']}"
 
             for mkt_key, label in [("moneyline", "ML"), ("spread_minus", "RL -1.5"),
