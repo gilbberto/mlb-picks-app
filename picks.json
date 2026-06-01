@@ -32,6 +32,22 @@
       "profit": null,
       "label": "\ud83d\udd25 High",
       "settled": false
+    },
+    {
+      "id": 3,
+      "date": "2026-06-01",
+      "game": "TEX @ STL",
+      "market": "O/U",
+      "team": "Over",
+      "detail": "o7.5",
+      "model_prob": 0.783,
+      "odds": -124,
+      "stake": 128.3,
+      "bankroll_before": 1000,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ]
 }
