@@ -700,8 +700,9 @@ def render_card(pick, key_suffix="", game_idx=0):
                                 sk,_,sl = recommend_stake(pv, oi, bankroll=bk)
                                 if sk > 0:
                                     pt = entry.get("pick","")
+                                    dtl = entry.get("detail","")
                                     ts = datetime.now(TZ).strftime("%Y-%m-%d")
-                                    add_pick(ts, gl, mkt_label, pv, oi, sk, bk, sl, pt)
+                                    add_pick(ts, gl, mkt_label, pv, oi, sk, bk, sl, pt, dtl)
                                     st.session_state[log_key] = True
                                 else:
                                     st.caption("⚠️ Kelly=0")
@@ -1387,8 +1388,9 @@ def main():
                                 sk,_,sl = recommend_stake(pv, oi, bankroll=bk)
                                 if sk > 0:
                                     pt = r["pick"]
+                                    dtl = r.get("entry", {}).get("detail", "")
                                     ts = datetime.now(TZ).strftime("%Y-%m-%d")
-                                    add_pick(ts, gl, r["market"], pv, oi, sk, bk, sl, pt)
+                                    add_pick(ts, gl, r["market"], pv, oi, sk, bk, sl, pt, dtl)
                                     st.session_state[f"done_{log_key}"] = True
                                 else:
                                     st.caption("⚠️ Kelly=0")
@@ -1434,6 +1436,27 @@ def main():
             mc2.metric("Profit", f"${pnl['profit']:+.0f}", delta=f"{pnl['roi']:+.0f}%")
             mc3.metric("Record", f"{pnl['wins']}-{pnl['losses']}", delta=f"{pnl['pct']}%")
             mc4.metric("Pendientes", pnl["open"])
+
+            # Bankroll chart
+            if len(data["history"]) >= 2:
+                try:
+                    import altair as alt
+                    import pandas as pd
+                    chart_data = []
+                    br = 1000
+                    for p in data["history"]:  # chronological
+                        if p.get("settled") and p.get("profit") is not None:
+                            br += p["profit"]
+                        chart_data.append({"#": len(chart_data), "Bankroll": br, "Fecha": p.get("date","")})
+                    cdf = pd.DataFrame(chart_data)
+                    chart = alt.Chart(cdf).mark_line(point=True, color="#00cc66").encode(
+                        x=alt.X("#:Q", title="Pick #", axis=alt.Axis(tickMinStep=1)),
+                        y=alt.Y("Bankroll:Q", title="Bankroll ($)", scale=alt.Scale(zero=False)),
+                        tooltip=["Fecha:N", "Bankroll:Q"],
+                    ).properties(height=200)
+                    st.altair_chart(chart, use_container_width=True)
+                except:
+                    pass
 
             # Header
             hcols = st.columns([1, 1.5, 0.7, 1.2, 0.7, 0.7, 0.7, 1, 1.2, 0.5])

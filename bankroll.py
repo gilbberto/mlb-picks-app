@@ -124,7 +124,7 @@ def save_picks(data):
     with open(DB_PATH, "w") as f:
         json.dump(data, f, indent=2)
 
-def add_pick(date, game, market, model_prob, odds, stake, bankroll, label="", team=""):
+def add_pick(date, game, market, model_prob, odds, stake, bankroll, label="", team="", detail=""):
     data = load_picks()
     # Parse team abbreviation from "AWAY @ HOME" if team not given
     if not team and " @ " in game:
@@ -138,6 +138,7 @@ def add_pick(date, game, market, model_prob, odds, stake, bankroll, label="", te
         "game": game,
         "market": market,
         "team": team,
+        "detail": detail,
         "model_prob": round(model_prob, 3),
         "odds": odds,
         "stake": round(stake, 2),
@@ -265,6 +266,33 @@ def auto_settle():
                         won = match["away_runs"] > match["home_runs"]
                     elif team == match["home_abbr"]:
                         won = match["home_runs"] > match["away_runs"]
+
+                elif market in ("RL -1.5", "RL +1.5"):
+                    if not team: continue
+                    team_runs = match["away_runs"] if team == match["away_abbr"] else match["home_runs"]
+                    opp_runs = match["home_runs"] if team == match["away_abbr"] else match["away_runs"]
+                    diff = team_runs - opp_runs
+                    if market == "RL -1.5":
+                        won = diff >= 1.5
+                    else:  # RL +1.5
+                        won = diff >= -1.5
+
+                elif market == "O/U":
+                    detail = p.get("detail", "")
+                    total = match["away_runs"] + match["home_runs"]
+                    pick_side = team  # "Over" or "Under"
+                    # Parse line from detail (e.g., "o8.5", "u8.5", "o7", "u7")
+                    line = None
+                    if detail:
+                        try:
+                            line = float(detail.replace("o","").replace("u",""))
+                        except:
+                            pass
+                    if line is not None and pick_side:
+                        if pick_side.lower() == "over":
+                            won = total > line
+                        elif pick_side.lower() == "under":
+                            won = total < line
 
                 if won is not None:
                     profit = settle_pick(p["id"], won)
