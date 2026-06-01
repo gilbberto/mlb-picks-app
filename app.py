@@ -1468,7 +1468,6 @@ def main():
             if len(data["history"]) >= 2:
                 try:
                     import altair as alt
-                    import pandas as pd
                     chart_data = []
                     br = 1000
                     for p in data["history"]:  # chronological
