@@ -96,6 +96,22 @@
       "profit": null,
       "label": "\ud83d\udd25 High",
       "settled": false
+    },
+    {
+      "id": 7,
+      "date": "2026-06-02",
+      "game": "SD @ PHI",
+      "market": "RL +1.5",
+      "team": "Philadelphia Phillies",
+      "detail": "+1.5",
+      "model_prob": 0.737,
+      "odds": 163,
+      "stake": 135.21,
+      "bankroll_before": 938.46,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ]
 }
