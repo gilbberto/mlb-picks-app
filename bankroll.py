@@ -310,6 +310,136 @@ def auto_settle():
 
     return settled_count, errors
 
+PRED_PATH = os.path.join(os.path.dirname(__file__), "predictions_log.json")
+
+def log_predictions(picks, today=None):
+    """Save all model predictions for the day to predictions_log.json."""
+    if today is None:
+        today = datetime.now().strftime("%Y-%m-%d")
+    try:
+        with open(PRED_PATH) as f:
+            data = json.load(f)
+    except:
+        data = {"predictions": []}
+
+    existing_ids = {p["id"] for p in data["predictions"] if p.get("date") == today}
+    new_count = 0
+    for pick in picks:
+        gid = pick.get("game_id", "")
+        for mkt_key, label in [("moneyline", "ML"), ("spread_minus", "RL -1.5"),
+                                ("spread_plus", "RL +1.5"), ("total", "O/U")]:
+            entry = pick.get(mkt_key)
+            if not entry:
+                continue
+            pid = f"{gid}_{mkt_key}"
+            if pid in existing_ids:
+                continue
+            ha = pick.get("home_abbrev", "?")
+            aa = pick.get("away_abbrev", "?")
+            data["predictions"].append({
+                "id": pid,
+                "date": today,
+                "game": f"{aa} @ {ha}",
+                "away_abbrev": aa,
+                "home_abbrev": ha,
+                "market": label,
+                "pick": entry.get("pick", ""),
+                "prob": entry.get("prob", 0),
+                "odds": entry.get("odds", "N/A"),
+                "edge": entry.get("edge"),
+                "detail": entry.get("detail", ""),
+                "result": None,
+                "settled": False,
+            })
+            new_count += 1
+    if new_count > 0:
+        with open(PRED_PATH, "w") as f:
+            json.dump(data, f, indent=2)
+    return new_count
+
+def settle_predictions():
+    """Settle unsettled predictions against MLB API results."""
+    from datetime import datetime
+    try:
+        with open(PRED_PATH) as f:
+            data = json.load(f)
+    except:
+        return 0, []
+
+    unsettled = [p for p in data["predictions"] if not p.get("settled")]
+    if not unsettled:
+        return 0, []
+
+    # Group by date
+    dates = set(p["date"] for p in unsettled)
+    settled_count = 0
+    errors = []
+
+    for dt in dates:
+        games = _fetch_mlb_games(dt)
+        if not games:
+            continue
+        for p in unsettled:
+            pid = p["id"]
+            # Match game
+            gl = f"{p.get('away_abbrev','')} @ {p.get('home_abbrev','')}"
+            game = None
+            for g in games:
+                if g["label"] == gl:
+                    game = g
+                    break
+            if not game:
+                continue
+
+            market = p["market"]
+            pick_side = p["pick"]
+            detail = p.get("detail", "")
+            away_runs = game["away_runs"]
+            home_runs = game["home_runs"]
+
+            try:
+                won = None
+                if market == "ML":
+                    if pick_side == game["home_name"]:
+                        won = home_runs > away_runs
+                    else:
+                        won = away_runs > home_runs
+                elif market in ("RL -1.5", "RL +1.5"):
+                    fav = True if market == "RL -1.5" else False
+                    margin = home_runs - away_runs
+                    if fav:
+                        won = (pick_side == game["home_name"] and margin >= 1) or \
+                              (pick_side == game["away_name"] and -margin >= 1)
+                    else:
+                        won = (pick_side == game["home_name"] and -margin < 1) or \
+                              (pick_side == game["away_name"] and margin < 1)
+                elif market == "O/U":
+                    total = home_runs + away_runs
+                    line = None
+                    if detail:
+                        try:
+                            line = float(detail.replace("o","").replace("u",""))
+                        except:
+                            pass
+                    if line:
+                        if pick_side.lower() == "over":
+                            won = total > line
+                        elif pick_side.lower() == "under":
+                            won = total < line
+
+                if won is not None:
+                    p["result"] = "W" if won else "L"
+                    p["settled"] = True
+                    settled_count += 1
+            except Exception as e:
+                errors.append(f"Pred #{pid}: {e}")
+
+    if settled_count > 0:
+        with open(PRED_PATH, "w") as f:
+            json.dump(data, f, indent=2)
+    return settled_count, errors
+
+
 if __name__ == "__main__":
     # Demo / test
     print("=== Kelly Demo ===")

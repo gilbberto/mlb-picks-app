@@ -37,5 +37,5 @@ jobs:
         run: |
           git config user.name "MLB Picks Bot"
           git config user.email "bot@mlb-picks.local"
-          git add picks.json game_starts_notified.json
+          git add picks.json game_starts_notified.json predictions_log.json
           git diff --cached --quiet || (git commit -m "auto-settle: update picks.json + game starts" && git push)

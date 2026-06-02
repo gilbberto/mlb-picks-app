@@ -6,7 +6,7 @@ Envs: TELEGRAM_TOKEN, TELEGRAM_CHAT_ID
 import os, sys, json
 from datetime import datetime
 sys.path.insert(0, os.path.dirname(__file__))
-from bankroll import auto_settle, load_picks, get_pnl, REV_TEAM, MLB_API
+from bankroll import auto_settle, settle_predictions, load_picks, get_pnl, REV_TEAM, MLB_API
 import requests
 
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN", "")
@@ -151,6 +151,13 @@ def main():
         msg = "\n".join(lines)
         print(f"\nMensaje:\n{msg}")
         send_telegram(msg)
+
+    pred_count, pred_errors = settle_predictions()
+    if pred_count > 0:
+        print(f"  Predicciones liquidadas: {pred_count}")
+        if pred_errors:
+            for e in pred_errors:
+                print(f"  ⚠️ {e}")
 
     check_game_starts_and_scores()
 

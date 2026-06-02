@@ -1276,6 +1276,13 @@ def main():
             pick_entry["border_color"] = border
             picks.append(pick_entry)
 
+    # Log all predictions for tracking
+    try:
+        from bankroll import log_predictions
+        log_predictions(picks)
+    except:
+        pass
+
     if not picks:
         return
 
@@ -1768,6 +1775,33 @@ def main():
                 if cal_rows:
                     with st.expander("📐 Calibración del modelo", expanded=False):
                         st.dataframe(pd.DataFrame(cal_rows), hide_index=True, use_container_width=True)
+
+            # ── Predicciones history ──
+            try:
+                with open(os.path.join(os.path.dirname(__file__), "predictions_log.json")) as f:
+                    pred_data = json.load(f)
+                all_preds = pred_data.get("predictions", [])
+                settled_preds = [p for p in all_preds if p.get("settled")]
+                if settled_preds:
+                    pw = sum(1 for p in settled_preds if p["result"] == "W")
+                    pl = sum(1 for p in settled_preds if p["result"] == "L")
+                    pt = pw + pl
+                    pct = round(pw / pt * 100) if pt > 0 else 0
+                    st.markdown(f"**📊 Rendimiento del modelo:** {pw}-{pl} ({pct}%) en {pt} predicciones liquidadas")
+                    # By market
+                    mkt_rows = []
+                    for mkt in ("ML", "RL -1.5", "RL +1.5", "O/U"):
+                        pool = [p for p in settled_preds if p["market"] == mkt]
+                        if not pool:
+                            continue
+                        mw = sum(1 for p in pool if p["result"] == "W")
+                        mt = len(pool)
+                        mp = round(mw / mt * 100)
+                        mkt_rows.append({"Mercado": mkt, "G-P": f"{mw}-{mt-mw}", "Picks": mt, "%": f"{mp}%"})
+                    if mkt_rows:
+                        with st.expander("📊 Por mercado", expanded=False):
+                            st.dataframe(pd.DataFrame(mkt_rows), hide_index=True, use_container_width=True)
+            except: pass
         else:
             st.info("💡 Aún no has registrado picks. Usa el botón **📝** en las tarjetas o recomendaciones para empezar.")
     except ImportError:

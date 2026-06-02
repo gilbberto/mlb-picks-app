@@ -3,7 +3,7 @@ morning_summary.py — GitHub Actions: daily summary of today's picks via Telegr
 Usage: python3 morning_summary.py
 Envs: TELEGRAM_TOKEN, TELEGRAM_CHAT_ID
 """
-import os, sys
+import os, sys, json
 sys.path.insert(0, os.path.dirname(__file__))
 from bankroll import load_picks, get_pnl
 from datetime import datetime, timezone, timedelta
@@ -39,8 +39,32 @@ def main():
 
     todays_picks = [p for p in data["history"] if p.get("date") == today]
 
+    # Predictions log (model predictions for today)
+    pred_path = os.path.join(os.path.dirname(__file__), "predictions_log.json")
+    try:
+        with open(pred_path) as f:
+            pred_data = json.load(f)
+        todays_preds = [p for p in pred_data.get("predictions", []) if p.get("date") == today]
+    except:
+        todays_preds = []
+
+    pred_line = ""
+    if todays_preds:
+        settled = [p for p in todays_preds if p.get("settled")]
+        pending = [p for p in todays_preds if not p.get("settled")]
+        pw = sum(1 for p in settled if p["result"] == "W")
+        pl = sum(1 for p in settled if p["result"] == "L")
+        pt = pw + pl
+        if pt > 0:
+            pred_line = f"📊 *Modelo:* {pw}-{pl} ({round(pw/pt*100)}%) en {pt} liquidados"
+        if pending:
+            pred_line += f" | {len(pending)} pendientes"
+
     if not todays_picks:
-        msg = f"☀️ *Buenos días! — {today}*\n\nNo hay picks registrados para hoy."
+        if pred_line:
+            msg = f"☀️ *Buenos días! — {today}*\n{pred_line}\n\nSin picks registrados. Revisa las predicciones del modelo."
+        else:
+            msg = f"☀️ *Buenos días! — {today}*\n\nNo hay actividad para hoy."
     else:
         lines = [f"☀️ *Resumen del día — {today}*\n"]
         total_stake = 0
@@ -59,6 +83,9 @@ def main():
         lines.append(f"📊 *Record:* {pnl['wins']}-{pnl['losses']} ({pnl['pct']}%)")
         lines.append(f"📈 *Profit:* ${pnl['profit']:.2f} ({pnl['roi']}%)")
         lines.append(f"🎯 *Stake total hoy:* ${total_stake:.2f}")
+        if pred_line:
+            lines.append("")
+            lines.append(pred_line)
         msg = "\n".join(lines)
 
     print(msg)
