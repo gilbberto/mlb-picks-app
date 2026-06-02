@@ -112,6 +112,22 @@
       "profit": null,
       "label": "\ud83d\udd25 High",
       "settled": false
+    },
+    {
+      "id": 8,
+      "date": "2026-06-02",
+      "game": "CLE @ NYY",
+      "market": "ML",
+      "team": "Cleveland Guardians",
+      "detail": "",
+      "model_prob": 0.58,
+      "odds": 210,
+      "stake": 89.02,
+      "bankroll_before": 938.46,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ]
 }
