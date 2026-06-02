@@ -1,6 +1,14 @@
 # MLB Picks App — Historial de Sesión
 
-## Fecha: 1 Jun 2026
+## Fecha: 2 Jun 2026
+
+### Correcciones RL
+- **Bug `extract_market_odds`**: agregado `expect_point` para filtrar por -1.5 o +1.5 — evita devolver odds de la línea equivocada cuando modelo y mercado no coinciden
+- **Bug `monte_carlo_predict`**: probabilidades ahora se computan por equipo/línea (`spr_home_minus`, `spr_home_plus`, `spr_away_minus`, `spr_away_plus`) en vez de siempre desde el local
+- **Asignación por mercado**: RL -1.5/+1.5 ahora usa la asignación de la odds API (quien está en -1.5 en la casa) en vez del `spr_exp_margin` del modelo
+- **Fallback `predict_spread`**: recalcula probs con margen firmado cuando el mercado y el modelo difieren
+
+
 
 ### Funcionalidades implementadas
 

@@ -334,10 +334,10 @@ def match_game(odds_list, home_name, away_name):
     return None
 
 
-def extract_market_odds(game_odds, market_key, outcome_name=None):
+def extract_market_odds(game_odds, market_key, outcome_name=None, expect_point=None):
     if not game_odds:
         return None, None
-    best_price, best_book = None, None
+    best_price, best_book, best_point = None, None, None
     for book in game_odds.get("bookmakers", []):
         for mkt in book.get("markets", []):
             if mkt.get("key") != market_key:
@@ -345,8 +345,10 @@ def extract_market_odds(game_odds, market_key, outcome_name=None):
             for oc in mkt.get("outcomes", []):
                 if outcome_name and oc.get("name") != outcome_name:
                     continue
-                price = oc.get("price")
                 point = oc.get("point")
+                if expect_point is not None and point != expect_point:
+                    continue
+                price = oc.get("price")
                 if best_price is None or (price is not None and abs(price) > abs(best_price)):
                     best_price = price
                     best_book = book.get("title", "Unknown")
@@ -493,7 +495,8 @@ def monte_carlo_predict(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f, n
     """Run Monte Carlo simulation using trained models. Returns dict."""
     if not _MODELS_LOADED:
         return {"ml_hp": None, "ml_ap": None,
-                "spr_fav_prob": None, "spr_dog_prob": None, "spr_exp_margin": None,
+                "spr_home_minus": None, "spr_home_plus": None,
+                "spr_away_minus": None, "spr_away_plus": None, "spr_exp_margin": None,
                 "exp_total": None, "total_std": 3.2}
 
     row = build_rf_feature_row(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f)
@@ -512,15 +515,21 @@ def monte_carlo_predict(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f, n
     total_sims = np.random.normal(exp_total, 3.2, n_sims)
 
     mc_hw = np.mean(rdiff_sims > 0)
-    mc_cover_minus = np.mean(rdiff_sims >= 1.5)
-    mc_cover_plus = np.mean(rdiff_sims >= -1.5)
+    mc_home_minus = np.mean(rdiff_sims >= 1.5)   # home cubre -1.5
+    mc_home_plus  = np.mean(rdiff_sims >= -1.5)  # home cubre +1.5
     mc_over = np.mean(total_sims > 8.5)
+
+    # Probs complementarias para el visitante
+    mc_away_minus = 1.0 - mc_home_plus   # visita cubre -1.5
+    mc_away_plus  = 1.0 - mc_home_minus  # visita cubre +1.5
 
     return {
         "ml_hp": round(float(mc_hw), 4),
         "ml_ap": round(float(1 - mc_hw), 4),
-        "spr_fav_prob": round(float(mc_cover_minus), 4),
-        "spr_dog_prob": round(float(mc_cover_plus), 4),
+        "spr_home_minus": round(float(mc_home_minus), 4),
+        "spr_home_plus": round(float(mc_home_plus), 4),
+        "spr_away_minus": round(float(mc_away_minus), 4),
+        "spr_away_plus": round(float(mc_away_plus), 4),
         "spr_exp_margin": round(float(exp_rdiff), 2),
         "exp_total": round(float(exp_total), 2),
         "total_std": 3.2,
@@ -1111,14 +1120,19 @@ def main():
 
             ml_hp = mc["ml_hp"]
             ml_ap = mc["ml_ap"]
-            spr_fav_prob = mc["spr_fav_prob"]
-            spr_dog_prob = mc["spr_dog_prob"]
+            spr_home_minus = mc["spr_home_minus"]
+            spr_home_plus = mc["spr_home_plus"]
+            spr_away_minus = mc["spr_away_minus"]
+            spr_away_plus = mc["spr_away_plus"]
             spr_exp_margin = mc["spr_exp_margin"]
             exp_total = mc["exp_total"]
             total_std = mc["total_std"]
 
+            # Asignación inicial basada en el modelo (se sobrescribe con el mercado si hay odds)
             spr_fav_team = hn if spr_exp_margin >= 0 else an
             spr_dog_team = an if spr_exp_margin >= 0 else hn
+            spr_fav_prob = spr_home_minus if spr_exp_margin >= 0 else spr_away_minus
+            spr_dog_prob = spr_away_plus if spr_exp_margin >= 0 else spr_home_plus
 
             if ml_hp is None:
                 # Fallback: use old model
@@ -1128,7 +1142,8 @@ def main():
                                                  hpitch if hpitch.get("ip",0) >= 10 else None,
                                                  apitch if apitch.get("ip",0) >= 10 else None,
                                                  elo_hp, park_f)
-                spr_fav_prob, spr_dog_prob, spr_exp_margin = predict_spread(hf, af, park_f)
+                spr_fav_prob_old, spr_dog_prob_old, spr_exp_margin_old = predict_spread(hf, af, park_f)
+                spr_fav_prob, spr_dog_prob, spr_exp_margin = spr_fav_prob_old, spr_dog_prob_old, spr_exp_margin_old
                 spr_fav_team = hn if spr_exp_margin >= 0 else an
                 spr_dog_team = an if spr_exp_margin >= 0 else hn
                 exp_total, total_std = predict_totals(hf, af, hs, aws,
@@ -1178,6 +1193,10 @@ def main():
                 "spr_fav_team": spr_fav_team, "spr_fav_prob": spr_fav_prob,
                 "spr_dog_team": spr_dog_team, "spr_dog_prob": spr_dog_prob,
                 "spr_exp_margin": spr_exp_margin,
+                "spr_home_minus": spr_home_minus,
+                "spr_home_plus": spr_home_plus,
+                "spr_away_minus": spr_away_minus,
+                "spr_away_plus": spr_away_plus,
                 "home_pitcher": h_pitcher_name, "away_pitcher": a_pitcher_name,
                 "home_elo": h_elo, "away_elo": a_elo,
                 "venue": venue_name,
@@ -1195,6 +1214,54 @@ def main():
             if odds_raw:
                 og = match_game(odds_raw, hn, an)
                 if og:
+                    # Sobrescribir asignación RL con la del mercado (quien está en -1.5 / +1.5)
+                    m_fav, m_dog = None, None
+                    for book in og.get("bookmakers", []):
+                        for mkt in book.get("markets", []):
+                            if mkt.get("key") == "spreads":
+                                oc = mkt.get("outcomes", [])
+                                if len(oc) >= 2:
+                                    for o in oc:
+                                        if o.get("point", 0) < 0: m_fav = o["name"]
+                                        elif o.get("point", 0) > 0: m_dog = o["name"]
+                                break
+                        if m_fav: break
+                    if m_fav and m_dog:
+                        spr_fav_team = m_fav
+                        spr_dog_team = m_dog
+                        # Recalcular probs según qué equipo es favorito del mercado
+                        hm = pick_entry.get("spr_home_minus")
+                        if hm is not None:
+                            # XGBoost path: usar raw MC probs
+                            if m_fav == hn:
+                                spr_fav_prob = hm
+                                spr_dog_prob = pick_entry["spr_away_plus"]
+                            else:
+                                spr_fav_prob = pick_entry["spr_away_minus"]
+                                spr_dog_prob = pick_entry["spr_home_plus"]
+                        else:
+                            # Fallback path: recalcular con margen firmado
+                            h_exp = (hf.get("rs_exp", hf["rs"]) * af.get("ra_exp", af["ra"])) / LG_AVG_RUNS * park_f
+                            a_exp = (af.get("rs_exp", af["rs"]) * hf.get("ra_exp", hf["ra"])) / LG_AVG_RUNS * park_f
+                            exp_margin = h_exp - a_exp
+                            std = 3.0
+                            if m_fav == hn:
+                                spr_fav_prob = 1 - norm_cdf(1.5, exp_margin, std)
+                                spr_dog_prob = norm_cdf(1.5, exp_margin, std)
+                            else:
+                                spr_fav_prob = norm_cdf(-1.5, exp_margin, std)
+                                spr_dog_prob = 1 - norm_cdf(-1.5, exp_margin, std)
+                        try:
+                            from bankroll import calibrate_rl
+                            spr_fav_prob = calibrate_rl(spr_fav_prob)
+                            spr_dog_prob = 1.0 - spr_fav_prob
+                        except ImportError:
+                            pass
+                        pick_entry["spr_fav_team"] = spr_fav_team
+                        pick_entry["spr_dog_team"] = spr_dog_team
+                        pick_entry["spr_fav_prob"] = spr_fav_prob
+                        pick_entry["spr_dog_prob"] = spr_dog_prob
+
                     # Moneyline odds
                     tgt = hn if ml_hp > 0.50 else an
                     ml_price, ml_book, _ = extract_market_odds(og, "h2h", tgt)
@@ -1215,7 +1282,7 @@ def main():
                         pick_entry["moneyline"] = {"pick": tgt, "prob": max(cal_hp, cal_ap)*100 if cal_hp else max(ml_hp, ml_ap)*100, "raw_prob": max(ml_hp, ml_ap)*100, "ev": None, "odds": "N/A", "book": "", "edge": None}
 
                     # Spread odds — favorite -1.5
-                    spr_price, spr_book, _ = extract_market_odds(og, "spreads", spr_fav_team)
+                    spr_price, spr_book, _ = extract_market_odds(og, "spreads", spr_fav_team, expect_point=-1.5)
                     if spr_price and spr_fav_prob > 0:
                         ev_spr = compute_ev(spr_fav_prob*100, spr_price)
                         pick_entry["spread_minus"] = {
@@ -1228,7 +1295,7 @@ def main():
                         pick_entry["spread_minus"] = {"pick": spr_fav_team, "prob": spr_fav_prob*100, "detail": "-1.5", "ev": None, "odds": "N/A", "book": ""}
 
                     # Spread odds — underdog +1.5
-                    spr_dog_price, spr_dog_book, _ = extract_market_odds(og, "spreads", spr_dog_team)
+                    spr_dog_price, spr_dog_book, _ = extract_market_odds(og, "spreads", spr_dog_team, expect_point=1.5)
                     if spr_dog_price and spr_dog_prob > 0:
                         ev_spr_dog = compute_ev(spr_dog_prob*100, spr_dog_price)
                         pick_entry["spread_plus"] = {
