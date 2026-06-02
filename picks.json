@@ -1,5 +1,5 @@
 {
-  "bankroll": 1000,
+  "bankroll": 938.46,
   "history": [
     {
       "id": 1,
@@ -12,10 +12,10 @@
       "odds": 155,
       "stake": 212.62,
       "bankroll_before": 1000,
-      "result": null,
-      "profit": null,
+      "result": "L",
+      "profit": -212.62,
       "label": "\ud83d\udd25 High",
-      "settled": false
+      "settled": true
     },
     {
       "id": 2,
@@ -28,10 +28,10 @@
       "odds": 130,
       "stake": 151.37,
       "bankroll_before": 1000,
-      "result": null,
-      "profit": null,
+      "result": "W",
+      "profit": 196.78,
       "label": "\ud83d\udd25 High",
-      "settled": false
+      "settled": true
     },
     {
       "id": 3,
@@ -44,10 +44,10 @@
       "odds": -124,
       "stake": 128.3,
       "bankroll_before": 1000,
-      "result": null,
-      "profit": null,
+      "result": "L",
+      "profit": -128.3,
       "label": "\ud83d\udd25 High",
-      "settled": false
+      "settled": true
     },
     {
       "id": 4,
@@ -60,10 +60,10 @@
       "odds": -125,
       "stake": 103.25,
       "bankroll_before": 1000,
-      "result": null,
-      "profit": null,
+      "result": "W",
+      "profit": 82.6,
       "label": "\ud83d\udd25 High",
-      "settled": false
+      "settled": true
     }
   ]
 }
