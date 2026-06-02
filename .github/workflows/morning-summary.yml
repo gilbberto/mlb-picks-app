@@ -2,8 +2,8 @@ name: Morning Summary
 
 on:
   schedule:
-    # 8:00 AM Chihuahua = 13:00 UTC (summer DST)
-    - cron: '0 13 * * *'
+    # 8:00 AM Chihuahua = 14:00 UTC (UTC-6 year-round)
+    - cron: '0 14 * * *'
   workflow_dispatch:
 
 jobs:

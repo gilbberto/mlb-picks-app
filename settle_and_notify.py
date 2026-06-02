@@ -141,8 +141,8 @@ def main():
         for p in after["history"]:
             if p["id"] in pending_before and p.get("settled"):
                 profit = p.get("profit", 0)
-                icon = "✅" if p.get("won") else "❌"
-                result = "GANADA" if p.get("won") else "PERDIDA"
+                icon = "✅" if p.get("result") == "W" else "❌"
+                result = "GANADA" if p.get("result") == "W" else "PERDIDA"
                 lines.append(f"{icon} *{p['game']}* → {p.get('market','?')} {p.get('team','?')} {icon} *{result}* (${profit:+.2f})")
         lines.append("")
         lines.append(f"💰 *Bankroll:* ${after['bankroll']:.2f}")
