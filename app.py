@@ -622,10 +622,13 @@ def send_telegram(msg):
     try:
         tok = st.secrets.get("TELEGRAM_TOKEN", os.environ.get("TELEGRAM_TOKEN", ""))
         cid = st.secrets.get("TELEGRAM_CHAT_ID", os.environ.get("TELEGRAM_CHAT_ID", ""))
-        if not tok or not cid: return
-        requests.post(f"https://api.telegram.org/bot{tok}/sendMessage",
-                      json={"chat_id": cid, "text": msg, "parse_mode": "Markdown"}, timeout=10)
+        if not tok or not cid: return None
+        r = requests.post(f"https://api.telegram.org/bot{tok}/sendMessage",
+                       json={"chat_id": cid, "text": msg, "parse_mode": "Markdown"}, timeout=10)
+        if r.ok:
+            return r.json().get("result", {}).get("message_id")
     except: pass
+    return None
 
 def fmt_ou(pick_name, detail):
     if not detail:
@@ -634,10 +637,18 @@ def fmt_ou(pick_name, detail):
     return f"{pick_name} {line}"
 
 
-def notify_pick(gl, market, team, stake, odds, bankroll):
+def notify_pick(gl, market, team, stake, odds, bankroll, pick_id=None):
     try:
         s = f"📝 *Pick registrado*\n{gl} → {market} {team}\nApuesta: ${stake:.2f} @ {odds:+d}\nBankroll: ${bankroll:.2f}"
-        send_telegram(s)
+        mid = send_telegram(s)
+        if mid and pick_id:
+            from bankroll import load_picks, save_picks
+            d = load_picks()
+            for p in d["history"]:
+                if p["id"] == pick_id:
+                    p["telegram_msg_id"] = mid
+                    break
+            save_picks(d)
     except: pass
 
 
@@ -774,7 +785,7 @@ def _log_pick_fn(pick, mkt_key, mkt_label, entry):
         pick_team = entry.get("pick", "")
         today = datetime.now(TZ).strftime("%Y-%m-%d")
         pid = add_pick(today, gl, mkt_label, prob, odds_int, stake, bk, slabel, pick_team)
-        notify_pick(gl, mkt_label, pick_team, stake, odds_int, bk)
+        notify_pick(gl, mkt_label, pick_team, stake, odds_int, bk, pick_id=pid)
         sync_picks_to_github()
         return True
     except Exception as e:
@@ -876,8 +887,8 @@ def render_card(pick, key_suffix="", game_idx=0):
                             sk,_,sl = recommend_stake(pv, oi, bankroll=bk)
                             if sk > 0:
                                 ts = datetime.now(TZ).strftime("%Y-%m-%d")
-                                add_pick(ts, gl, mkt_label, pv, oi, sk, bk, sl, pick_name, detail)
-                                notify_pick(gl, mkt_label, pick_name, sk, oi, bk)
+                                pid = add_pick(ts, gl, mkt_label, pv, oi, sk, bk, sl, pick_name, detail)
+                                notify_pick(gl, mkt_label, pick_name, sk, oi, bk, pick_id=pid)
                                 sync_picks_to_github()
                                 st.session_state[log_key] = True
                             else:
@@ -1637,8 +1648,8 @@ def main():
                                 pt = r["pick"]
                                 dtl = r.get("entry", {}).get("detail", "")
                                 ts = datetime.now(TZ).strftime("%Y-%m-%d")
-                                add_pick(ts, gl, r["market"], pv, oi, sk, bk, sl, pt, dtl)
-                                notify_pick(gl, r["market"], pt, sk, oi, bk)
+                                pid = add_pick(ts, gl, r["market"], pv, oi, sk, bk, sl, pt, dtl)
+                                notify_pick(gl, r["market"], pt, sk, oi, bk, pick_id=pid)
                                 sync_picks_to_github()
                                 st.session_state[f"done_{lk}"] = True
                                 try: st.query_params.clear()
@@ -1823,6 +1834,16 @@ def main():
                     pid = int(del_pid)
                     from bankroll import save_picks, load_picks
                     d = load_picks()
+                    # Delete Telegram message if stored
+                    pick_to_del = next((p for p in d["history"] if p.get("id") == pid), None)
+                    if pick_to_del and pick_to_del.get("telegram_msg_id"):
+                        try:
+                            tok = st.secrets.get("TELEGRAM_TOKEN", os.environ.get("TELEGRAM_TOKEN", ""))
+                            cid = st.secrets.get("TELEGRAM_CHAT_ID", os.environ.get("TELEGRAM_CHAT_ID", ""))
+                            if tok and cid:
+                                requests.post(f"https://api.telegram.org/bot{tok}/deleteMessage",
+                                              json={"chat_id": cid, "message_id": pick_to_del["telegram_msg_id"]}, timeout=5)
+                        except: pass
                     d["history"] = [x for x in d["history"] if x.get("id") != pid]
                     save_picks(d)
                     try: st.query_params.clear()
