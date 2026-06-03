@@ -272,5 +272,44 @@ def main():
             else:
                 print(f"  Error morning summary: {r.stderr[:200]}")
 
+def _git_pull():
+    """Sync local state from git before each cycle."""
+    import subprocess
+    subprocess.run(["git", "pull", "--rebase", "-X", "theirs"], capture_output=True, cwd=os.path.dirname(__file__))
+
+def _git_commit():
+    """Save game_starts_notified.json to git after each cycle."""
+    import subprocess
+    cwd = os.path.dirname(__file__)
+    subprocess.run(["git", "config", "user.name", "MLB Picks Bot"], capture_output=True, cwd=cwd)
+    subprocess.run(["git", "config", "user.email", "bot@mlb-picks.local"], capture_output=True, cwd=cwd)
+    subprocess.run(["git", "add", "game_starts_notified.json", ".morning_sent"], capture_output=True, cwd=cwd)
+    r = subprocess.run(["git", "diff", "--cached", "--quiet"], capture_output=True, cwd=cwd)
+    if r.returncode != 0:
+        subprocess.run(["git", "commit", "-m", "sync state"], capture_output=True, cwd=cwd)
+        subprocess.run(["git", "pull", "--rebase", "-X", "theirs"], capture_output=True, cwd=cwd)
+        subprocess.run(["git", "push"], capture_output=True, cwd=cwd)
+
 if __name__ == "__main__":
+    import time
+    in_actions = bool(os.environ.get("GITHUB_ACTIONS"))
+    if in_actions:
+        _git_pull()
     main()
+    if in_actions:
+        _git_commit()
+    for _ in range(10):
+        h = datetime.now(TZ).hour
+        if h >= 22 or h < 6:
+            sleep_min = 120
+        elif 12 <= h < 18:
+            sleep_min = 30
+        else:
+            sleep_min = 15
+        print(f"  Durmiendo {sleep_min} min (hora Chihuahua: {h})...")
+        time.sleep(sleep_min * 60)
+        if in_actions:
+            _git_pull()
+        main()
+        if in_actions:
+            _git_commit()
