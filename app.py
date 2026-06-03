@@ -1829,12 +1829,13 @@ def main():
 
             # Handle delete via query param
             del_pid = st.query_params.get("del_pick")
-            if del_pid is not None:
+            proc_key = f"processed_del_{del_pid}"
+            if del_pid is not None and not st.session_state.get(proc_key, False):
+                st.session_state[proc_key] = True
                 try:
                     pid = int(del_pid)
                     from bankroll import save_picks, load_picks
                     d = load_picks()
-                    # Delete Telegram message if stored
                     pick_to_del = next((p for p in d["history"] if p.get("id") == pid), None)
                     if pick_to_del and pick_to_del.get("telegram_msg_id"):
                         try:
