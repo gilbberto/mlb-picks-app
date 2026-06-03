@@ -1571,14 +1571,21 @@ def main():
             st.caption(f"Top {min(len(recs),4)} de {len(recs)} — Kelly Criterion (25% fraccional, bankroll ${actual_bankroll:,.0f}).")
 
             # HTML table with inline form buttons (safe: requires click, no bot auto-follow)
+            from bankroll import load_picks
+            existing = set()
+            for ep in load_picks().get("history", []):
+                epg = ep.get("game", "").strip()
+                epm = ep.get("market", "").strip()
+                ept = ep.get("team", "").strip()
+                if epg and epm and ept:
+                    existing.add((epg, epm, ept))
             html_rows = ""
             for i, r in enumerate(recs[:4]):
-                lk = f"rg_{i}_{r['mkt_key']}"
-                done = st.session_state.get(f"done_{lk}", False)
+                is_regd = (r["game"].strip(), r["market"].strip(), r["pick"].strip()) in existing
                 icon = "🔥" if r["edge"] > 8 else "⭐" if r["edge"] > 5 else "✅"
                 pick_str = fmt_ou(r["pick"], r.get("entry",{}).get("detail",""))
                 stake_str = f"${r['stake']:.0f}" if r["stake"] > 0 else "—"
-                if done:
+                if is_regd:
                     btn = "<span style='color:#58a6ff'>✅</span>"
                 else:
                     btn = f"<form action='' method='GET' style='display:inline;margin:0;padding:0'><input type='hidden' name='reg_pick' value='{i}'><button type='submit' style='background:none;border:none;cursor:pointer;font-size:18px;padding:0;color:#58a6ff' title='Registrar'>📝</button></form>"
@@ -1612,24 +1619,20 @@ def main():
                     idx = int(reg_idx)
                     if 0 <= idx < len(recs[:4]):
                         r = recs[idx]
-                        lk = f"rg_{idx}_{r['mkt_key']}"
-                        done = st.session_state.get(f"done_{lk}", False)
-                        if not done:
-                            from bankroll import add_pick, load_picks, recommend_stake
-                            d = load_picks(); bk = d["bankroll"]
-                            gl = f"{r['pick_dict']['away_abbrev']} @ {r['pick_dict']['home_abbrev']}"
-                            os_ = r["odds"]
-                            oi = int(str(os_).replace("$","")) if os_ not in ("N/A","—","") else 0
-                            pv = r["prob"]/100.0
-                            sk,_,sl = recommend_stake(pv, oi, bankroll=bk)
-                            if sk > 0:
-                                pt = r["pick"]
-                                dtl = r.get("entry", {}).get("detail", "")
-                                ts = datetime.now(TZ).strftime("%Y-%m-%d")
-                                pid = add_pick(ts, gl, r["market"], pv, oi, sk, bk, sl, pt, dtl)
-                                notify_pick(gl, r["market"], pt, sk, oi, bk, pick_id=pid)
-                                sync_picks_to_github()
-                                st.session_state[f"done_{lk}"] = True
+                        from bankroll import add_pick, load_picks, recommend_stake
+                        d = load_picks(); bk = d["bankroll"]
+                        gl = f"{r['pick_dict']['away_abbrev']} @ {r['pick_dict']['home_abbrev']}"
+                        os_ = r["odds"]
+                        oi = int(str(os_).replace("$","")) if os_ not in ("N/A","—","") else 0
+                        pv = r["prob"]/100.0
+                        sk,_,sl = recommend_stake(pv, oi, bankroll=bk)
+                        if sk > 0:
+                            pt = r["pick"]
+                            dtl = r.get("entry", {}).get("detail", "")
+                            ts = datetime.now(TZ).strftime("%Y-%m-%d")
+                            pid = add_pick(ts, gl, r["market"], pv, oi, sk, bk, sl, pt, dtl)
+                            notify_pick(gl, r["market"], pt, sk, oi, bk, pick_id=pid)
+                            sync_picks_to_github()
                     st.query_params.clear()
                     st.rerun()
     except ImportError:
