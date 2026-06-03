@@ -162,6 +162,23 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 58
+    },
+    {
+      "id": 11,
+      "date": "2026-06-03",
+      "game": "SF @ MIL",
+      "market": "ML",
+      "team": "San Francisco Giants",
+      "detail": "",
+      "model_prob": 0.696,
+      "odds": 131,
+      "stake": 145.03,
+      "bankroll_before": 1251.92,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false,
+      "telegram_msg_id": 59
     }
   ]
 }
