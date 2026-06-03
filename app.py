@@ -215,12 +215,67 @@ def fetch_pitcher_stats(pid):
                 ip_val = int(parts[0]) + int(parts[1]) / 3.0 if len(parts) > 1 else float(parts[0])
             else:
                 ip_val = float(ip or 0)
+            hr = safe_float(s.get("homeRuns"))
+            bb = safe_float(s.get("baseOnBalls"))
+            so = safe_float(s.get("strikeOuts"))
+            h = safe_float(s.get("hits"))
+            ab = safe_float(s.get("atBats"))
+            sf = safe_float(s.get("sacFlies"))
+            hbp = safe_float(s.get("hitByPitch"))
+            go = safe_float(s.get("groundOuts"))
+            ao = safe_float(s.get("airOuts"))
+            fip = 3.10
+            if ip_val > 0:
+                fip = ((13 * hr) + (3 * (bb + hbp)) - (2 * so)) / ip_val + 3.10
+            babip = 0.300
+            if (ab - so - hr + sf) > 0:
+                babip = (h - hr) / (ab - so - hr + sf)
+            kbb = so / bb if bb > 0 else so
+            gb_rate = go / (go + ao) if (go + ao) > 0 else 0.44
             return {"era": safe_float(s.get("era")), "whip": safe_float(s.get("whip")), "ip": ip_val,
                     "k9": safe_float(s.get("strikeoutsPer9Inn")), "bb9": safe_float(s.get("walksPer9Inn")),
-                    "hr9": safe_float(s.get("homeRunsPer9")), "name": splits[0].get("player",{}).get("fullName","")}
+                    "hr9": safe_float(s.get("homeRunsPer9")), "fip": fip, "babip": babip,
+                    "kbb": kbb, "gb_rate": gb_rate,
+                    "name": splits[0].get("player",{}).get("fullName","")}
     except Exception:
         return {}
     return {}
+
+
+@st.cache_data(ttl=3600)
+def fetch_pitcher_recent_form(pid, n_starts=5):
+    if not pid:
+        return {}
+    try:
+        url = f"{MLB_API_BASE}/people/{pid}/stats?stats=gameLog&season={CURRENT_SEASON}&group=pitching"
+        resp = requests.get(url, timeout=8)
+        if resp.status_code != 200:
+            return {}
+        splits = resp.json().get("stats", [{}])[0].get("splits", [])
+        starts = [s for s in splits if s.get("stat", {}).get("inningsPitched", "0") != "0" and
+                  s.get("game", {}).get("gameType") == "R"]
+        recent = starts[-n_starts:]
+        if not recent:
+            return {}
+        eras, k9s, bbs, hrs = [], [], [], []
+        for s in recent:
+            st = s.get("stat", {})
+            ip_s = st.get("inningsPitched", "0")
+            ipv = 0
+            if isinstance(ip_s, str) and "." in ip_s:
+                p2 = ip_s.split(".")
+                ipv = int(p2[0]) + int(p2[1]) / 3.0 if len(p2) > 1 else float(p2[0])
+            else:
+                ipv = float(ip_s or 0)
+            er = safe_float(st.get("earnedRuns"))
+            eras.append(9 * er / ipv if ipv > 0 else 4.5)
+            k9s.append(safe_float(st.get("strikeoutsPer9Inn")))
+            bbs.append(safe_float(st.get("walksPer9Inn")))
+            hrs.append(safe_float(st.get("homeRunsPer9")))
+        return {"rec_era": np.mean(eras), "rec_k9": np.mean(k9s),
+                "rec_bb9": np.mean(bbs), "rec_hr9": np.mean(hrs)}
+    except Exception:
+        return {}
 
 @st.cache_data(ttl=600)
 def fetch_recent_games(tid, ng=20):
@@ -462,7 +517,8 @@ def compute_ev(prob, odds):
 
 # ─── RandomForest + Monte Carlo ───
 
-def build_rf_feature_row(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f):
+def build_rf_feature_row(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f,
+                          hp_rec=None, ap_rec=None):
     """Build a feature dict matching the training format."""
     return {
         "h_elo": h_elo, "a_elo": a_elo,
@@ -482,16 +538,25 @@ def build_rf_feature_row(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f):
         "hp_bb9": hpitch.get("bb9", 3.0) if hpitch else 3.0,
         "hp_hr9": hpitch.get("hr9", 1.2) if hpitch else 1.2,
         "hp_v": 1 if (hpitch and hpitch.get("ip",0) >= 10) else 0,
+        "hp_fip": hpitch.get("fip", 4.5) if hpitch else 4.5,
+        "hp_babip": hpitch.get("babip", 0.300) if hpitch else 0.300,
+        "hp_kbb": hpitch.get("kbb", 3.0) if hpitch else 3.0,
+        "hp_gb_rate": hpitch.get("gb_rate", 0.44) if hpitch else 0.44,
         "ap_era": apitch.get("era", 4.5) if apitch else 4.5,
         "ap_k9": apitch.get("k9", 8.0) if apitch else 8.0,
         "ap_bb9": apitch.get("bb9", 3.0) if apitch else 3.0,
         "ap_hr9": apitch.get("hr9", 1.2) if apitch else 1.2,
         "ap_v": 1 if (apitch and apitch.get("ip",0) >= 10) else 0,
+        "ap_fip": apitch.get("fip", 4.5) if apitch else 4.5,
+        "ap_babip": apitch.get("babip", 0.300) if apitch else 0.300,
+        "ap_kbb": apitch.get("kbb", 3.0) if apitch else 3.0,
+        "ap_gb_rate": apitch.get("gb_rate", 0.44) if apitch else 0.44,
     }
 
 
 @st.cache_data(ttl=3600)
-def monte_carlo_predict(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f, n_sims=5000):
+def monte_carlo_predict(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f,
+                         hp_rec=None, ap_rec=None, n_sims=5000):
     """Run Monte Carlo simulation using trained models. Returns dict."""
     if not _MODELS_LOADED:
         return {"ml_hp": None, "ml_ap": None,

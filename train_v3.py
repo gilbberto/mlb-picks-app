@@ -103,7 +103,16 @@ def fetch_season_pitcher_stats(pid, season):
                 "era": sf(s.get("era")), "ip": ipv,
                 "k9": sf(s.get("strikeoutsPer9Inn")),
                 "bb9": sf(s.get("walksPer9Inn")),
-                "hr9": sf(s.get("homeRunsPer9"))
+                "hr9": sf(s.get("homeRunsPer9")),
+                "hr": sf(s.get("homeRuns")),
+                "bb": sf(s.get("baseOnBalls")),
+                "so": sf(s.get("strikeOuts")),
+                "h": sf(s.get("hits")),
+                "ab": sf(s.get("atBats")),
+                "sf": sf(s.get("sacFlies")),
+                "hbp": sf(s.get("hitByPitch")),
+                "go": sf(s.get("groundOuts")),
+                "ao": sf(s.get("airOuts")),
             }
 
 # Fetch boxscores for games not yet fetched
@@ -173,8 +182,12 @@ def get_pitcher_feats(pid, season):
     key = (str(pid), str(season))
     ps = pitcher_stats_db.get(key)
     if ps and ps.get("ip", 0) >= 10:
-        return (ps["era"], ps["k9"], ps["bb9"], ps["hr9"], 1)
-    return (4.5, 8.0, 3.0, 1.2, 0)
+        fip = ((13 * ps.get("hr", 0)) + (3 * (ps.get("bb", 0) + ps.get("hbp", 0))) - (2 * ps.get("so", 0))) / ps["ip"] + 3.10 if ps["ip"] > 0 else 4.5
+        babip = (ps.get("h", 0) - ps.get("hr", 0)) / (ps.get("ab", 0) - ps.get("so", 0) - ps.get("hr", 0) + ps.get("sf", 0)) if (ps.get("ab", 0) - ps.get("so", 0) - ps.get("hr", 0) + ps.get("sf", 0)) > 0 else 0.300
+        kbb = ps.get("so", 0) / ps.get("bb", 0) if ps.get("bb", 0) > 0 else ps.get("so", 0)
+        gb = ps.get("go", 0) / (ps.get("go", 0) + ps.get("ao", 0)) if (ps.get("go", 0) + ps.get("ao", 0)) > 0 else 0.44
+        return (ps["era"], ps["k9"], ps["bb9"], ps["hr9"], 1, fip, babip, kbb, gb)
+    return (4.5, 8.0, 3.0, 1.2, 0, 4.5, 0.300, 3.0, 0.44)
 
 # ─── Step 4: Build features ───
 print("\n=== Step 4: Building features ===")
@@ -272,7 +285,9 @@ for i, g in enumerate(all_games):
         "h_era": ts_h["era"], "a_era": ts_a["era"],
         "park": pf,
         "hp_era": hpe[0], "hp_k9": hpe[1], "hp_bb9": hpe[2], "hp_hr9": hpe[3], "hp_v": hpe[4],
+        "hp_fip": hpe[5], "hp_babip": hpe[6], "hp_kbb": hpe[7], "hp_gb_rate": hpe[8],
         "ap_era": ape[0], "ap_k9": ape[1], "ap_bb9": ape[2], "ap_hr9": ape[3], "ap_v": ape[4],
+        "ap_fip": ape[5], "ap_babip": ape[6], "ap_kbb": ape[7], "ap_gb_rate": ape[8],
         "hw": 1 if hs > as_ else 0,
         "rd": hs - as_,
         "tot": hs + as_,
@@ -294,7 +309,9 @@ cols = ["h_elo", "a_elo", "h_wp", "a_wp", "h_rs", "a_rs", "h_ra", "a_ra",
         "h_ops", "a_ops", "h_whip", "a_whip", "h_era", "a_era",
         "park",
         "hp_era", "hp_k9", "hp_bb9", "hp_hr9", "hp_v",
-        "ap_era", "ap_k9", "ap_bb9", "ap_hr9", "ap_v"]
+        "hp_fip", "hp_babip", "hp_kbb", "hp_gb_rate",
+        "ap_era", "ap_k9", "ap_bb9", "ap_hr9", "ap_v",
+        "ap_fip", "ap_babip", "ap_kbb", "ap_gb_rate"]
 
 X = np.array([[f[c] for c in cols] for f in features])
 y_hw = np.array([f["hw"] for f in features])
