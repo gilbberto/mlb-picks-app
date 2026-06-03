@@ -391,32 +391,49 @@ def main():
         away_abbr = REV_TEAM.get(an.lower(), an[:3].upper())
         game_label = f"{away_abbr} @ {home_abbr}"
 
-        # Common comparison data for justification
+        # Justification helpers
         h_fip = hpitch.get("fip", 4.5) if hpitch else 4.5
         a_fip = apitch.get("fip", 4.5) if apitch else 4.5
         elo_diff = h_elo - a_elo
-        fav_team = hn if ml_hp >= 0.5 else an
-        is_home_fav = ml_hp >= 0.5
+        h_wp = hf.get("wp", 0.5); a_wp = af.get("wp", 0.5)
+        h_rs10 = hf.get("rs", 4.5); a_rs10 = af.get("rs", 4.5)
 
         def ml_reason(team):
-            if team == hn and elo_diff > 25:
-                return f"Ventaja Elo +{elo_diff}"
-            if team == an and elo_diff < -25:
-                return f"Ventaja Elo +{-elo_diff}"
-            if team == hn and h_fip < a_fip - 0.4:
-                return f"Mejor FIP ({h_fip:.2f}) vs ({a_fip:.2f})"
-            if team == an and a_fip < h_fip - 0.4:
-                return f"Mejor FIP ({a_fip:.2f}) vs ({h_fip:.2f})"
-            margin = exp_rdiff if team == hn else -exp_rdiff
-            return f"Margen proyectado: {margin:+.1f}"
+            parts = []
+            is_h = team == hn
+            fip_own = h_fip if is_h else a_fip
+            fip_opp = a_fip if is_h else h_fip
+            elo = elo_diff if is_h else -elo_diff
+            if fip_own < fip_opp - 0.3:
+                parts.append(f"mejor FIP ({fip_own:.2f} vs {fip_opp:.2f})")
+            if abs(elo) > 20:
+                parts.append(f"ventaja Elo de {abs(elo)} pts")
+            margin = exp_rdiff if is_h else -exp_rdiff
+            if margin > 0:
+                parts.append(f"proyectan {margin:+.1f} carreras de margen")
+            if parts:
+                txt = ", ".join(parts)
+                return txt[0].upper() + txt[1:] + "."
+            return f"Modelo proyecta victoria con {ml_prob*100:.0f}% de probabilidad."
+
+        def ou_reason():
+            parts = [f"modelo proyecta {exp_total:.1f} carreras totales"]
+            if abs(park_f - 1.0) > 0.03:
+                label = "favorable a ofensiva" if park_f > 1.0 else "desfavorable a ofensiva"
+                parts.append(f"factor parque {park_f:.2f} ({label})")
+            avg_rs = (h_rs10 + a_rs10) / 2
+            if avg_rs > 4.5:
+                parts.append(f"equipos promedian {avg_rs:.1f} carreras c/u en últimos 10")
+            txt = ", ".join(parts)
+            return txt[0].upper() + txt[1:] + "."
 
         game_picks = []
 
         # ML — pick the favorite
         if ml_hp >= 0.5:
-            ml_team = hn; ml_prob = ml_hp; ml_is_home = True
+            ml_team = hn; ml_prob = ml_hp
         else:
-            ml_team = an; ml_prob = ml_ap; ml_is_home = False
+            ml_team = an; ml_prob = ml_ap
 
         ml_price, ml_book, _ = extract_market_odds(og, "h2h", ml_team)
 
@@ -436,12 +453,9 @@ def main():
         spr_price, spr_book, _ = extract_market_odds(og, "spreads", rl_fav_team, expect_point=-1.5)
         def rl_reason(team, is_fav):
             if is_fav:
-                return f"Margen: {exp_rdiff:+.1f}"
-            if elo_diff > 25 and team == hn:
-                return f"Ventaja Elo +{elo_diff}"
-            if elo_diff < -25 and team == an:
-                return f"Ventaja Elo +{-elo_diff}"
-            return f"Margen: {exp_rdiff:+.1f}"
+                margin = exp_rdiff if team == hn else -exp_rdiff
+                return f"Modelo proyecta margen de {margin:+.1f} carreras, suficiente para cubrir -1.5."
+            return f"Modelo proyecta {ml_prob*100:.0f}% de ganar el juego directamente."
 
         if spr_price is not None:
             game_picks.append({
@@ -470,10 +484,7 @@ def main():
         if ov_price is not None and ov_point is not None:
             ov_prob = norm_cdf(exp_total - ov_point, 0, 3.2)
             ov_prob_cal = calibrate_ml(round(float(ov_prob), 4))
-            pf_str = f"Park: {park_f:.2f}" if abs(park_f - 1.0) > 0.03 else ""
-            ov_reason = f"Proyección: {exp_total:.1f} carreras"
-            if pf_str:
-                ov_reason += f" | {pf_str}"
+            ov_reason = ou_reason()
             if ov_prob_cal >= 0.5:
                 game_picks.append({
                     "game": game_label, "market": "O/U", "team": "Over",
