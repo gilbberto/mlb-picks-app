@@ -767,30 +767,6 @@ def predict_totals(hf, af, hs, aws, h_adv=None, a_adv=None, park_factor=1.0):
 
 
 # ─── UI ───
-
-def _log_pick_fn(pick, mkt_key, mkt_label, entry):
-    """Helper to log a pick to the tracker. Returns True on success."""
-    try:
-        from bankroll import add_pick, load_picks, recommend_stake
-        data = load_picks()
-        bk = data["bankroll"]
-        gl = f"{pick['away_abbrev']} @ {pick['home_abbrev']}"
-        odds_str = entry.get("odds", "N/A")
-        try: odds_int = int(str(odds_str).replace("$",""))
-        except: odds_int = 0
-        prob = entry.get("prob", 50) / 100.0
-        stake, units, slabel = recommend_stake(prob, odds_int, bankroll=bk)
-        if stake <= 0:
-            return False
-        pick_team = entry.get("pick", "")
-        today = datetime.now(TZ).strftime("%Y-%m-%d")
-        pid = add_pick(today, gl, mkt_label, prob, odds_int, stake, bk, slabel, pick_team)
-        notify_pick(gl, mkt_label, pick_team, stake, odds_int, bk, pick_id=pid)
-        sync_picks_to_github()
-        return True
-    except Exception as e:
-        return False
-
 def render_card(pick, key_suffix="", game_idx=0):
     hn = pick["home_team"]
     an = pick["away_team"]
@@ -1630,7 +1606,9 @@ def main():
             # Handle form submission via query param
             reg_idx = st.query_params.get("reg_pick")
             if reg_idx is not None:
-                try:
+                proc_key = f"processed_reg_{reg_idx}"
+                if not st.session_state.get(proc_key, False):
+                    st.session_state[proc_key] = True
                     idx = int(reg_idx)
                     if 0 <= idx < len(recs[:4]):
                         r = recs[idx]
@@ -1652,11 +1630,8 @@ def main():
                                 notify_pick(gl, r["market"], pt, sk, oi, bk, pick_id=pid)
                                 sync_picks_to_github()
                                 st.session_state[f"done_{lk}"] = True
-                                try: st.query_params.clear()
-                                except: pass
-                                st.rerun()
-                except:
-                    pass
+                    st.query_params.clear()
+                    st.rerun()
     except ImportError:
         pass
 
@@ -1832,26 +1807,22 @@ def main():
             proc_key = f"processed_del_{del_pid}"
             if del_pid is not None and not st.session_state.get(proc_key, False):
                 st.session_state[proc_key] = True
-                try:
-                    pid = int(del_pid)
-                    from bankroll import save_picks, load_picks
-                    d = load_picks()
-                    pick_to_del = next((p for p in d["history"] if p.get("id") == pid), None)
-                    if pick_to_del and pick_to_del.get("telegram_msg_id"):
-                        try:
-                            tok = st.secrets.get("TELEGRAM_TOKEN", os.environ.get("TELEGRAM_TOKEN", ""))
-                            cid = st.secrets.get("TELEGRAM_CHAT_ID", os.environ.get("TELEGRAM_CHAT_ID", ""))
-                            if tok and cid:
-                                requests.post(f"https://api.telegram.org/bot{tok}/deleteMessage",
-                                              json={"chat_id": cid, "message_id": pick_to_del["telegram_msg_id"]}, timeout=5)
-                        except: pass
-                    d["history"] = [x for x in d["history"] if x.get("id") != pid]
-                    save_picks(d)
-                    try: st.query_params.clear()
+                pid = int(del_pid)
+                from bankroll import save_picks, load_picks
+                d = load_picks()
+                pick_to_del = next((p for p in d["history"] if p.get("id") == pid), None)
+                if pick_to_del and pick_to_del.get("telegram_msg_id"):
+                    try:
+                        tok = st.secrets.get("TELEGRAM_TOKEN", os.environ.get("TELEGRAM_TOKEN", ""))
+                        cid = st.secrets.get("TELEGRAM_CHAT_ID", os.environ.get("TELEGRAM_CHAT_ID", ""))
+                        if tok and cid:
+                            requests.post(f"https://api.telegram.org/bot{tok}/deleteMessage",
+                                          json={"chat_id": cid, "message_id": pick_to_del["telegram_msg_id"]}, timeout=5)
                     except: pass
-                    st.rerun()
-                except:
-                    pass
+                d["history"] = [x for x in d["history"] if x.get("id") != pid]
+                save_picks(d)
+                st.query_params.clear()
+                st.rerun()
 
             green = total_profit >= 0
             st.markdown(f"Profit total: <span style='color:{'#00cc66' if green else '#ff4444'}'><b>${total_profit:+.2f}</b></span>", unsafe_allow_html=True)
