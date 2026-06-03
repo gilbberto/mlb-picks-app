@@ -4,10 +4,16 @@ Usage: python3 settle_and_notify.py
 Envs: TELEGRAM_TOKEN, TELEGRAM_CHAT_ID
 """
 import os, sys, json, math
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 sys.path.insert(0, os.path.dirname(__file__))
 from bankroll import auto_settle, settle_predictions, load_picks, get_pnl, REV_TEAM, MLB_API
 import requests
+
+try:
+    from zoneinfo import ZoneInfo
+    TZ = ZoneInfo("America/Chihuahua")
+except:
+    TZ = timezone(timedelta(hours=-6))
 
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN", "")
 CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
@@ -47,7 +53,7 @@ def get_todays_pick_games():
     """Return set of game labels (e.g. 'TEX @ STL') for today's registered picks."""
     try:
         data = load_picks()
-        today = datetime.now().strftime("%Y-%m-%d")
+        today = datetime.now(TZ).strftime("%Y-%m-%d")
         return {p["game"] for p in data["history"] if p.get("date") == today}
     except:
         return set()
@@ -56,7 +62,7 @@ def get_picks_for_game(game_label):
     """Return list of today's picks matching a game label."""
     try:
         data = load_picks()
-        today = datetime.now().strftime("%Y-%m-%d")
+        today = datetime.now(TZ).strftime("%Y-%m-%d")
         return [p for p in data["history"] if p.get("date") == today and p.get("game") == game_label]
     except:
         return []
@@ -117,7 +123,7 @@ def check_game_starts_and_scores():
     state = load_state()
     notified_starts = set(state.get("notified_starts", []))
     scores = state.get("scores", {})
-    today = datetime.now().strftime("%Y-%m-%d")
+    today = datetime.now(TZ).strftime("%Y-%m-%d")
 
     url = f"{MLB_API}/schedule?date={today}&sportId=1&hydrate=linescore,team"
     try:
