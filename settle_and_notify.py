@@ -252,5 +252,25 @@ def main():
 
     check_game_starts_and_scores()
 
+    # Morning summary entre 6-11 AM (una vez por dia)
+    h = datetime.now(TZ).hour
+    if 6 <= h <= 11:
+        flag = os.path.join(os.path.dirname(__file__), ".morning_sent")
+        today = datetime.now(TZ).strftime("%Y-%m-%d")
+        try:
+            already = open(flag).read().strip() == today
+        except:
+            already = False
+        if not already:
+            print("  Morning summary pendiente — ejecutando...")
+            import subprocess
+            r = subprocess.run(["python3", "morning_summary.py"], capture_output=True, text=True, cwd=os.path.dirname(__file__))
+            if r.returncode == 0:
+                with open(flag, "w") as f:
+                    f.write(today)
+                print("  Morning summary enviado")
+            else:
+                print(f"  Error morning summary: {r.stderr[:200]}")
+
 if __name__ == "__main__":
     main()

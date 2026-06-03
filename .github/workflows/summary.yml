@@ -2,8 +2,6 @@ name: Morning Summary
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
 
 jobs:
   summary:
