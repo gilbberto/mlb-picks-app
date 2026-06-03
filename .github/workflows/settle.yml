@@ -1,8 +1,6 @@
 name: Settle MLB Picks
 
 on:
-  schedule:
-    - cron: '*/15 0-6,12-23 * * *'
   workflow_dispatch:
   push:
     branches: [main]
