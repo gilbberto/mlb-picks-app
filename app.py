@@ -1690,33 +1690,21 @@ def main():
                     "Profit": profit_str,
                 })
 
-            # Dataframe con scroll horizontal
-            if rows:
-                _df = pd.DataFrame(rows)
-                st.dataframe(
-                    _df,
-                    use_container_width=True,
-                    hide_index=True,
-                )
-
-                # Delete pick — per-row buttons
-                st.markdown("**Eliminar picks:**")
-                del_cols = st.columns(min(len(data["history"]), 5))
-                for i, p in enumerate(data["history"]):
-                    col = del_cols[i % len(del_cols)]
-                    pid = p.get("id", i + 1)
-                    lbl = f"#{pid} {p.get('game','')[:12]}"
-                    if col.button(lbl, key=f"del_{pid}", use_container_width=True):
+            # Per-row delete buttons
+            for i, (row, p) in enumerate(zip(rows, list(reversed(data["history"])))):
+                pid = p.get("id", i + 1)
+                cols = st.columns([3, 1.5, 2.5, 2, 1])
+                with cols[0]: st.markdown(row["Juego"])
+                with cols[1]: st.markdown(row["Mercado"])
+                with cols[2]: st.markdown(row["Pick"])
+                with cols[3]: st.markdown(f"{row['Estado']} {row['Profit']}")
+                with cols[4]:
+                    if st.button("✕", key=f"del_{pid}", help=f"Eliminar pick #{pid}"):
                         from bankroll import save_picks, load_picks
                         d = load_picks()
                         d["history"] = [x for x in d["history"] if x.get("id") != pid]
                         save_picks(d)
                         st.rerun()
-                if st.button("🗑️ Limpiar todo", key="clear_all", type="secondary"):
-                    from bankroll import save_picks
-                    save_picks({"bankroll": 1000, "history": []})
-                    st.session_state.clear()
-                    st.toast("✅ Historial limpiado", icon="🗑️")
 
             green = total_profit >= 0
             st.markdown(f"Profit total: <span style='color:{'#00cc66' if green else '#ff4444'}'><b>${total_profit:+.2f}</b></span>", unsafe_allow_html=True)
