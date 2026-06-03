@@ -399,33 +399,27 @@ def main():
         h_rs10 = hf.get("rs", 4.5); a_rs10 = af.get("rs", 4.5)
 
         def ml_reason(team):
-            parts = []
             is_h = team == hn
             fip_own = h_fip if is_h else a_fip
             fip_opp = a_fip if is_h else h_fip
             elo = elo_diff if is_h else -elo_diff
-            if fip_own < fip_opp - 0.3:
-                parts.append(f"mejor FIP ({fip_own:.2f} vs {fip_opp:.2f})")
-            if abs(elo) > 20:
-                parts.append(f"ventaja Elo de {abs(elo)} pts")
             margin = exp_rdiff if is_h else -exp_rdiff
-            if margin > 0:
-                parts.append(f"proyectan {margin:+.1f} carreras de margen")
-            if parts:
-                txt = ", ".join(parts)
-                return txt[0].upper() + txt[1:] + "."
-            return f"Modelo proyecta victoria con {ml_prob*100:.0f}% de probabilidad."
+            if fip_own < fip_opp - 0.3:
+                return f"Los {team} tienen mejor abridor hoy (FIP {fip_own:.2f} vs {fip_opp:.2f}), lo que inclina la balanza a su favor."
+            if abs(elo) > 20:
+                return f"Los {team} llegan con mejor rendimiento general (Elo +{abs(elo)}) y el modelo proyecta su victoria por {margin:+.1f} carreras."
+            return f"El modelo favorece a los {team} con un {ml_prob*100:.0f}% de probabilidad de ganar el juego."
 
-        def ou_reason():
-            parts = [f"modelo proyecta {exp_total:.1f} carreras totales"]
-            if abs(park_f - 1.0) > 0.03:
-                label = "favorable a ofensiva" if park_f > 1.0 else "desfavorable a ofensiva"
-                parts.append(f"factor parque {park_f:.2f} ({label})")
+        def ou_reason(line):
             avg_rs = (h_rs10 + a_rs10) / 2
+            if abs(park_f - 1.0) > 0.04:
+                label = "un parque favorable a la ofensiva" if park_f > 1.0 else "un parque que favorece a los lanzadores"
+                if avg_rs > 4.5:
+                    return f"Se espera un juego con ~{exp_total:.0f} carreras, superando la línea de {line}. Además, {label} y ambos equipos vienen promediando {avg_rs:.1f} carreras por juego."
+                return f"Se espera un juego con ~{exp_total:.0f} carreras, superando la línea de {line}. También {label}."
             if avg_rs > 4.5:
-                parts.append(f"equipos promedian {avg_rs:.1f} carreras c/u en últimos 10")
-            txt = ", ".join(parts)
-            return txt[0].upper() + txt[1:] + "."
+                return f"El modelo espera muchas carreras (~{exp_total:.0f}) superando la línea de {line}. Los dos equipos vienen anotando bien: {avg_rs:.1f} carreras por juego cada uno."
+            return f"El modelo proyecta ~{exp_total:.0f} carreras totales, por encima de la línea de {line}."
 
         game_picks = []
 
@@ -484,7 +478,7 @@ def main():
         if ov_price is not None and ov_point is not None:
             ov_prob = norm_cdf(exp_total - ov_point, 0, 3.2)
             ov_prob_cal = calibrate_ml(round(float(ov_prob), 4))
-            ov_reason = ou_reason()
+            ov_reason = ou_reason(ov_point)
             if ov_prob_cal >= 0.5:
                 game_picks.append({
                     "game": game_label, "market": "O/U", "team": "Over",
