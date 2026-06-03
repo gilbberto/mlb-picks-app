@@ -466,7 +466,7 @@ def main():
         if g not in best_per_game or p["edge"] > best_per_game[g]["edge"]:
             best_per_game[g] = p
     recs = sorted(best_per_game.values(), key=lambda x: x["edge"], reverse=True)
-    top = recs[:6]
+    top = recs[:4]
 
     # Format message
     lines = [f"☀️ *Buenos dias! — {today}*\n"]
