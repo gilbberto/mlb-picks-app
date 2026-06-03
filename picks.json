@@ -1,5 +1,5 @@
 {
-  "bankroll": 938.46,
+  "bankroll": 786.13,
   "history": [
     {
       "id": 1,
@@ -92,10 +92,10 @@
       "odds": -120,
       "stake": 152.33,
       "bankroll_before": 938.46,
-      "result": null,
-      "profit": null,
+      "result": "L",
+      "profit": -152.33,
       "label": "\ud83d\udd25 High",
-      "settled": false
+      "settled": true
     },
     {
       "id": 7,
@@ -124,6 +124,22 @@
       "odds": 210,
       "stake": 89.02,
       "bankroll_before": 938.46,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
+    },
+    {
+      "id": 9,
+      "date": "2026-06-02",
+      "game": "CWS @ MIN",
+      "market": "RL +1.5",
+      "team": "Chicago White Sox",
+      "detail": "+1.5",
+      "model_prob": 0.872,
+      "odds": 900,
+      "stake": 168.64,
+      "bankroll_before": 786.13,
       "result": null,
       "profit": null,
       "label": "\ud83d\udd25 High",
