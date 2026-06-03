@@ -1518,32 +1518,21 @@ def main():
             st.markdown("## 🏆 Recomendaciones del Día")
             st.caption(f"Top {min(len(recs),4)} de {len(recs)} — Kelly Criterion (25% fraccional, bankroll ${actual_bankroll:,.0f}).")
 
-            rec_table = []
-            for i, r in enumerate(recs[:4]):
-                icon = "🔥" if r["edge"] > 8 else "⭐" if r["edge"] > 5 else "✅"
-                rec_table.append({
-                    "#": i + 1,
-                    "Juego": r["game"],
-                    "Mercado": r["market"],
-                    "Pick": fmt_ou(r["pick"], r.get("entry",{}).get("detail","")),
-                    "Prob": f"{r['prob']:.0f}%",
-                    "Edge": f"{icon} {r['edge']:+.1f}%",
-                    "Stake": f"${r['stake']:.0f}" if r["stake"] > 0 else "—",
-                })
-            st.dataframe(pd.DataFrame(rec_table), hide_index=True, use_container_width=True)
-
-            # Register buttons inline (one per pick, labeled by #)
-            btns = []
             for i, r in enumerate(recs[:4]):
                 lk = f"rg_{i}_{r['mkt_key']}"
                 done = st.session_state.get(f"done_{lk}", False)
-                if not done:
-                    btns.append((i, r, lk))
-            if btns:
-                cols = st.columns(len(btns))
-                for ci, (i, r, lk) in enumerate(btns):
-                    with cols[ci]:
-                        if st.button(f"📝 #{i+1}", key=lk, use_container_width=True):
+                icon = "🔥" if r["edge"] > 8 else "⭐" if r["edge"] > 5 else "✅"
+                pick_str = fmt_ou(r["pick"], r.get("entry",{}).get("detail",""))
+                stake_str = f"${r['stake']:.0f}" if r["stake"] > 0 else "—"
+                with st.container(border=True):
+                    cols = st.columns([4, 1])
+                    with cols[0]:
+                        st.markdown(f"**#{i+1}** {r['game']}")
+                        st.markdown(f"{r['market']} · {pick_str}  |  {icon} {r['edge']:+.1f}%  |  {stake_str}")
+                    with cols[1]:
+                        if done:
+                            st.markdown("✅")
+                        elif st.button("📝", key=lk, use_container_width=True):
                             try:
                                 from bankroll import add_pick, load_picks, recommend_stake
                                 d = load_picks(); bk = d["bankroll"]
