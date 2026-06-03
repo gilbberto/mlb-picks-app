@@ -528,11 +528,22 @@ def main():
                     stake_info = f"  💰 ${stake_amt:.0f}"
             except:
                 pass
-            lines.append(f"{flames} *{r['game']}*")
+            lines.append(f"{flames} {r['game']}")
             lines.append(f"   {r['market']} {r['team']}{detail}")
             lines.append(f"   Prob: {r['prob']:.0f}%  |  Odds: {fmt_odds(r['odds'])}  |  Edge: +{r['edge']:.1f}%{stake_info}")
             if r.get("reason"):
-                lines.append(f"   _{r['reason']}_")
+                reason = r['reason']
+                parts = []
+                if ". " in reason:
+                    idx = reason.find(". ")
+                    parts = [reason[:idx+1], reason[idx+2:]]
+                elif " y " in reason:
+                    idx = reason.find(" y ")
+                    parts = [reason[:idx], reason[idx+1:]]
+                else:
+                    parts = [reason]
+                for p in parts:
+                    lines.append(f"   {p}")
             lines.append("")
 
     # P&L summary
