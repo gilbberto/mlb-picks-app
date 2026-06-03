@@ -176,6 +176,22 @@
       "profit": null,
       "label": "\ud83d\udd25 High",
       "settled": false
+    },
+    {
+      "id": 12,
+      "date": "2026-06-02",
+      "game": "TEX @ STL",
+      "market": "ML",
+      "team": "St. Louis Cardinals",
+      "detail": "",
+      "model_prob": 0.57,
+      "odds": 700,
+      "stake": 99.97,
+      "bankroll_before": 786.13,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ]
 }
