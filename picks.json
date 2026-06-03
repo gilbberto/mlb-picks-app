@@ -128,6 +128,22 @@
       "profit": 186.94,
       "label": "\ud83d\udd25 High",
       "settled": true
+    },
+    {
+      "id": 9,
+      "date": "2026-06-03",
+      "game": "COL @ LAA",
+      "market": "O/U",
+      "team": "Over",
+      "detail": "o8.5",
+      "model_prob": 0.848,
+      "odds": -120,
+      "stake": 208.36,
+      "bankroll_before": 1251.92,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ]
 }
