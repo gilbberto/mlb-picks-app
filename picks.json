@@ -132,34 +132,19 @@
     {
       "id": 9,
       "date": "2026-06-03",
-      "game": "COL @ LAA",
+      "game": "SD @ PHI",
       "market": "O/U",
       "team": "Over",
-      "detail": "o8.5",
-      "model_prob": 0.848,
+      "detail": "o7.5",
+      "model_prob": 0.926,
       "odds": -120,
-      "stake": 208.36,
+      "stake": 261.75,
       "bankroll_before": 1251.92,
       "result": null,
       "profit": null,
       "label": "\ud83d\udd25 High",
-      "settled": false
-    },
-    {
-      "id": 10,
-      "date": "2026-06-03",
-      "game": "COL @ LAA",
-      "market": "O/U",
-      "team": "Over",
-      "detail": "o8.5",
-      "model_prob": 0.848,
-      "odds": -120,
-      "stake": 208.36,
-      "bankroll_before": 1251.92,
-      "result": null,
-      "profit": null,
-      "label": "\ud83d\udd25 High",
-      "settled": false
+      "settled": false,
+      "telegram_msg_id": 57
     }
   ]
 }
