@@ -1591,14 +1591,14 @@ def main():
                 icon = "🔥" if r["edge"] > 8 else "⭐" if r["edge"] > 5 else "✅"
                 pick_str = fmt_ou(r["pick"], r.get("entry",{}).get("detail",""))
                 stake_str = f"${r['stake']:.0f}" if r["stake"] > 0 else "—"
-                btn = f"<span style='color:#58a6ff'>✅</span>" if done else f"<a href='?reg_pick={i}' style='text-decoration:none;cursor:pointer;font-size:18px' title='Registrar'>📝</a>"
+                btn_display = "✅" if done else "📝"
                 html_rows += f"""<tr style="background:{'#0d1b2a' if i%2==0 else '#1b2838'}">
                     <td style="padding:6px 8px;border-bottom:1px solid #2d3748">{r['game']}</td>
                     <td style="padding:6px 8px;border-bottom:1px solid #2d3748">{r['market']}</td>
                     <td style="padding:6px 8px;border-bottom:1px solid #2d3748">{pick_str}</td>
                     <td style="padding:6px 8px;border-bottom:1px solid #2d3748">{icon} {r['edge']:+.1f}%</td>
                     <td style="padding:6px 8px;border-bottom:1px solid #2d3748">{stake_str}</td>
-                    <td style="padding:6px 8px;border-bottom:1px solid #2d3748;text-align:center">{btn}</td>
+                    <td style="padding:6px 8px;border-bottom:1px solid #2d3748;text-align:center">{btn_display}</td>
                 </tr>"""
             st.markdown(f"""<div style="overflow-x:auto">
             <table style="width:100%;border-collapse:collapse;color:#c9d1d9;font-size:14px">
@@ -1613,16 +1613,19 @@ def main():
                 <tbody>{html_rows}</tbody>
             </table></div>""", unsafe_allow_html=True)
 
-            # Handle query param for registration
-            reg_idx = st.query_params.get("reg_pick")
-            if reg_idx is not None:
-                try:
-                    idx = int(reg_idx)
-                    if 0 <= idx < len(recs[:4]):
-                        r = recs[idx]
-                        lk = f"rg_{idx}_{r['mkt_key']}"
-                        done = st.session_state.get(f"done_{lk}", False)
-                        if not done:
+            # Register buttons (safe Streamlit buttons, not HTML links)
+            for i, r in enumerate(recs[:4]):
+                lk = f"rg_{i}_{r['mkt_key']}"
+                done = st.session_state.get(f"done_{lk}", False)
+                if done:
+                    continue
+                pick_str = fmt_ou(r["pick"], r.get("entry",{}).get("detail",""))
+                cols = st.columns([5, 1])
+                with cols[0]:
+                    st.markdown(f"#{i+1} {r['game'][:15]} · {r['market']} · {pick_str}")
+                with cols[1]:
+                    if st.button("📝", key=lk, use_container_width=True):
+                        try:
                             from bankroll import add_pick, load_picks, recommend_stake
                             d = load_picks(); bk = d["bankroll"]
                             gl = f"{r['pick_dict']['away_abbrev']} @ {r['pick_dict']['home_abbrev']}"
@@ -1638,11 +1641,9 @@ def main():
                                 notify_pick(gl, r["market"], pt, sk, oi, bk)
                                 sync_picks_to_github()
                                 st.session_state[f"done_{lk}"] = True
-                                try: st.query_params.clear()
-                                except: pass
                                 st.rerun()
-                except:
-                    pass
+                        except Exception as ex:
+                            st.caption(f"❌ {ex}")
     except ImportError:
         pass
 
