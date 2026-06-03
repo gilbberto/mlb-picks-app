@@ -12,8 +12,8 @@
       "odds": "N/A",
       "edge": null,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "W",
+      "settled": true
     },
     {
       "id": "823130_spread_minus",
@@ -27,8 +27,8 @@
       "odds": "N/A",
       "edge": null,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "823130_spread_plus",
@@ -42,8 +42,8 @@
       "odds": "N/A",
       "edge": null,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "823130_total",
