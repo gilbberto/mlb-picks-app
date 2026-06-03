@@ -179,6 +179,23 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 59
+    },
+    {
+      "id": 12,
+      "date": "2026-06-03",
+      "game": "TEX @ STL",
+      "market": "O/U",
+      "team": "Over",
+      "detail": "o7.5",
+      "model_prob": 0.806,
+      "odds": -120,
+      "stake": 179.26,
+      "bankroll_before": 1251.92,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false,
+      "telegram_msg_id": 60
     }
   ]
 }
