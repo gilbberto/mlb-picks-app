@@ -252,6 +252,10 @@ def main():
 
     check_game_starts_and_scores()
 
+    # Commit game_starts_notified.json so concurrency cancel doesn't re-notify
+    if os.environ.get("GITHUB_ACTIONS"):
+        os.system("git add game_starts_notified.json 2>/dev/null && git diff --cached --quiet 2>/dev/null || git commit -m 'sync state' 2>/dev/null && git pull --rebase -X theirs 2>/dev/null && git push 2>/dev/null")
+
 if __name__ == "__main__":
     main()
     import time
@@ -264,15 +268,3 @@ if __name__ == "__main__":
         print(f"\n--- Siguiente ciclo en 30 min ({datetime.now(TZ).strftime('%H:%M')}) ---")
         time.sleep(1800)
         main()
-    # Keep running every 30 min during MLB hours
-    import time
-    for _ in range(24):  # max 12 hours
-        h = datetime.now(timezone.utc).hour
-        if 7 <= h <= 11:
-            print("Fuera de horario MLB (07-11 UTC) — durmiendo 2h")
-            time.sleep(7200)
-            continue
-        print(f"\n--- Siguiente ciclo en 30 min ({datetime.now(TZ).strftime('%H:%M')}) ---")
-        time.sleep(1800)
-        main()
-        maybe_run_morning_summary()
