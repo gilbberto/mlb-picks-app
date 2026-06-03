@@ -5,6 +5,10 @@ on:
   push:
     branches: [main]
 
+concurrency:
+  group: settle
+  cancel-in-progress: true
+
 jobs:
   settle:
     runs-on: ubuntu-latest
