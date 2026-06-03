@@ -1450,15 +1450,6 @@ def main():
         else:
             st.info("No hay picks disponibles para mostrar.")
 
-    # ── Parlays ──
-    parlays = generate_parlays(picks)
-    if parlays:
-        st.divider()
-        st.markdown("## 🎯 Parlays Recomendados")
-        st.caption("Top 3 picks por valor esperado. Todos deben ganar para pagar el parlay.")
-        for i, parlay in enumerate(parlays):
-            render_parlay(parlay, i)
-
     # ── Recomendaciones ──
     recs = []
     try:
