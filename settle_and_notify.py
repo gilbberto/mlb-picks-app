@@ -115,6 +115,30 @@ def pick_win_pct(pick, away_runs, home_runs, away_abbr, home_abbr, inning):
 
     return None
 
+def _game_ended_msg(label, away_abbr, home_abbr, away_runs, home_runs):
+    """Build juego terminado message with pick results."""
+    picks = get_picks_for_game(label)
+    result_lines = []
+    for pk in picks:
+        market = pk.get("market", "")
+        team = pk.get("team", "")
+        detail = pk.get("detail", "")
+        settled = pk.get("settled")
+        if settled:
+            icon = "✅" if pk.get("result") == "W" else "❌"
+            result = "GANADA" if pk.get("result") == "W" else "PERDIDA"
+            profit = pk.get("profit", 0)
+            lp = f"{market} {team}" + (f" {detail}" if detail else "")
+            result_lines.append(f"{icon} {lp}: *{result}* (${profit:+.2f})")
+        else:
+            lp = f"{market} {team}" + (f" {detail}" if detail else "")
+            result_lines.append(f"⏳ {lp}: pendiente")
+    parts = [f"⚾ *JUEGO TERMINADO*\n{label}", f"{away_abbr} {away_runs} - {home_runs} {home_abbr}"]
+    if result_lines:
+        parts.append("")
+        parts.extend(result_lines)
+    return "\n".join(parts)
+
 def check_game_starts_and_scores():
     print("=== Verificando juegos en vivo ===")
     pick_games = get_todays_pick_games()
@@ -125,6 +149,7 @@ def check_game_starts_and_scores():
 
     state = load_state()
     notified_starts = set(state.get("notified_starts", []))
+    notified_ended = set(state.get("notified_ended", []))
     scores = state.get("scores", {})
     today = datetime.now(TZ).strftime("%Y-%m-%d")
 
@@ -141,8 +166,6 @@ def check_game_starts_and_scores():
     for d in r.json().get("dates", []):
         for g in d.get("games", []):
             state_code = g.get("status", {}).get("codedGameState", "")
-            if state_code not in ("L", "I"):
-                continue
             gid = str(g["gamePk"])
             away = g["teams"]["away"]
             home = g["teams"]["home"]
@@ -152,12 +175,23 @@ def check_game_starts_and_scores():
             home_abbr = REV_TEAM.get(home_name.lower(), home_name)
             label = f"{away_abbr} @ {home_abbr}"
 
-            # Solo notificar juegos donde tengo picks registrados
             if label not in pick_games:
                 continue
 
             away_runs = away.get("score", 0)
             home_runs = home.get("score", 0)
+
+            # Juego terminado
+            if state_code == "F":
+                if gid not in notified_ended:
+                    msg = _game_ended_msg(label, away_abbr, home_abbr, away_runs, home_runs)
+                    print(f"  {label} — JUEGO TERMINADO ({away_runs}-{home_runs})")
+                    send_telegram(msg)
+                    notified_ended.add(gid)
+                continue
+
+            if state_code not in ("L", "I"):
+                continue
 
             linescore = g.get("linescore") or {}
             inning = linescore.get("currentInning")
@@ -208,6 +242,7 @@ def check_game_starts_and_scores():
                 scores[gid] = {"away": away_runs, "home": home_runs}
 
     state["notified_starts"] = list(notified_starts)
+    state["notified_ended"] = list(notified_ended)
     state["scores"] = scores
     save_state(state)
 
