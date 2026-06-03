@@ -320,7 +320,10 @@ def _git_commit():
     cwd = os.path.dirname(__file__)
     subprocess.run(["git", "config", "user.name", "MLB Picks Bot"], capture_output=True, cwd=cwd)
     subprocess.run(["git", "config", "user.email", "bot@mlb-picks.local"], capture_output=True, cwd=cwd)
-    subprocess.run(["git", "add", "game_starts_notified.json", ".morning_sent"], capture_output=True, cwd=cwd)
+    for f in ("picks.json", "game_starts_notified.json", "predictions_log.json", ".morning_sent"):
+        fp = os.path.join(cwd, f)
+        if os.path.isfile(fp):
+            subprocess.run(["git", "add", f], capture_output=True, cwd=cwd)
     r = subprocess.run(["git", "diff", "--cached", "--quiet"], capture_output=True, cwd=cwd)
     if r.returncode != 0:
         subprocess.run(["git", "commit", "-m", "sync state"], capture_output=True, cwd=cwd)
