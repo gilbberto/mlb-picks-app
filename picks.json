@@ -144,6 +144,22 @@
       "profit": null,
       "label": "\ud83d\udd25 High",
       "settled": false
+    },
+    {
+      "id": 10,
+      "date": "2026-06-02",
+      "game": "CLE @ NYY",
+      "market": "ML",
+      "team": "New York Yankees",
+      "detail": "",
+      "model_prob": 0.68,
+      "odds": 3300,
+      "stake": 131.73,
+      "bankroll_before": 786.13,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ]
 }
