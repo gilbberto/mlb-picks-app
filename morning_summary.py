@@ -391,6 +391,25 @@ def main():
         away_abbr = REV_TEAM.get(an.lower(), an[:3].upper())
         game_label = f"{away_abbr} @ {home_abbr}"
 
+        # Common comparison data for justification
+        h_fip = hpitch.get("fip", 4.5) if hpitch else 4.5
+        a_fip = apitch.get("fip", 4.5) if apitch else 4.5
+        elo_diff = h_elo - a_elo
+        fav_team = hn if ml_hp >= 0.5 else an
+        is_home_fav = ml_hp >= 0.5
+
+        def ml_reason(team):
+            if team == hn and elo_diff > 25:
+                return f"Ventaja Elo +{elo_diff}"
+            if team == an and elo_diff < -25:
+                return f"Ventaja Elo +{-elo_diff}"
+            if team == hn and h_fip < a_fip - 0.4:
+                return f"Mejor FIP ({h_fip:.2f}) vs ({a_fip:.2f})"
+            if team == an and a_fip < h_fip - 0.4:
+                return f"Mejor FIP ({a_fip:.2f}) vs ({h_fip:.2f})"
+            margin = exp_rdiff if team == hn else -exp_rdiff
+            return f"Margen proyectado: {margin:+.1f}"
+
         game_picks = []
 
         # ML — pick the favorite
@@ -406,6 +425,7 @@ def main():
                 "game": game_label, "market": "ML", "team": ml_team, "detail": "",
                 "prob": round(ml_prob * 100, 1), "odds": ml_price,
                 "edge": edge_pct(round(ml_prob * 100, 1), ml_price),
+                "reason": ml_reason(ml_team),
             })
 
         # RL -1.5 (favorite)
@@ -414,11 +434,21 @@ def main():
         else:
             rl_fav_team = an; rl_fav_prob = spr_away_minus
         spr_price, spr_book, _ = extract_market_odds(og, "spreads", rl_fav_team, expect_point=-1.5)
+        def rl_reason(team, is_fav):
+            if is_fav:
+                return f"Margen: {exp_rdiff:+.1f}"
+            if elo_diff > 25 and team == hn:
+                return f"Ventaja Elo +{elo_diff}"
+            if elo_diff < -25 and team == an:
+                return f"Ventaja Elo +{-elo_diff}"
+            return f"Margen: {exp_rdiff:+.1f}"
+
         if spr_price is not None:
             game_picks.append({
                 "game": game_label, "market": "RL -1.5", "team": rl_fav_team, "detail": "-1.5",
                 "prob": round(rl_fav_prob * 100, 1), "odds": spr_price,
                 "edge": edge_pct(round(rl_fav_prob * 100, 1), spr_price),
+                "reason": rl_reason(rl_fav_team, True),
             })
 
         # RL +1.5 (underdog)
@@ -432,6 +462,7 @@ def main():
                 "game": game_label, "market": "RL +1.5", "team": rl_dog_team, "detail": "+1.5",
                 "prob": round(rl_dog_prob * 100, 1), "odds": spr_dog_price,
                 "edge": edge_pct(round(rl_dog_prob * 100, 1), spr_dog_price),
+                "reason": rl_reason(rl_dog_team, False),
             })
 
         # O/U
@@ -439,12 +470,17 @@ def main():
         if ov_price is not None and ov_point is not None:
             ov_prob = norm_cdf(exp_total - ov_point, 0, 3.2)
             ov_prob_cal = calibrate_ml(round(float(ov_prob), 4))
+            pf_str = f"Park: {park_f:.2f}" if abs(park_f - 1.0) > 0.03 else ""
+            ov_reason = f"Proyección: {exp_total:.1f} carreras"
+            if pf_str:
+                ov_reason += f" | {pf_str}"
             if ov_prob_cal >= 0.5:
                 game_picks.append({
                     "game": game_label, "market": "O/U", "team": "Over",
                     "detail": f"o{ov_point}",
                     "prob": round(ov_prob_cal * 100, 1), "odds": ov_price,
                     "edge": edge_pct(round(ov_prob_cal * 100, 1), ov_price),
+                    "reason": ov_reason,
                 })
             else:
                 un_price, un_book, _ = extract_market_odds(og, "totals", "Under")
@@ -454,6 +490,7 @@ def main():
                         "detail": f"u{ov_point}",
                         "prob": round((1-ov_prob_cal)*100, 1), "odds": un_price,
                         "edge": edge_pct(round((1-ov_prob_cal)*100, 1), un_price),
+                        "reason": ov_reason,
                     })
 
         picks.extend(game_picks)
@@ -489,6 +526,8 @@ def main():
             lines.append(f"{flames} *{r['game']}*")
             lines.append(f"   {r['market']} {r['team']}{detail}")
             lines.append(f"   Prob: {r['prob']:.0f}%  |  Odds: {fmt_odds(r['odds'])}  |  Edge: +{r['edge']:.1f}%{stake_info}")
+            if r.get("reason"):
+                lines.append(f"   _{r['reason']}_")
             lines.append("")
 
     # P&L summary
