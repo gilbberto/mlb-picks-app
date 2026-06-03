@@ -68,7 +68,7 @@ Los valores están en `.streamlit/secrets.toml` local (gitignored) y en Streamli
 - **Win probability en carreras**: cada notificación de carrera incluye % de ganar de cada pick registrado en ese juego
 - **market_fav_team** movido después de `og = match_game()` (antes usaba og del juego anterior)
 - **Fallback path**: recalcula probs con margen firmado cuando mercado y modelo difieren
-- **auto-settle.yml**: cambiado `git pull --rebase` por `fetch + rebase` para detached HEAD
+- **auto-settle.yml**: checkout con `ref: main` + `git pull --rebase -X theirs` (detached HEAD + conflictos)
 - **auto-settle.yml**: corregido YAML duplicado que causaba "No jobs were run"
 
 ### Pendientes / Ideas
