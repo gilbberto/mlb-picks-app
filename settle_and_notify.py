@@ -252,18 +252,5 @@ def main():
 
     check_game_starts_and_scores()
 
-    if os.environ.get("GITHUB_ACTIONS"):
-        os.system("git config user.name 'MLB Picks Bot' && git config user.email 'bot@mlb-picks.local' && git add game_starts_notified.json && git diff --cached --quiet || (git commit -m 'sync state' && git pull --rebase -X theirs && git push)")
-
 if __name__ == "__main__":
     main()
-    import time
-    for _ in range(24):
-        h = datetime.now(timezone.utc).hour
-        if 7 <= h <= 11:
-            print("Fuera de horario MLB (07-11 UTC) — durmiendo 2h")
-            time.sleep(7200)
-            continue
-        print(f"\n--- Siguiente ciclo en 30 min ({datetime.now(TZ).strftime('%H:%M')}) ---")
-        time.sleep(1800)
-        main()
