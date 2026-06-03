@@ -1699,8 +1699,8 @@ def main():
                 with cols[2]: st.markdown(row["Pick"])
                 with cols[3]: st.markdown(f"{row['Estado']} {row['Profit']}")
                 with cols[4]:
-                    settled = p.get("result") in ("W", "L")
-                    if not settled and st.button("✕", key=f"del_{pid}", help=f"Eliminar pick #{pid}"):
+                    is_settled = p.get("result") in ("W", "L")
+                    if not is_settled and st.button("✕", key=f"del_{pid}", help=f"Eliminar pick #{pid}"):
                         from bankroll import save_picks, load_picks
                         d = load_picks()
                         d["history"] = [x for x in d["history"] if x.get("id") != pid]
