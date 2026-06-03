@@ -103,12 +103,14 @@ def pick_win_pct(pick, away_runs, home_runs, away_abbr, home_abbr, inning):
         except:
             return None
         total = away_runs + home_runs
-        remaining = max(0, 9 - inning) * 0.5  # ~0.5 runs per remaining inning
-        expected = total + remaining
         if team == "Over":
-            prob = 1.0 / (1.0 + math.exp(-(total - line) / max(remaining, 0.5)))
+            if total > line:
+                return 100.0
         else:
-            prob = 1.0 / (1.0 + math.exp((total - line) / max(remaining, 0.5)))
+            if total > line:
+                return 0.0
+        remaining = max(0, 9 - inning) * 0.5  # ~0.5 runs per remaining inning
+        prob = 1.0 / (1.0 + math.exp(-(total - line) / max(remaining, 0.5)))
         return round(prob * 100, 1)
 
     return None
