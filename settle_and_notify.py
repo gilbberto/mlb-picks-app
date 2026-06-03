@@ -182,7 +182,7 @@ def check_game_starts_and_scores():
             home_runs = home.get("score", 0)
 
             # Juego terminado
-            if state_code == "F":
+            if state_code in ("F", "O"):
                 if gid not in notified_ended:
                     msg = _game_ended_msg(label, away_abbr, home_abbr, away_runs, home_runs)
                     print(f"  {label} — JUEGO TERMINADO ({away_runs}-{home_runs})")
