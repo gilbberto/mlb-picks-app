@@ -1,12 +1,9 @@
-name: Auto-Settle MLB Picks
+name: Settle MLB Picks
 
 on:
   schedule:
-    # Every 15 minutes during MLB hours (12:00-23:59 + 00:00-06:59 UTC = 6am-11:59pm Chihuahua UTC-6)
     - cron: '*/15 0-6,12-23 * * *'
-  workflow_dispatch:  # manual trigger
-  push:
-    branches: [main]
+  workflow_dispatch:
 
 jobs:
   settle:
