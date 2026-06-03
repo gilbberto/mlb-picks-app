@@ -25,11 +25,12 @@ def send_telegram(msg):
         return
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     try:
+        print(f"  Enviando a Telegram (len={len(msg)} chars)...")
         r = requests.post(url, json={"chat_id": CHAT_ID, "text": msg, "parse_mode": "Markdown"}, timeout=15)
         if r.status_code == 200:
             print("  Notificación enviada a Telegram")
         else:
-            print(f"  Error Telegram: {r.text}")
+            print(f"  Error Telegram ({r.status_code}): {r.text[:200]}")
     except Exception as e:
         print(f"  Error Telegram: {e}")
 
