@@ -252,31 +252,18 @@ def main():
 
     check_game_starts_and_scores()
 
-def maybe_run_morning_summary():
-    h = datetime.now(TZ).hour
-    if not (6 <= h <= 11):
-        return
-    flag = os.path.join(os.path.dirname(__file__), ".morning_done")
-    today = datetime.now(TZ).strftime("%Y-%m-%d")
-    try:
-        if open(flag).read().strip() == today:
-            print("  Morning summary: ya enviado hoy")
-            return
-    except:
-        pass
-    print("  Morning summary: generando...")
-    import subprocess
-    ret = subprocess.run(["python3", "morning_summary.py"], capture_output=True, text=True, cwd=os.path.dirname(__file__))
-    if ret.returncode == 0:
-        with open(flag, "w") as f:
-            f.write(today)
-        print("  Morning summary: enviado")
-    else:
-        print(f"  Error morning summary:\n{ret.stderr}")
-
 if __name__ == "__main__":
     main()
-    maybe_run_morning_summary()
+    import time
+    for _ in range(24):
+        h = datetime.now(timezone.utc).hour
+        if 7 <= h <= 11:
+            print("Fuera de horario MLB (07-11 UTC) — durmiendo 2h")
+            time.sleep(7200)
+            continue
+        print(f"\n--- Siguiente ciclo en 30 min ({datetime.now(TZ).strftime('%H:%M')}) ---")
+        time.sleep(1800)
+        main()
     # Keep running every 30 min during MLB hours
     import time
     for _ in range(24):  # max 12 hours
