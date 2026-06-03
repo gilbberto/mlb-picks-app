@@ -1,1 +1,11 @@
-{"notified_starts": [], "scores": {}}
+{
+  "notified_starts": [
+    "822973"
+  ],
+  "scores": {
+    "822973": {
+      "away": 1,
+      "home": 1
+    }
+  }
+}
