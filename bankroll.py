@@ -31,47 +31,38 @@ REV_TEAM = {v.lower(): k for k, v in TEAM_NAMES.items()}
 # ─── Calibration ───
 # Based on XGBoost validation on 262 games (2026 season)
 def calibrate_ml(prob):
-    """Calibrate ML probability. XGBoost (8174 games) validated 262 games.
-    Smooth monotonic piecewise linear. Overall ML acc: 57.6%."""
+    """Calibrate ML probability. XGBoost (35 features, 8198 games 2023-2026).
+    Light calibration — XGBoost binary:logistic tends to be well-calibrated.
+    Revisit after ≥50 settled picks."""
     if prob < 0.50:
         return 1.0 - calibrate_ml(1.0 - prob)
-    # Target points from validation: prob -> calibrated
-    # 0.525→0.574, 0.575→~0.58*, 0.625→0.604, 0.675→0.615, 0.725→0.667, 0.775→0.714
-    # *55-60% bucket was noisy (N=51, actual=45.1% — treated as outlier); smoothed
+    # Gentle piecewise linear (50% of old calibration strength)
     if prob < 0.55:
         t = (prob - 0.50) / 0.05
-        return 0.555 + t * 0.025  # 0.50->0.555, 0.55->0.580
-    if prob < 0.60:
-        t = (prob - 0.55) / 0.05
-        return 0.580 + t * 0.010  # 0.55->0.580, 0.60->0.590
-    if prob < 0.70:
-        t = (prob - 0.60) / 0.10
-        return 0.590 + t * 0.050  # 0.60->0.590, 0.70->0.640
+        return 0.525 + t * 0.035  # 0.50->0.525, 0.55->0.560
+    if prob < 0.65:
+        t = (prob - 0.55) / 0.10
+        return 0.560 + t * 0.060  # 0.55->0.560, 0.65->0.620
     if prob < 0.80:
-        t = (prob - 0.70) / 0.10
-        return 0.640 + t * 0.060  # 0.70->0.640, 0.80->0.700
-    return min(0.700 + (prob - 0.80) * 0.20, 0.78)  # gentle slope beyond 80%
+        t = (prob - 0.65) / 0.15
+        return 0.620 + t * 0.105  # 0.65->0.620, 0.80->0.725
+    return min(0.725 + (prob - 0.80) * 0.25, 0.85)  # 0.80->0.725, 0.95->0.762
 
 def calibrate_rl(prob):
-    """Calibrate RL -1.5 probability. XGBoost (8174 games) validated 262 games.
-    Overall RL -1.5 cover rate: ~36.6%. Smooth monotonic shrinkage."""
-    # Smooth shrinkage target: 0.366 (mean), with confidence-dependent adjustment
-    # Low predictions (<15%) are very underconfident; high ones are overconfident
-    if prob < 0.08:
-        return 0.05 + prob * 0.625  # 0->0.05, 0.08->0.10
-    if prob < 0.15:
-        t = (prob - 0.08) / 0.07
-        return 0.10 + t * 0.10  # 0.08->0.10, 0.15->0.20
-    if prob < 0.25:
-        t = (prob - 0.15) / 0.10
-        return 0.20 + t * 0.10  # 0.15->0.20, 0.25->0.30
+    """Calibrate RL probability. XGBoost (35 features, 8198 games 2023-2026).
+    Base RL -1.5 cover rate: ~36.6%. Light shrinkage toward mean."""
+    if prob < 0.10:
+        return 0.06 + prob * 0.40  # 0->0.06, 0.10->0.10
+    if prob < 0.20:
+        t = (prob - 0.10) / 0.10
+        return 0.10 + t * 0.08  # 0.10->0.10, 0.20->0.18
     if prob < 0.35:
-        t = (prob - 0.25) / 0.10
-        return 0.30 + t * 0.06  # 0.25->0.30, 0.35->0.36
-    if prob < 0.50:
-        t = (prob - 0.35) / 0.15
-        return 0.36 + t * 0.12  # 0.35->0.36, 0.50->0.48
-    return min(0.48 + (prob - 0.50) * 0.30, 0.65)  # 0.50->0.48, 0.65->0.53
+        t = (prob - 0.20) / 0.15
+        return 0.18 + t * 0.14  # 0.20->0.18, 0.35->0.32
+    if prob < 0.55:
+        t = (prob - 0.35) / 0.20
+        return 0.32 + t * 0.14  # 0.35->0.32, 0.55->0.46
+    return min(0.46 + (prob - 0.55) * 0.30, 0.70)  # 0.55->0.46, 0.70->0.51
 
 # ─── Kelly Criterion ───
 def american_to_prob(odds):

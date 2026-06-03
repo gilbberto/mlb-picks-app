@@ -519,8 +519,11 @@ def compute_ev(prob, odds):
 
 def build_rf_feature_row(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f,
                           hp_rec=None, ap_rec=None):
-    """Build a feature dict matching the training format."""
-    return {
+    """Build a feature dict matching the training format.
+    hp_rec/ap_rec: recent form dicts from fetch_pitcher_recent_form().
+    These rec_* features exist in the feature space but may not yet
+    have nonzero coefficients until the model is retrained with them."""
+    f = {
         "h_elo": h_elo, "a_elo": a_elo,
         "h_wp": hf.get("wp", 0.5), "a_wp": af.get("wp", 0.5),
         "h_rs": hf.get("rs", 4.5), "a_rs": af.get("rs", 4.5),
@@ -551,7 +554,19 @@ def build_rf_feature_row(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f,
         "ap_babip": apitch.get("babip", 0.300) if apitch else 0.300,
         "ap_kbb": apitch.get("kbb", 3.0) if apitch else 3.0,
         "ap_gb_rate": apitch.get("gb_rate", 0.44) if apitch else 0.44,
+        "hp_rec_era": hp_rec.get("rec_era", hpitch.get("era", 4.5)) if hp_rec else 4.5,
+        "hp_rec_k9": hp_rec.get("rec_k9", hpitch.get("k9", 8.0)) if hp_rec else 8.0,
+        "hp_rec_bb9": hp_rec.get("rec_bb9", hpitch.get("bb9", 3.0)) if hp_rec else 3.0,
+        "hp_rec_hr9": hp_rec.get("rec_hr9", hpitch.get("hr9", 1.2)) if hp_rec else 1.2,
+        "ap_rec_era": ap_rec.get("rec_era", apitch.get("era", 4.5)) if ap_rec else 4.5,
+        "ap_rec_k9": ap_rec.get("rec_k9", apitch.get("k9", 8.0)) if ap_rec else 8.0,
+        "ap_rec_bb9": ap_rec.get("rec_bb9", apitch.get("bb9", 3.0)) if ap_rec else 3.0,
+        "ap_rec_hr9": ap_rec.get("rec_hr9", apitch.get("hr9", 1.2)) if ap_rec else 1.2,
     }
+    # The model was trained with only 35 features (no rec_*). Adding rec_*
+    # here will cause a feature mismatch until the model is retrained.
+    # For now, strip rec_* features to keep compatibility:
+    return {k: v for k, v in f.items() if not k.startswith(("hp_rec_", "ap_rec_"))}
 
 
 @st.cache_data(ttl=3600)
@@ -564,7 +579,8 @@ def monte_carlo_predict(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f,
                 "spr_away_minus": None, "spr_away_plus": None, "spr_exp_margin": None,
                 "exp_total": None, "total_std": 3.2}
 
-    row = build_rf_feature_row(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f)
+    row = build_rf_feature_row(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f,
+                                hp_rec=hp_rec, ap_rec=ap_rec)
     x = np.array([[row[c] for c in _cols]])
 
     if _xgb_hw is not None:
@@ -1156,6 +1172,9 @@ def main():
             apitch = fetch_pitcher_stats(ap_info.get("id")) if ap_info.get("id") else {}
             h_pitcher_name = hpitch.get("name", hp_info.get("fullName", ""))
             a_pitcher_name = apitch.get("name", ap_info.get("fullName", ""))
+            # Recent form (last 5 starts) — fetched but not yet in features (needs model retrain)
+            hprec = fetch_pitcher_recent_form(hp_info.get("id")) if hp_info.get("id") else {}
+            aprec = fetch_pitcher_recent_form(ap_info.get("id")) if ap_info.get("id") else {}
 
             # ── Elo ratings ──
             elo_hp, h_elo, a_elo = compute_elo(hr, ar, hid, aid)
@@ -1168,7 +1187,7 @@ def main():
             mc = monte_carlo_predict(hs, aws, hf, af, h_elo, a_elo,
                                      hpitch if hpitch.get("ip",0) >= 10 else None,
                                      apitch if apitch.get("ip",0) >= 10 else None,
-                                     park_f)
+                                     park_f, hp_rec=hprec, ap_rec=aprec)
 
             ml_hp = mc["ml_hp"]
             ml_ap = mc["ml_ap"]
