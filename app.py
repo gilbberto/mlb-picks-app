@@ -1518,40 +1518,45 @@ def main():
             st.markdown("## 🏆 Recomendaciones del Día")
             st.caption(f"Top {min(len(recs),4)} de {len(recs)} — Kelly Criterion (25% fraccional, bankroll ${actual_bankroll:,.0f}).")
 
+            # Table header
+            h = st.columns([2.5, 2.5, 1])
+            with h[0]: st.markdown("**Juego · Mercado**")
+            with h[1]: st.markdown("**Pick · Edge · Stake**")
+            with h[2]: st.markdown("**Reg**")
+            st.markdown("---")
+
             for i, r in enumerate(recs[:4]):
                 lk = f"rg_{i}_{r['mkt_key']}"
                 done = st.session_state.get(f"done_{lk}", False)
                 icon = "🔥" if r["edge"] > 8 else "⭐" if r["edge"] > 5 else "✅"
                 pick_str = fmt_ou(r["pick"], r.get("entry",{}).get("detail",""))
                 stake_str = f"${r['stake']:.0f}" if r["stake"] > 0 else "—"
-                with st.container(border=True):
-                    cols = st.columns([4, 1])
-                    with cols[0]:
-                        st.markdown(f"**#{i+1}** {r['game']}")
-                        st.markdown(f"{r['market']} · {pick_str}  |  {icon} {r['edge']:+.1f}%  |  {stake_str}")
-                    with cols[1]:
-                        if done:
-                            st.markdown("✅")
-                        elif st.button("📝", key=lk, use_container_width=True):
-                            try:
-                                from bankroll import add_pick, load_picks, recommend_stake
-                                d = load_picks(); bk = d["bankroll"]
-                                gl = f"{r['pick_dict']['away_abbrev']} @ {r['pick_dict']['home_abbrev']}"
-                                os_ = r["odds"]
-                                oi = int(str(os_).replace("$","")) if os_ not in ("N/A","—","") else 0
-                                pv = r["prob"]/100.0
-                                sk,_,sl = recommend_stake(pv, oi, bankroll=bk)
-                                if sk > 0:
-                                    pt = r["pick"]
-                                    dtl = r.get("entry", {}).get("detail", "")
-                                    ts = datetime.now(TZ).strftime("%Y-%m-%d")
-                                    add_pick(ts, gl, r["market"], pv, oi, sk, bk, sl, pt, dtl)
-                                    notify_pick(gl, r["market"], pt, sk, oi, bk)
-                                    sync_picks_to_github()
-                                    st.session_state[f"done_{lk}"] = True
-                                    st.rerun()
-                            except Exception as ex:
-                                st.caption(f"❌ {ex}")
+                cols = st.columns([2.5, 2.5, 1])
+                with cols[0]: st.markdown(f"{r['game']}  \n{r['market']}")
+                with cols[1]: st.markdown(f"{pick_str}  \n{icon} {r['edge']:+.1f}% · {stake_str}")
+                with cols[2]:
+                    if done:
+                        st.markdown("✅")
+                    elif st.button("📝", key=lk, use_container_width=True):
+                        try:
+                            from bankroll import add_pick, load_picks, recommend_stake
+                            d = load_picks(); bk = d["bankroll"]
+                            gl = f"{r['pick_dict']['away_abbrev']} @ {r['pick_dict']['home_abbrev']}"
+                            os_ = r["odds"]
+                            oi = int(str(os_).replace("$","")) if os_ not in ("N/A","—","") else 0
+                            pv = r["prob"]/100.0
+                            sk,_,sl = recommend_stake(pv, oi, bankroll=bk)
+                            if sk > 0:
+                                pt = r["pick"]
+                                dtl = r.get("entry", {}).get("detail", "")
+                                ts = datetime.now(TZ).strftime("%Y-%m-%d")
+                                add_pick(ts, gl, r["market"], pv, oi, sk, bk, sl, pt, dtl)
+                                notify_pick(gl, r["market"], pt, sk, oi, bk)
+                                sync_picks_to_github()
+                                st.session_state[f"done_{lk}"] = True
+                                st.rerun()
+                        except Exception as ex:
+                            st.caption(f"❌ {ex}")
     except ImportError:
         pass
 
