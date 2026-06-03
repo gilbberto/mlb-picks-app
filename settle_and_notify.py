@@ -203,6 +203,25 @@ def check_game_starts_and_scores():
                             msg += "\n" + "\n".join(wp_lines)
                     print(f"  {label} — {away_runs}-{home_runs} (cambio)")
                     send_telegram(msg)
+                elif state_code == "I" and (away_runs > 0 or home_runs > 0):
+                    msg = f"⚾ *CARRERA!* {label}\n{away_abbr} {away_runs} - {home_runs} {home_abbr}"
+                    if inn_ord:
+                        msg += f"  ({inning_icon(inn_state)} {inn_ord})"
+                    picks_in_game = get_picks_for_game(label)
+                    if picks_in_game:
+                        wp_lines = []
+                        for pk in picks_in_game:
+                            wp = pick_win_pct(pk, away_runs, home_runs, away_abbr, home_abbr, inning or 1)
+                            if wp is not None:
+                                pm = pk.get("market", "")
+                                pt = pk.get("team", "")
+                                pd = pk.get("detail", "")
+                                label_pick = f"{pm} {pt}" + (f" {pd}" if pd else "")
+                                wp_lines.append(f"  {label_pick}: {wp:.0f}%")
+                        if wp_lines:
+                            msg += "\n" + "\n".join(wp_lines)
+                    print(f"  {label} — {away_runs}-{home_runs} (inicial)")
+                    send_telegram(msg)
                 scores[gid] = {"away": away_runs, "home": home_runs}
 
     state["notified_starts"] = list(notified_starts)
