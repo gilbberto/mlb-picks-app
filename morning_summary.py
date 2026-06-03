@@ -283,7 +283,7 @@ def match_game(odds_list, home_name, away_name):
     return None
 
 def extract_market_odds(game_odds, market_key, outcome_name=None, expect_point=None):
-    if not game_odds: return None, None
+    if not game_odds: return None, None, None
     best_price, best_book, best_point = None, None, None
     for book in game_odds.get("bookmakers", []):
         for mkt in book.get("markets", []):
@@ -295,7 +295,7 @@ def extract_market_odds(game_odds, market_key, outcome_name=None, expect_point=N
                 price = oc.get("price")
                 if best_price is None or (price is not None and abs(price) > abs(best_price)):
                     best_price = price; best_book = book.get("title", "Unknown"); best_point = point
-    return best_price, best_book, best_point if market_key != "h2h" else (best_price, best_book)
+    return best_price, best_book, best_point
 
 def fmt_odds(odds):
     if odds is None: return "N/A"
@@ -399,11 +399,7 @@ def main():
         else:
             ml_team = an; ml_prob = ml_ap; ml_is_home = False
 
-        ml_price, ml_book = extract_market_odds(og, "h2h", ml_team)
-        if ml_price is None:
-            ml_price, ml_book = extract_market_odds(og, "h2h")
-            if ml_price is not None:
-                ml_price = None  # can't determine which price is ours
+        ml_price, ml_book, _ = extract_market_odds(og, "h2h", ml_team)
 
         if ml_price is not None:
             game_picks.append({
