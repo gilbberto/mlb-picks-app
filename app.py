@@ -1782,25 +1782,54 @@ def main():
                     "Profit": profit_str,
                 })
 
-            # Tabla de picks
-            st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
+            # Tabla de picks con botón eliminar inline
+            if rows:
+                html = """<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;color:#c9d1d9;font-size:13px">
+                <thead><tr style="background:#161b22">
+                    <th style="padding:6px 8px;text-align:left;border-bottom:2px solid #30363d">Fecha</th>
+                    <th style="padding:6px 8px;text-align:left;border-bottom:2px solid #30363d">Juego</th>
+                    <th style="padding:6px 8px;text-align:left;border-bottom:2px solid #30363d">Mercado</th>
+                    <th style="padding:6px 8px;text-align:left;border-bottom:2px solid #30363d">Pick</th>
+                    <th style="padding:6px 8px;text-align:center;border-bottom:2px solid #30363d">Estado</th>
+                    <th style="padding:6px 8px;text-align:right;border-bottom:2px solid #30363d">Profit</th>
+                    <th style="padding:6px 8px;text-align:center;border-bottom:2px solid #30363d">Del</th>
+                </tr></thead><tbody>"""
+                for i, (row, p) in enumerate(zip(rows, list(reversed(data["history"])))):
+                    pid = p.get("id", i + 1)
+                    is_settled = p.get("result") in ("W", "L")
+                    bg = "#0d1b2a" if i % 2 == 0 else "#1b2838"
+                    profit_str = row["Profit"]
+                    estado = row["Estado"]
+                    if is_settled:
+                        del_btn = "—"
+                    else:
+                        del_btn = f"<form action='' method='GET' style='display:inline;margin:0;padding:0'><input type='hidden' name='del_pick' value='{pid}'><button type='submit' style='background:none;border:none;cursor:pointer;font-size:16px;padding:0;color:#ff4444' title='Eliminar'>✕</button></form>"
+                    html += f"""<tr style="background:{bg}">
+                        <td style="padding:4px 6px;border-bottom:1px solid #2d3748">{row['Fecha']}</td>
+                        <td style="padding:4px 6px;border-bottom:1px solid #2d3748">{row['Juego']}</td>
+                        <td style="padding:4px 6px;border-bottom:1px solid #2d3748">{row['Mercado']}</td>
+                        <td style="padding:4px 6px;border-bottom:1px solid #2d3748">{row['Pick']}</td>
+                        <td style="padding:4px 6px;border-bottom:1px solid #2d3748;text-align:center">{estado}</td>
+                        <td style="padding:4px 6px;border-bottom:1px solid #2d3748;text-align:right">{profit_str}</td>
+                        <td style="padding:4px 6px;border-bottom:1px solid #2d3748;text-align:center">{del_btn}</td>
+                    </tr>"""
+                html += "</tbody></table></div>"
+                st.markdown(html, unsafe_allow_html=True)
 
-            # Delete buttons for pending picks
-            pending = [d for d in data["history"] if d.get("result") not in ("W", "L")]
-            if pending:
-                st.markdown("**Pendientes:**")
-                for p in pending:
-                    pid = p.get("id", 0)
-                    cols = st.columns([5, 1])
-                    with cols[0]:
-                        st.markdown(f"{p.get('game','')} · {p.get('market','')} · {fmt_ou(p.get('team',''), p.get('detail',''))}")
-                    with cols[1]:
-                        if st.button("✕", key=f"del_{pid}", use_container_width=True):
-                            from bankroll import save_picks, load_picks
-                            d = load_picks()
-                            d["history"] = [x for x in d["history"] if x.get("id") != pid]
-                            save_picks(d)
-                            st.rerun()
+            # Handle delete via query param
+            del_pid = st.query_params.get("del_pick")
+            if del_pid is not None:
+                try:
+                    pid = int(del_pid)
+                    from bankroll import save_picks, load_picks
+                    d = load_picks()
+                    d["history"] = [x for x in d["history"] if x.get("id") != pid]
+                    save_picks(d)
+                    try: st.query_params.clear()
+                    except: pass
+                    st.rerun()
+                except:
+                    pass
 
             green = total_profit >= 0
             st.markdown(f"Profit total: <span style='color:{'#00cc66' if green else '#ff4444'}'><b>${total_profit:+.2f}</b></span>", unsafe_allow_html=True)
