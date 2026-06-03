@@ -1517,40 +1517,52 @@ def main():
             st.divider()
             st.markdown("## 🏆 Recomendaciones del Día")
             st.caption(f"Top {min(len(recs),4)} de {len(recs)} — Kelly Criterion (25% fraccional, bankroll ${actual_bankroll:,.0f}).")
+
+            rec_table = []
+            for i, r in enumerate(recs[:4]):
+                icon = "🔥" if r["edge"] > 8 else "⭐" if r["edge"] > 5 else "✅"
+                rec_table.append({
+                    "#": i + 1,
+                    "Juego": r["game"],
+                    "Mercado": r["market"],
+                    "Pick": fmt_ou(r["pick"], r.get("entry",{}).get("detail","")),
+                    "Prob": f"{r['prob']:.0f}%",
+                    "Edge": f"{icon} {r['edge']:+.1f}%",
+                    "Stake": f"${r['stake']:.0f}" if r["stake"] > 0 else "—",
+                })
+            st.dataframe(pd.DataFrame(rec_table), hide_index=True, use_container_width=True)
+
+            # Register buttons inline (one per pick, labeled by #)
+            btns = []
             for i, r in enumerate(recs[:4]):
                 lk = f"rg_{i}_{r['mkt_key']}"
                 done = st.session_state.get(f"done_{lk}", False)
-                icon = "🔥" if r["edge"] > 8 else "⭐" if r["edge"] > 5 else "✅"
-                pick_str = fmt_ou(r["pick"], r.get("entry",{}).get("detail",""))
-                stake_str = f"${r['stake']:.0f} {r['units']}u" if r["stake"] > 0 else "—"
-                cols = st.columns([3, 2, 1.2])
-                with cols[0]:
-                    st.markdown(f"**{r['game']}**  \n{r['market']} · {pick_str}")
-                with cols[1]:
-                    st.markdown(f"{icon} Edge {r['edge']:+.1f}%  \nProb {r['prob']:.0f}% · {stake_str}")
-                with cols[2]:
-                    if done:
-                        st.markdown("✅")
-                    elif st.button("📝", key=lk, use_container_width=True):
-                        try:
-                            from bankroll import add_pick, load_picks, recommend_stake
-                            d = load_picks(); bk = d["bankroll"]
-                            gl = f"{r['pick_dict']['away_abbrev']} @ {r['pick_dict']['home_abbrev']}"
-                            os_ = r["odds"]
-                            oi = int(str(os_).replace("$","")) if os_ not in ("N/A","—","") else 0
-                            pv = r["prob"]/100.0
-                            sk,_,sl = recommend_stake(pv, oi, bankroll=bk)
-                            if sk > 0:
-                                pt = r["pick"]
-                                dtl = r.get("entry", {}).get("detail", "")
-                                ts = datetime.now(TZ).strftime("%Y-%m-%d")
-                                add_pick(ts, gl, r["market"], pv, oi, sk, bk, sl, pt, dtl)
-                                notify_pick(gl, r["market"], pt, sk, oi, bk)
-                                sync_picks_to_github()
-                                st.session_state[f"done_{lk}"] = True
-                                st.rerun()
-                        except Exception as ex:
-                            st.caption(f"❌ {ex}")
+                if not done:
+                    btns.append((i, r, lk))
+            if btns:
+                cols = st.columns(len(btns))
+                for ci, (i, r, lk) in enumerate(btns):
+                    with cols[ci]:
+                        if st.button(f"📝 #{i+1}", key=lk, use_container_width=True):
+                            try:
+                                from bankroll import add_pick, load_picks, recommend_stake
+                                d = load_picks(); bk = d["bankroll"]
+                                gl = f"{r['pick_dict']['away_abbrev']} @ {r['pick_dict']['home_abbrev']}"
+                                os_ = r["odds"]
+                                oi = int(str(os_).replace("$","")) if os_ not in ("N/A","—","") else 0
+                                pv = r["prob"]/100.0
+                                sk,_,sl = recommend_stake(pv, oi, bankroll=bk)
+                                if sk > 0:
+                                    pt = r["pick"]
+                                    dtl = r.get("entry", {}).get("detail", "")
+                                    ts = datetime.now(TZ).strftime("%Y-%m-%d")
+                                    add_pick(ts, gl, r["market"], pv, oi, sk, bk, sl, pt, dtl)
+                                    notify_pick(gl, r["market"], pt, sk, oi, bk)
+                                    sync_picks_to_github()
+                                    st.session_state[f"done_{lk}"] = True
+                                    st.rerun()
+                            except Exception as ex:
+                                st.caption(f"❌ {ex}")
     except ImportError:
         pass
 
