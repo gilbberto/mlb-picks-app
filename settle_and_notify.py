@@ -252,9 +252,8 @@ def main():
 
     check_game_starts_and_scores()
 
-    # Commit game_starts_notified.json so concurrency cancel doesn't re-notify
     if os.environ.get("GITHUB_ACTIONS"):
-        os.system("git add game_starts_notified.json 2>/dev/null && git diff --cached --quiet 2>/dev/null || git commit -m 'sync state' 2>/dev/null && git pull --rebase -X theirs 2>/dev/null && git push 2>/dev/null")
+        os.system("git config user.name 'MLB Picks Bot' && git config user.email 'bot@mlb-picks.local' && git add game_starts_notified.json && git diff --cached --quiet || (git commit -m 'sync state' && git pull --rebase -X theirs && git push)")
 
 if __name__ == "__main__":
     main()
