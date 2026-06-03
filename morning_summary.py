@@ -557,4 +557,8 @@ def main():
     send_telegram(msg)
 
 if __name__ == "__main__":
-    main()
+    h = datetime.now(TZ).hour
+    if h < 6 or h >= 12:
+        print(f"Fuera de horario matutino ({h}:00 Chihuahua) — salteando")
+    else:
+        main()

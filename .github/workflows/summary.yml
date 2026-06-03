@@ -5,6 +5,8 @@ on:
     # 6:00 AM Chihuahua = 12:00 UTC (UTC-6 year-round)
     - cron: '0 12 * * *'
   workflow_dispatch:
+  push:
+    branches: [main]
 
 jobs:
   summary:
