@@ -160,6 +160,22 @@
       "profit": null,
       "label": "\ud83d\udd25 High",
       "settled": false
+    },
+    {
+      "id": 11,
+      "date": "2026-06-02",
+      "game": "LAD @ AZ",
+      "market": "ML",
+      "team": "Arizona Diamondbacks",
+      "detail": "",
+      "model_prob": 0.631,
+      "odds": 475,
+      "stake": 108.72,
+      "bankroll_before": 786.13,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ]
 }
