@@ -258,27 +258,39 @@ def main():
         for e in errors:
             print(f"  ⚠️ {e}")
 
+    new_ids = {p["id"] for p in load_picks()["history"] if p["id"] in pending_before and p.get("settled")}
     if count == 0:
         print("  Sin cambios — salteando notificación de resultados")
         if os.environ.get("GITHUB_EVENT_NAME") == "workflow_dispatch":
             send_telegram("⚾ *MLB Picks Bot* ✅ Activo — sin juegos nuevos liquidados.")
-    else:
-        after = load_picks()
-        pnl = get_pnl()
-        lines = ["⚾ *Resultados MLB*"]
-        for p in after["history"]:
-            if p["id"] in pending_before and p.get("settled"):
-                profit = p.get("profit", 0)
-                icon = "✅" if p.get("result") == "W" else "❌"
-                result = "GANADA" if p.get("result") == "W" else "PERDIDA"
-                lines.append(f"{icon} *{p['game']}* → {p.get('market','?')} {p.get('team','?')} {icon} *{result}* (${profit:+.2f})")
-        lines.append("")
-        lines.append(f"💰 *Bankroll:* ${after['bankroll']:.2f}")
-        lines.append(f"📊 *Record:* {pnl['wins']}-{pnl['losses']} ({pnl['pct']}%)")
-        lines.append(f"📈 *Profit:* ${pnl['profit']:.2f} ({pnl['roi']}%)")
-        msg = "\n".join(lines)
-        print(f"\nMensaje:\n{msg}")
-        send_telegram(msg)
+    elif new_ids:
+        # Avoid notifying same pick across parallel zombie workflows
+        already_notified = set(load_state().get("notified_settled", []))
+        fresh_ids = new_ids - already_notified
+        if not fresh_ids:
+            print("  IDs ya notificados — salteando")
+        else:
+            after = load_picks()
+            pnl = get_pnl()
+            lines = ["⚾ *Resultados MLB*"]
+            for p in after["history"]:
+                if p["id"] in fresh_ids:
+                    profit = p.get("profit", 0)
+                    icon = "✅" if p.get("result") == "W" else "❌"
+                    result = "GANADA" if p.get("result") == "W" else "PERDIDA"
+                    lines.append(f"{icon} *{p['game']}* → {p.get('market','?')} {p.get('team','?')} {icon} *{result}* (${profit:+.2f})")
+            lines.append("")
+            lines.append(f"💰 *Bankroll:* ${after['bankroll']:.2f}")
+            lines.append(f"📊 *Record:* {pnl['wins']}-{pnl['losses']} ({pnl['pct']}%)")
+            lines.append(f"📈 *Profit:* ${pnl['profit']:.2f} ({pnl['roi']}%)")
+            msg = "\n".join(lines)
+            print(f"\nMensaje:\n{msg}")
+            send_telegram(msg)
+            # Mark these IDs as notified so other workflows skip
+            st = load_state()
+            st.setdefault("notified_settled", [])
+            st["notified_settled"] = list(set(st["notified_settled"]) | fresh_ids)
+            save_state(st)
 
     pred_count, pred_errors = settle_predictions()
     if pred_count > 0:
