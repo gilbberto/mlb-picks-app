@@ -65,6 +65,7 @@ Los valores están en `.streamlit/secrets.toml` local (gitignored) y en Streamli
 
 ### Fixes 2 Jun 2026
 - **Notificaciones**: ahora solo envía inicio/carreras de juegos con picks registrados (antes mandaba todos)
+- **Win probability en carreras**: cada notificación de carrera incluye % de ganar de cada pick registrado en ese juego
 - **market_fav_team** movido después de `og = match_game()` (antes usaba og del juego anterior)
 - **Fallback path**: recalcula probs con margen firmado cuando mercado y modelo difieren
 - **auto-settle.yml**: cambiado `git pull --rebase` por `fetch + rebase` para detached HEAD
