@@ -43,8 +43,23 @@ def inning_icon(state):
     if state == "Bottom": return "🔽"
     return ""
 
+def get_todays_pick_games():
+    """Return set of game labels (e.g. 'TEX @ STL') for today's registered picks."""
+    try:
+        data = load_picks()
+        today = datetime.now().strftime("%Y-%m-%d")
+        return {p["game"] for p in data["history"] if p.get("date") == today}
+    except:
+        return set()
+
 def check_game_starts_and_scores():
     print("=== Verificando juegos en vivo ===")
+    pick_games = get_todays_pick_games()
+    if not pick_games:
+        print("  Sin picks registrados hoy — salteando")
+        return
+    print(f"  Picks de hoy: {pick_games}")
+
     state = load_state()
     notified_starts = set(state.get("notified_starts", []))
     scores = state.get("scores", {})
@@ -60,8 +75,6 @@ def check_game_starts_and_scores():
         print(f"  Error MLB API: {e}")
         return
 
-
-
     for d in r.json().get("dates", []):
         for g in d.get("games", []):
             state_code = g.get("status", {}).get("codedGameState", "")
@@ -75,6 +88,11 @@ def check_game_starts_and_scores():
             away_abbr = REV_TEAM.get(away_name.lower(), away_name)
             home_abbr = REV_TEAM.get(home_name.lower(), home_name)
             label = f"{away_abbr} @ {home_abbr}"
+
+            # Solo notificar juegos donde tengo picks registrados
+            if label not in pick_games:
+                continue
+
             away_runs = away.get("score", 0)
             home_runs = home.get("score", 0)
 
@@ -94,7 +112,6 @@ def check_game_starts_and_scores():
             prev = scores.get(gid)
             if prev is None or prev.get("away") != away_runs or prev.get("home") != home_runs:
                 if prev is not None:
-                    # Determine which team(s) scored
                     parts = []
                     if away_runs > prev.get("away", 0):
                         diff = away_runs - prev.get("away", 0)

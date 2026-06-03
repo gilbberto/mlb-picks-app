@@ -66,7 +66,7 @@ Los valores están en `.streamlit/secrets.toml` local (gitignored) y en Streamli
 ### Fixes 2 Jun 2026
 - **market_fav_team** movido después de `og = match_game()` (antes usaba og del juego anterior)
 - **Fallback path**: recalcula probs con margen firmado cuando mercado y modelo difieren
-- **auto-settle.yml**: agregado `git pull --rebase` antes de push para evitar exit code 128
+- **auto-settle.yml**: cambiado `git pull --rebase` por `fetch + rebase` para detached HEAD
 - **auto-settle.yml**: corregido YAML duplicado que causaba "No jobs were run"
 
 ### Pendientes / Ideas
