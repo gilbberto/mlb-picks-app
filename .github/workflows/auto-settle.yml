@@ -36,7 +36,9 @@ jobs:
         run: |
           git config user.name "MLB Picks Bot"
           git config user.email "bot@mlb-picks.local"
-          git add picks.json game_starts_notified.json predictions_log.json
+          for f in picks.json game_starts_notified.json predictions_log.json; do
+            [ -f "$f" ] && git add "$f"
+          done
           git diff --cached --quiet && exit 0
           git commit -m "auto-settle: update picks.json + game starts"
           git pull --rebase -X theirs origin main && git push
