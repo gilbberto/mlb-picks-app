@@ -254,3 +254,14 @@ def main():
 
 if __name__ == "__main__":
     main()
+    # Keep running every 30 min during MLB hours
+    import time
+    for _ in range(24):  # max 12 hours
+        h = datetime.now(timezone.utc).hour
+        if 7 <= h <= 11:
+            print("Fuera de horario MLB (07-11 UTC) — durmiendo 2h")
+            time.sleep(7200)
+            continue
+        print(f"\n--- Siguiente ciclo en 30 min ({datetime.now(TZ).strftime('%H:%M')}) ---")
+        time.sleep(1800)
+        main()
