@@ -3,7 +3,7 @@ settle_and_notify.py — GitHub Actions: auto-settle + Telegram notification.
 Usage: python3 settle_and_notify.py
 Envs: TELEGRAM_TOKEN, TELEGRAM_CHAT_ID
 """
-import os, sys, json
+import os, sys, json, math
 from datetime import datetime
 sys.path.insert(0, os.path.dirname(__file__))
 from bankroll import auto_settle, settle_predictions, load_picks, get_pnl, REV_TEAM, MLB_API
@@ -51,6 +51,60 @@ def get_todays_pick_games():
         return {p["game"] for p in data["history"] if p.get("date") == today}
     except:
         return set()
+
+def get_picks_for_game(game_label):
+    """Return list of today's picks matching a game label."""
+    try:
+        data = load_picks()
+        today = datetime.now().strftime("%Y-%m-%d")
+        return [p for p in data["history"] if p.get("date") == today and p.get("game") == game_label]
+    except:
+        return []
+
+def estimate_team_win_pct(run_diff, inning):
+    """Win probability for the team with positive run_diff based on inning."""
+    k = {1: 0.30, 2: 0.32, 3: 0.35, 4: 0.38, 5: 0.42,
+         6: 0.47, 7: 0.53, 8: 0.62, 9: 0.75}.get(min(inning, 9), 0.80)
+    return 1.0 / (1.0 + math.exp(-k * run_diff))
+
+def pick_win_pct(pick, away_runs, home_runs, away_abbr, home_abbr, inning):
+    """Return estimated win % for this pick given current score."""
+    team = pick.get("team", "")
+    market = pick.get("market", "")
+    detail = pick.get("detail", "")
+    team_lower = team.lower()
+
+    # Determine if pick team is home or away
+    is_home = any(name in team_lower for name in [home_abbr.lower(), pick.get("game","").split("@")[1].strip().lower()])
+    team_runs = home_runs if is_home else away_runs
+    opp_runs = away_runs if is_home else home_runs
+    run_diff = team_runs - opp_runs
+
+    if market == "ML":
+        return round(estimate_team_win_pct(run_diff, inning) * 100 if run_diff >= 0 else (1 - estimate_team_win_pct(-run_diff, inning)) * 100, 1)
+
+    elif market in ("RL -1.5", "RL +1.5"):
+        spread = -1.5 if market == "RL -1.5" else 1.5
+        eff_diff = run_diff - spread
+        # Rough approximation: use team win prob scaled
+        base = estimate_team_win_pct(abs(eff_diff), inning) if eff_diff >= 0 else 1 - estimate_team_win_pct(abs(eff_diff), inning)
+        return round(base * 100, 1)
+
+    elif market == "O/U":
+        try:
+            line = float(detail.replace("o","").replace("u",""))
+        except:
+            return None
+        total = away_runs + home_runs
+        remaining = max(0, 9 - inning) * 0.5  # ~0.5 runs per remaining inning
+        expected = total + remaining
+        if team == "Over":
+            prob = 1.0 / (1.0 + math.exp(-(total - line) / max(remaining, 0.5)))
+        else:
+            prob = 1.0 / (1.0 + math.exp((total - line) / max(remaining, 0.5)))
+        return round(prob * 100, 1)
+
+    return None
 
 def check_game_starts_and_scores():
     print("=== Verificando juegos en vivo ===")
@@ -127,6 +181,20 @@ def check_game_starts_and_scores():
                         msg += f"  ({inn_display})"
                     if who:
                         msg += f"\nAnotó: {who}"
+                    # Win probability for each pick in this game
+                    picks_in_game = get_picks_for_game(label)
+                    if picks_in_game:
+                        wp_lines = []
+                        for pk in picks_in_game:
+                            wp = pick_win_pct(pk, away_runs, home_runs, away_abbr, home_abbr, inning or 1)
+                            if wp is not None:
+                                pm = pk.get("market", "")
+                                pt = pk.get("team", "")
+                                pd = pk.get("detail", "")
+                                label_pick = f"{pm} {pt}" + (f" {pd}" if pd else "")
+                                wp_lines.append(f"  {label_pick}: {wp:.0f}%")
+                        if wp_lines:
+                            msg += "\n" + "\n".join(wp_lines)
                     print(f"  {label} — {away_runs}-{home_runs} (cambio)")
                     send_telegram(msg)
                 scores[gid] = {"away": away_runs, "home": home_runs}
