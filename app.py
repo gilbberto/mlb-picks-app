@@ -1425,7 +1425,10 @@ def main():
                     except: pass
                 pick_name = p.get("pick","—")
                 display_name = fmt_ou(pick_name, p.get("detail","")) if mk == "total" else pick_name
-                display_pick = f"🔥 {display_name}" if (edge is not None and edge > 2) else display_name
+                flames = ""
+                if edge is not None and edge > 2:
+                    flames = "🔥" if edge <= 5 else "🔥🔥" if edge <= 8 else "🔥🔥🔥"
+                display_pick = f"{flames} {display_name}" if flames else display_name
                 flat_rows.append({
                     "Juego": gl, "Hora": t, "M": ml,
                     "Pick": display_pick,
@@ -1444,98 +1447,6 @@ def main():
                 "EV": st.column_config.TextColumn("EV", width="small"),
             }, hide_index=True, use_container_width=True)
             st.caption("Usa la sección 🏆 Recomendaciones para registrar tus picks.")
-            st.divider()
-            st.markdown("##### ✏️ Registrar Picks")
-            from bankroll import recommend_stake, load_picks, add_pick
-            bk_data = load_picks(); act_bk = bk_data["bankroll"]
-            reg_rows = []
-            for _, r in upcoming.iterrows():
-                gl = f"{r['away_abbrev']} @ {r['home_abbrev']}"
-                gid = r.get("game_id","")
-                row = {"Juego": gl}
-                for mk, base_ml in [("moneyline","ML"),("spread_minus","RL-1.5"),("spread_plus","RL+1.5"),("total","O/U")]:
-                    p_dat = r.get(mk)
-                    if not p_dat:
-                        row[base_ml] = "—"
-                    else:
-                        pick_name = p_dat.get("pick", "")
-                        if mk == "total":
-                            ml = fmt_ou(pick_name, p_dat.get("detail",""))
-                        else:
-                            abb = (r["home_abbrev"] if pick_name == r.get("home_team","") else
-                                   r["away_abbrev"] if pick_name == r.get("away_team","") else "")
-                            ml = f"{abb} {base_ml}" if abb else base_ml
-                        lk = f"lgs_{gid}_{mk}"
-                        if st.session_state.get(lk, False):
-                            row[base_ml] = "✅"
-                        else:
-                            odds = p_dat.get("odds","N/A")
-                            os_ = str(odds) if odds and odds!="N/A" else ""
-                            oi = int(os_.replace("$","")) if os_ not in ("N/A","—","") else 0
-                            prob = p_dat.get("prob",0)/100.0
-                            stk,_,_ = recommend_stake(prob, oi, bankroll=act_bk)
-                            edge = None
-                            if oi != 0 and prob:
-                                ip = american_to_prob(oi)
-                                if ip: edge = round(prob*100 - ip*100, 1)
-                            flames = ""
-                            if edge and edge > 2:
-                                flames = "🔥" if edge <= 5 else "🔥🔥" if edge <= 8 else "🔥🔥🔥"
-                            lbl = f"{flames} {ml}" if flames else ml
-                            row[base_ml] = lbl if stk > 0 else "—"
-                reg_rows.append(row)
-            if reg_rows:
-                st.dataframe(pd.DataFrame(reg_rows), hide_index=True, use_container_width=True)
-                for _, r in upcoming.iterrows():
-                    gl = f"{r['away_abbrev']} @ {r['home_abbrev']}"
-                    gid = r.get("game_id","")
-                    btns = []
-                    for mk, base_ml in [("moneyline","ML"),("spread_minus","RL-1.5"),("spread_plus","RL+1.5"),("total","O/U")]:
-                        if not st.session_state.get(f"lgs_{gid}_{mk}", False):
-                            p_dat = r.get(mk)
-                            if p_dat:
-                                pick_name = p_dat.get("pick", "")
-                                if mk == "total":
-                                    ml = fmt_ou(pick_name, p_dat.get("detail",""))
-                                else:
-                                    abb = (r["home_abbrev"] if pick_name == r.get("home_team","") else
-                                           r["away_abbrev"] if pick_name == r.get("away_team","") else "")
-                                    ml = f"{abb} {base_ml}" if abb else base_ml
-                                odds = p_dat.get("odds","N/A")
-                                os_ = str(odds) if odds and odds!="N/A" else ""
-                                oi = int(os_.replace("$","")) if os_ not in ("N/A","—","") else 0
-                                prob = p_dat.get("prob",0)/100.0
-                                stk,_,_ = recommend_stake(prob, oi, bankroll=act_bk)
-                                if stk > 0:
-                                    edge = None
-                                    if oi != 0 and prob:
-                                        ip = american_to_prob(oi)
-                                        if ip: edge = round(prob*100 - ip*100, 1)
-                                    flames = ""
-                                    if edge and edge > 2:
-                                        flames = "🔥" if edge <= 5 else "🔥🔥" if edge <= 8 else "🔥🔥🔥"
-                                    lbl = f"{flames}{ml}" if flames else ml
-                                    btns.append((mk, base_ml, lbl))
-                    if not btns: continue
-                    cols = st.columns([1.5]+[1]*len(btns))
-                    with cols[0]: st.markdown(f"**{gl}**")
-                    for ci,(mk,clean_ml,lbl) in enumerate(btns):
-                        with cols[ci+1]:
-                            lk = f"lgs_{gid}_{mk}"
-                            if st.button(lbl, key=lk, use_container_width=True):
-                                p_dat = r[mk]
-                                odds = p_dat.get("odds","N/A")
-                                os_ = str(odds) if odds and odds!="N/A" else ""
-                                oi = int(os_.replace("$","")) if os_ not in ("N/A","—","") else 0
-                                prob = p_dat.get("prob",0)/100.0
-                                stk,_,sl = recommend_stake(prob, oi, bankroll=act_bk)
-                                ts = datetime.now(TZ).strftime("%Y-%m-%d")
-                                add_pick(ts, gl, clean_ml, prob, oi, stk, act_bk, sl,
-                                         p_dat.get("pick",""), p_dat.get("detail",""))
-                                notify_pick(gl, clean_ml, p_dat.get("pick",""), stk, oi, act_bk)
-                                sync_picks_to_github()
-                                st.session_state[lk] = True
-                                st.rerun()
         else:
             st.info("No hay picks disponibles para mostrar.")
 
