@@ -1690,22 +1690,25 @@ def main():
                     "Profit": profit_str,
                 })
 
-            # Per-row delete buttons
-            for i, (row, p) in enumerate(zip(rows, list(reversed(data["history"])))):
-                pid = p.get("id", i + 1)
-                cols = st.columns([3, 1.5, 2.5, 2, 1])
-                with cols[0]: st.markdown(row["Juego"])
-                with cols[1]: st.markdown(row["Mercado"])
-                with cols[2]: st.markdown(row["Pick"])
-                with cols[3]: st.markdown(f"{row['Estado']} {row['Profit']}")
-                with cols[4]:
-                    is_settled = p.get("result") in ("W", "L")
-                    if not is_settled and st.button("✕", key=f"del_{pid}", help=f"Eliminar pick #{pid}"):
-                        from bankroll import save_picks, load_picks
-                        d = load_picks()
-                        d["history"] = [x for x in d["history"] if x.get("id") != pid]
-                        save_picks(d)
-                        st.rerun()
+            # Tabla de picks
+            st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
+
+            # Delete buttons for pending picks
+            pending = [d for d in data["history"] if d.get("result") not in ("W", "L")]
+            if pending:
+                st.markdown("**Pendientes:**")
+                for p in pending:
+                    pid = p.get("id", 0)
+                    cols = st.columns([5, 1])
+                    with cols[0]:
+                        st.markdown(f"{p.get('game','')} · {p.get('market','')} · {fmt_ou(p.get('team',''), p.get('detail',''))}")
+                    with cols[1]:
+                        if st.button("✕", key=f"del_{pid}", use_container_width=True):
+                            from bankroll import save_picks, load_picks
+                            d = load_picks()
+                            d["history"] = [x for x in d["history"] if x.get("id") != pid]
+                            save_picks(d)
+                            st.rerun()
 
             green = total_profit >= 0
             st.markdown(f"Profit total: <span style='color:{'#00cc66' if green else '#ff4444'}'><b>${total_profit:+.2f}</b></span>", unsafe_allow_html=True)
