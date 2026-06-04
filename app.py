@@ -671,11 +671,18 @@ def notify_pick(gl, market, team, stake, odds, bankroll, pick_id=None):
 # ─── GitHub sync ───
 
 def _gh_headers():
-    tok = st.secrets.get("GITHUB_TOKEN", os.environ.get("GITHUB_TOKEN", ""))
-    repo = st.secrets.get("REPO", os.environ.get("REPO", ""))
-    if not tok or not repo: return None, None, None
+    tok = os.environ.get("GITHUB_TOKEN", "")
+    repo = os.environ.get("REPO", "")
+    try:
+        tok = st.secrets.get("GITHUB_TOKEN", tok)
+        repo = st.secrets.get("REPO", repo)
+    except: pass
+    if not tok or not repo: return None, None, None, None
     owner, repo_name = repo.split("/")
-    branch = st.secrets.get("BRANCH", os.environ.get("BRANCH", "main"))
+    branch = os.environ.get("BRANCH", "main")
+    try:
+        branch = st.secrets.get("BRANCH", branch)
+    except: pass
     headers = {"Authorization": f"Bearer {tok}", "Accept": "application/vnd.github+json"}
     return owner, repo_name, branch, headers
 
