@@ -213,6 +213,23 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 122
+    },
+    {
+      "id": 14,
+      "date": "2026-06-04",
+      "game": "SD @ PHI",
+      "market": "O/U",
+      "team": "Over",
+      "detail": "o8.0",
+      "model_prob": 0.8,
+      "odds": -121,
+      "stake": 207.19,
+      "bankroll_before": 1486.9,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false,
+      "telegram_msg_id": 123
     }
   ]
 }
