@@ -196,6 +196,23 @@
       "label": "\ud83d\udd25 High",
       "settled": true,
       "telegram_msg_id": 65
+    },
+    {
+      "id": 13,
+      "date": "2026-06-04",
+      "game": "ATH @ CHC",
+      "market": "ML",
+      "team": "Athletics",
+      "detail": "",
+      "model_prob": 0.732,
+      "odds": 119,
+      "stake": 188.32,
+      "bankroll_before": 1486.9,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false,
+      "telegram_msg_id": 122
     }
   ]
 }
