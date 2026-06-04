@@ -112,36 +112,6 @@ def _check_telegram_commands():
     except Exception as e:
         print(f"  Error polling Telegram: {e}")
 
-def _check_recs_changed():
-    """Check if cached recommendations changed and notify."""
-    recs_path = os.path.join(os.path.dirname(__file__), ".recs_cache.json")
-    if not os.path.exists(recs_path):
-        return
-    try:
-        with open(recs_path) as f:
-            cache = json.load(f)
-        new_hash = cache.get("hash")
-        if new_hash is None:
-            return
-        state = load_state()
-        last_hash = state.get("last_recs_hash")
-        if last_hash != new_hash:
-            state["last_recs_hash"] = new_hash
-            save_state(state)
-            top = cache.get("top", [])
-            if not top:
-                return
-            lines = ["📊 *Recomendaciones actualizadas*\n"]
-            for r in top:
-                flames = "🔥" if r["edge"] >= 8 else ("⭐" if r["edge"] >= 5 else "✅")
-                detail = f" {r['detail']}" if r.get("detail") else ""
-                lines.append(f"{flames} {r['game']} → {r['market']} {r['team']}{detail}")
-                prob, odds = r.get("prob", 0), r.get("odds", "")
-                lines.append(f"   Prob: {prob:.0f}%  Edge: +{r.get('edge',0):.1f}%")
-            send_telegram("\n".join(lines))
-    except Exception as e:
-        print(f"  Error checking recs: {e}")
-
 def load_state():
     try:
         with open(NOTIFIED_PATH) as f:
@@ -366,20 +336,6 @@ def main():
 
     check_game_starts_and_scores()
     _check_telegram_commands()
-
-    # Refresh recommendations every ~4 cycles (~1h at 15min sleep)
-    # and check if they changed
-    h = datetime.now(TZ).hour
-    cycle_key = "_rec_cycle"
-    st = load_state()
-    last_cycle = st.get(cycle_key, 0)
-    st[cycle_key] = last_cycle + 1
-    save_state(st)
-    if last_cycle % 4 == 0 and 6 <= h <= 22:
-        import subprocess
-        subprocess.run(["python3", "-c", "from morning_summary import refresh_cache; refresh_cache()"],
-                       capture_output=True, cwd=os.path.dirname(__file__))
-        _check_recs_changed()
 
     # Morning summary entre 6-11 AM (una vez por dia)
     h = datetime.now(TZ).hour
