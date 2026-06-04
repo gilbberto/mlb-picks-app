@@ -418,7 +418,7 @@ def settle_predictions():
                         elif pick_side.lower() == "under":
                             won = total < line
 
-                if won is not None:
+                if won is not None and pick_side:
                     p["result"] = "W" if won else "L"
                     p["settled"] = True
                     settled_count += 1
