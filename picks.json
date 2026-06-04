@@ -247,6 +247,23 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 124
+    },
+    {
+      "id": 16,
+      "date": "2026-06-04",
+      "game": "LAD @ AZ",
+      "market": "ML",
+      "team": "Los Angeles Dodgers",
+      "detail": "",
+      "model_prob": 0.736,
+      "odds": -148,
+      "stake": 128.12,
+      "bankroll_before": 1486.9,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false,
+      "telegram_msg_id": 125
     }
   ]
 }
