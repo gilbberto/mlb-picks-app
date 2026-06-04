@@ -1,5 +1,5 @@
 {
-  "bankroll": 1385.03,
+  "bankroll": 1486.9,
   "history": [
     {
       "id": 1,
@@ -140,10 +140,10 @@
       "odds": -120,
       "stake": 261.75,
       "bankroll_before": 1251.92,
-      "result": null,
-      "profit": null,
+      "result": "L",
+      "profit": -261.75,
       "label": "\ud83d\udd25 High",
-      "settled": false,
+      "settled": true,
       "telegram_msg_id": 57
     },
     {
@@ -157,10 +157,10 @@
       "odds": -120,
       "stake": 208.36,
       "bankroll_before": 1251.92,
-      "result": null,
-      "profit": null,
+      "result": "W",
+      "profit": 173.63,
       "label": "\ud83d\udd25 High",
-      "settled": false,
+      "settled": true,
       "telegram_msg_id": 58
     },
     {
@@ -174,10 +174,10 @@
       "odds": 131,
       "stake": 145.03,
       "bankroll_before": 1251.92,
-      "result": null,
-      "profit": null,
+      "result": "W",
+      "profit": 189.99,
       "label": "\ud83d\udd25 High",
-      "settled": false,
+      "settled": true,
       "telegram_msg_id": 59
     },
     {
