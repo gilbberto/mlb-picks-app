@@ -514,12 +514,14 @@ def main():
     recs = sorted(best_per_game.values(), key=lambda x: x["edge"], reverse=True)
     top = recs[:4]
 
-    # Export recommendations JSON for settle_and_notify.py
+    # Export all recommendations for Telegram /picks command
     try:
-        export = [{"game": r["game"], "market": r["market"], "team": r["team"],
-                    "prob": r["prob"], "odds": r["odds"], "edge": r["edge"]} for r in top]
+        all_export = [{"game": r["game"], "market": r["market"], "team": r["team"],
+                       "prob": r["prob"], "odds": r["odds"], "edge": r["edge"],
+                       "detail": r.get("detail", "")} for r in recs[:20]]
         with open(os.path.join(BASE, ".recs_cache.json"), "w") as f:
-            json.dump({"ts": datetime.now().timestamp(), "top": export, "hash": hash(str(export))}, f)
+            json.dump({"ts": datetime.now().timestamp(), "top": all_export,
+                       "hash_top": hash(str(recs[:4]))}, f)
     except:
         pass
 
@@ -564,15 +566,6 @@ def main():
     lines.append(f"💰 *Bankroll:* ${data['bankroll']:.2f}")
     lines.append(f"📊 *Record:* {pnl['wins']}-{pnl['losses']} ({pnl['pct']}%)")
     lines.append(f"📈 *Profit:* ${pnl['profit']:.2f} ({pnl['roi']}%)")
-
-    # Export recommendations JSON for settle_and_notify.py
-    try:
-        export = [{"game": r["game"], "market": r["market"], "team": r["team"],
-                    "prob": r["prob"], "odds": r["odds"], "edge": r["edge"]} for r in top]
-        with open(os.path.join(BASE, ".recs_cache.json"), "w") as f:
-            json.dump({"ts": datetime.now().timestamp(), "top": export, "hash": hash(str(export))}, f)
-    except:
-        pass
 
     msg = "\n".join(lines)
     print(f"\nMensaje:\n{msg}")
