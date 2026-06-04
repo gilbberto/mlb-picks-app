@@ -670,19 +670,37 @@ def notify_pick(gl, market, team, stake, odds, bankroll, pick_id=None):
 
 # ─── GitHub sync ───
 
+def _gh_headers():
+    tok = st.secrets.get("GITHUB_TOKEN", os.environ.get("GITHUB_TOKEN", ""))
+    repo = st.secrets.get("REPO", os.environ.get("REPO", ""))
+    if not tok or not repo: return None, None, None
+    owner, repo_name = repo.split("/")
+    branch = st.secrets.get("BRANCH", os.environ.get("BRANCH", "main"))
+    headers = {"Authorization": f"Bearer {tok}", "Accept": "application/vnd.github+json"}
+    return owner, repo_name, branch, headers
+
+def sync_picks_from_github():
+    """Pull latest picks.json from GitHub (important for Railway where web + worker are separate)."""
+    try:
+        owner, repo_name, branch, headers = _gh_headers()
+        if not owner: return
+        import base64
+        url = f"https://api.github.com/repos/{owner}/{repo_name}/contents/picks.json?ref={branch}"
+        r = requests.get(url, headers=headers, timeout=10)
+        if r.status_code == 200:
+            content = base64.b64decode(r.json()["content"]).decode()
+            with open("picks.json", "w") as f:
+                f.write(content)
+    except: pass
+
 def sync_picks_to_github():
     try:
-        tok = st.secrets.get("GITHUB_TOKEN", os.environ.get("GITHUB_TOKEN", ""))
-        repo = st.secrets.get("REPO", os.environ.get("REPO", ""))
-        branch = st.secrets.get("BRANCH", os.environ.get("BRANCH", "main"))
-        if not tok or not repo: return
-        owner, repo_name = repo.split("/")
-        path = "picks.json"
-        with open(path, "r") as f:
-            content = f.read()
+        owner, repo_name, branch, headers = _gh_headers()
+        if not owner: return
         import base64
-        url = f"https://api.github.com/repos/{owner}/{repo_name}/contents/{path}"
-        headers = {"Authorization": f"Bearer {tok}", "Accept": "application/vnd.github+json"}
+        with open("picks.json", "r") as f:
+            content = f.read()
+        url = f"https://api.github.com/repos/{owner}/{repo_name}/contents/picks.json"
         r = requests.get(url + f"?ref={branch}", headers=headers, timeout=10)
         sha = r.json().get("sha", "") if r.ok else ""
         data = {"message": "sync picks.json from app", "content": base64.b64encode(content.encode()).decode(), "branch": branch}
@@ -1925,4 +1943,7 @@ def main():
 
 
 if __name__ == "__main__":
+    try:
+        sync_picks_from_github()
+    except: pass
     main()
