@@ -40,7 +40,11 @@ def safe_float(v, d=0.0):
     try: return float(v)
     except: return d
 
+_QUIET = False
+
 def send_telegram(msg):
+    if _QUIET:
+        return
     if not TELEGRAM_TOKEN or not CHAT_ID:
         print("Telegram no configurado")
         return
@@ -510,6 +514,15 @@ def main():
     recs = sorted(best_per_game.values(), key=lambda x: x["edge"], reverse=True)
     top = recs[:4]
 
+    # Export recommendations JSON for settle_and_notify.py
+    try:
+        export = [{"game": r["game"], "market": r["market"], "team": r["team"],
+                    "prob": r["prob"], "odds": r["odds"], "edge": r["edge"]} for r in top]
+        with open(os.path.join(BASE, ".recs_cache.json"), "w") as f:
+            json.dump({"ts": datetime.now().timestamp(), "top": export, "hash": hash(str(export))}, f)
+    except:
+        pass
+
     # Format message
     lines = [f"☀️ *Buenos dias! — {today}*\n"]
     lines.append(f"🏟️ *Recomendaciones del modelo* ({len(games)} juegos)\n")
@@ -552,9 +565,31 @@ def main():
     lines.append(f"📊 *Record:* {pnl['wins']}-{pnl['losses']} ({pnl['pct']}%)")
     lines.append(f"📈 *Profit:* ${pnl['profit']:.2f} ({pnl['roi']}%)")
 
+    # Export recommendations JSON for settle_and_notify.py
+    try:
+        export = [{"game": r["game"], "market": r["market"], "team": r["team"],
+                    "prob": r["prob"], "odds": r["odds"], "edge": r["edge"]} for r in top]
+        with open(os.path.join(BASE, ".recs_cache.json"), "w") as f:
+            json.dump({"ts": datetime.now().timestamp(), "top": export, "hash": hash(str(export))}, f)
+    except:
+        pass
+
     msg = "\n".join(lines)
     print(f"\nMensaje:\n{msg}")
     send_telegram(msg)
+    return top
+
+def refresh_cache():
+    """Run prediction logic without Telegram, just update .recs_cache.json."""
+    global _QUIET
+    _QUIET = True
+    try:
+        main()
+    except Exception as e:
+        import traceback
+        print(f"  Error en refresh_cache: {e}\n{traceback.format_exc()}")
+    finally:
+        _QUIET = False
 
 if __name__ == "__main__":
     h = datetime.now(TZ).hour
