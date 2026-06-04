@@ -1591,8 +1591,11 @@ def main():
 
             # HTML table with inline form buttons (safe: requires click, no bot auto-follow)
             from bankroll import load_picks
+            today_str = datetime.now(TZ).strftime("%Y-%m-%d")
             existing = set()
             for ep in load_picks().get("history", []):
+                if ep.get("date", "") != today_str:
+                    continue
                 epg = ep.get("game", "").strip()
                 epm = ep.get("market", "").strip()
                 ept = ep.get("team", "").strip()
