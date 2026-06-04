@@ -2,8 +2,12 @@
 worker.py — Railway background process.
 Uses GitHub API (no git CLI needed) for state sync.
 Runs settle_and_notify.py every 30s for instant Telegram response.
+Checks for new high-edge picks every ~2h during game hours.
 """
 import subprocess, time, os, json, base64, requests
+from datetime import datetime, timezone, timedelta
+try: from zoneinfo import ZoneInfo; TZ = ZoneInfo("America/Chihuahua")
+except: TZ = timezone(timedelta(hours=-6))
 
 CWD = os.path.dirname(os.path.abspath(__file__))
 ENV = os.environ.copy()
@@ -11,7 +15,7 @@ ENV["PYTHONUNBUFFERED"] = "1"
 
 REPO = "gilbberto/mlb-picks-app"
 BRANCH = "main"
-FILES_TO_SYNC = ("picks.json", "game_starts_notified.json", "predictions_log.json", ".morning_sent", ".telegram_offset")
+FILES_TO_SYNC = ("picks.json", "game_starts_notified.json", "predictions_log.json", ".morning_sent", ".telegram_offset", ".notified_new_picks.json")
 
 def _gh_headers():
     tok = os.environ.get("GITHUB_TOKEN", "")
@@ -74,6 +78,14 @@ def main():
             sync_from_github()
         subprocess.run(["python3", "settle_and_notify.py"], cwd=CWD, env=ENV)
         sync_to_github()
+        if cycle > 0 and cycle % 240 == 0:
+            h = datetime.now(TZ).hour
+            if 6 <= h < 12:
+                pass  # morning_summary handles this window
+            elif 12 <= h <= 23:
+                print("=== Verificando nuevos picks ===")
+                subprocess.run(["python3", "notify_new_picks.py"], cwd=CWD, env=ENV)
+                sync_to_github()
         time.sleep(30)
         cycle += 1
 
