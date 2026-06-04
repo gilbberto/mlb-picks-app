@@ -41,7 +41,7 @@ jobs:
         run: |
           git config user.name "MLB Picks Bot"
           git config user.email "bot@mlb-picks.local"
-          for f in picks.json game_starts_notified.json predictions_log.json .morning_sent; do
+          for f in picks.json game_starts_notified.json predictions_log.json .morning_sent .telegram_offset; do
             [ -f "$f" ] && git add "$f"
           done
           git diff --cached --quiet && exit 0

@@ -18,6 +18,7 @@ except:
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN", "")
 CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
 NOTIFIED_PATH = os.path.join(os.path.dirname(__file__), "game_starts_notified.json")
+TG_OFFSET_PATH = os.path.join(os.path.dirname(__file__), ".telegram_offset")
 
 def send_telegram(msg):
     if not TELEGRAM_TOKEN or not CHAT_ID:
@@ -34,7 +35,16 @@ def send_telegram(msg):
     except Exception as e:
         print(f"  Error Telegram: {e}")
 
-LAST_UPDATE_ID = 0
+def _load_tg_offset():
+    try:
+        with open(TG_OFFSET_PATH) as f:
+            return int(f.read().strip())
+    except:
+        return 0
+
+def _save_tg_offset(offset):
+    with open(TG_OFFSET_PATH, "w") as f:
+        f.write(str(offset))
 
 def _build_resultados_response():
     """Build current game results message for registered picks."""
@@ -90,25 +100,28 @@ def _build_resultados_response():
 
 def _check_telegram_commands():
     """Poll Telegram for user commands like /resultados."""
-    global LAST_UPDATE_ID
     if not TELEGRAM_TOKEN or not CHAT_ID:
         return
     try:
+        offset = _load_tg_offset()
         url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/getUpdates"
-        params = {"timeout": 5, "offset": LAST_UPDATE_ID + 1}
+        params = {"timeout": 5, "offset": offset + 1}
         r = requests.get(url, params=params, timeout=10)
         if r.status_code != 200:
             return
+        max_id = offset
         for update in r.json().get("result", []):
             update_id = update.get("update_id", 0)
-            if update_id > LAST_UPDATE_ID:
-                LAST_UPDATE_ID = update_id
+            if update_id > max_id:
+                max_id = update_id
             msg = update.get("message", {}) or update.get("callback_query", {}).get("message", {})
             chat_id = msg.get("chat", {}).get("id")
             text = (msg.get("text") or "").strip().lower()
             if chat_id and chat_id == int(CHAT_ID) and text in ("resultados", "/resultados"):
                 resp = _build_resultados_response()
                 send_telegram(resp)
+        if max_id > offset:
+            _save_tg_offset(max_id)
     except Exception as e:
         print(f"  Error polling Telegram: {e}")
 
@@ -368,7 +381,7 @@ def _git_commit():
     cwd = os.path.dirname(__file__)
     subprocess.run(["git", "config", "user.name", "MLB Picks Bot"], capture_output=True, cwd=cwd)
     subprocess.run(["git", "config", "user.email", "bot@mlb-picks.local"], capture_output=True, cwd=cwd)
-    for f in ("picks.json", "game_starts_notified.json", "predictions_log.json", ".morning_sent"):
+    for f in ("picks.json", "game_starts_notified.json", "predictions_log.json", ".morning_sent", ".telegram_offset"):
         fp = os.path.join(cwd, f)
         if os.path.isfile(fp):
             subprocess.run(["git", "add", f], capture_output=True, cwd=cwd)
