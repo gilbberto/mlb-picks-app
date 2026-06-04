@@ -2,12 +2,14 @@ name: Settle MLB Picks
 
 on:
   schedule:
-    - cron: '*/15 * * * *'   # Every 15 min
+    - cron: '*/15 * * * *'
+  push:
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
   group: settle-workflow
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   settle:
