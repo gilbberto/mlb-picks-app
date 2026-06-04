@@ -561,4 +561,12 @@ if __name__ == "__main__":
     if h < 6 or h >= 12:
         print(f"Fuera de horario matutino ({h}:00 Chihuahua) — salteando")
     else:
-        main()
+        try:
+            main()
+        except Exception as e:
+            import traceback
+            tb = traceback.format_exc()
+            print(f"Error en morning_summary: {e}\n{tb}")
+            try:
+                send_telegram(f"❌ Error en morning_summary: {e}")
+            except: pass

@@ -34,6 +34,84 @@ def send_telegram(msg):
     except Exception as e:
         print(f"  Error Telegram: {e}")
 
+LAST_UPDATE_ID = 0
+
+def _build_resultados_response():
+    """Build current game results message for registered picks."""
+    try:
+        data = load_picks()
+        today = datetime.now(TZ).strftime("%Y-%m-%d")
+        picks = [p for p in data["history"] if p.get("date") == today]
+        if not picks:
+            return "📋 No hay picks registrados hoy."
+        lines = ["📋 *Resultados del Día*\n"]
+        url = f"{MLB_API}/schedule?date={today}&sportId=1&hydrate=linescore,team"
+        r = requests.get(url, timeout=15)
+        games_map = {}
+        if r.status_code == 200:
+            for d in r.json().get("dates", []):
+                for g in d.get("games", []):
+                    away = g["teams"]["away"]
+                    home = g["teams"]["home"]
+                    away_abbr = REV_TEAM.get(away["team"]["name"].lower(), away["team"]["name"])
+                    home_abbr = REV_TEAM.get(home["team"]["name"].lower(), home["team"]["name"])
+                    label = f"{away_abbr} @ {home_abbr}"
+                    sc = g.get("status", {}).get("codedGameState", "")
+                    sd = g.get("status", {}).get("detailedState", "Programado")
+                    games_map[label] = {
+                        "state": sc, "state_str": sd,
+                        "away_runs": away.get("score", 0),
+                        "home_runs": home.get("score", 0),
+                    }
+        for p in picks:
+            gl = p.get("game", "")
+            market = p.get("market", "")
+            team = p.get("team", "")
+            detail = p.get("detail", "")
+            lp = f"{market} {team}" + (f" {detail}" if detail else "")
+            if p.get("settled"):
+                icon = "✅" if p.get("result") == "W" else "❌"
+                result = "GANADA" if p.get("result") == "W" else "PERDIDA"
+                profit = p.get("profit", 0)
+                lines.append(f"{icon} {gl} → {lp}: *{result}* (${profit:+.2f})")
+            elif gl in games_map and games_map[gl]["state"] in ("L", "I"):
+                gm = games_map[gl]
+                gs = gm["state_str"]
+                lines.append(f"⚾ {gl} → {lp}: *EN VIVO* ({gm['away_runs']}-{gm['home_runs']})")
+            else:
+                gs = games_map.get(gl, {}).get("state_str", "Programado")
+                lines.append(f"⏳ {gl} → {lp}: {gs}")
+        pnl = get_pnl()
+        lines.append(f"\n💰 *Bankroll:* ${pnl['bankroll']:.2f}")
+        lines.append(f"📊 *Record:* {pnl['wins']}-{pnl['losses']} ({pnl['pct']}%)")
+        return "\n".join(lines)
+    except Exception as e:
+        return f"❌ Error al obtener resultados: {e}"
+
+def _check_telegram_commands():
+    """Poll Telegram for user commands like /resultados."""
+    global LAST_UPDATE_ID
+    if not TELEGRAM_TOKEN or not CHAT_ID:
+        return
+    try:
+        url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/getUpdates"
+        params = {"timeout": 5, "offset": LAST_UPDATE_ID + 1}
+        r = requests.get(url, params=params, timeout=10)
+        if r.status_code != 200:
+            return
+        for update in r.json().get("result", []):
+            update_id = update.get("update_id", 0)
+            if update_id > LAST_UPDATE_ID:
+                LAST_UPDATE_ID = update_id
+            msg = update.get("message", {}) or update.get("callback_query", {}).get("message", {})
+            chat_id = msg.get("chat", {}).get("id")
+            text = (msg.get("text") or "").strip().lower()
+            if chat_id and chat_id == int(CHAT_ID) and text in ("resultados", "/resultados"):
+                resp = _build_resultados_response()
+                send_telegram(resp)
+    except Exception as e:
+        print(f"  Error polling Telegram: {e}")
+
 def load_state():
     try:
         with open(NOTIFIED_PATH) as f:
@@ -150,7 +228,6 @@ def check_game_starts_and_scores():
     state = load_state()
     notified_starts = set(state.get("notified_starts", []))
     notified_ended = set(state.get("notified_ended", []))
-    scores = state.get("scores", {})
     today = datetime.now(TZ).strftime("%Y-%m-%d")
 
     url = f"{MLB_API}/schedule?date={today}&sportId=1&hydrate=linescore,team"
@@ -193,57 +270,15 @@ def check_game_starts_and_scores():
             if state_code not in ("L", "I"):
                 continue
 
-            linescore = g.get("linescore") or {}
-            inning = linescore.get("currentInning")
-            inn_state = linescore.get("inningState", "")
-            inn_ord = linescore.get("currentInningOrdinal", f"{inning or ''}")
-
-            # Game start notification
+            # Game start notification (solo una vez)
             if gid not in notified_starts:
                 msg = f"⚾ *JUEGO INICIADO*\n{label}"
                 print(f"  {label} — notificando inicio")
                 send_telegram(msg)
                 notified_starts.add(gid)
 
-            # Score change detection
-            prev = scores.get(gid)
-            changed = prev is None or prev.get("away") != away_runs or prev.get("home") != home_runs
-            print(f"    prev={prev}, current={away_runs}-{home_runs}, changed={changed}")
-            if changed:
-                msg_parts = [f"⚾ *CARRERA!* {label}", f"{away_abbr} {away_runs} - {home_runs} {home_abbr}"]
-                if inn_ord:
-                    msg_parts.append(f"  ({inning_icon(inn_state)} {inn_ord})")
-                if prev is not None:
-                    sc_lines = []
-                    if away_runs > prev.get("away", 0):
-                        diff = away_runs - prev.get("away", 0)
-                        sc_lines.append(f"{away_abbr} ({'+' if diff > 0 else ''}{diff})")
-                    if home_runs > prev.get("home", 0):
-                        diff = home_runs - prev.get("home", 0)
-                        sc_lines.append(f"{home_abbr} ({'+' if diff > 0 else ''}{diff})")
-                    if sc_lines:
-                        msg_parts.append("Anotó: " + ", ".join(sc_lines))
-                picks_in_game = get_picks_for_game(label)
-                if picks_in_game:
-                    wp_lines = []
-                    for pk in picks_in_game:
-                        wp = pick_win_pct(pk, away_runs, home_runs, away_abbr, home_abbr, inning or 1)
-                        if wp is not None:
-                            pm = pk.get("market", "")
-                            pt = pk.get("team", "")
-                            pd = pk.get("detail", "")
-                            lp = f"{pm} {pt}" + (f" {pd}" if pd else "")
-                            wp_lines.append(f"  {lp}: {wp:.0f}%")
-                    if wp_lines:
-                        msg_parts.append("\n".join(wp_lines))
-                msg = "\n".join(msg_parts)
-                print(f"  {label} — {away_runs}-{home_runs} {'(inicial)' if prev is None else '(cambio)'}")
-                send_telegram(msg)
-                scores[gid] = {"away": away_runs, "home": home_runs}
-
     state["notified_starts"] = list(notified_starts)
     state["notified_ended"] = list(notified_ended)
-    state["scores"] = scores
     save_state(state)
 
 def main():
@@ -300,6 +335,7 @@ def main():
                 print(f"  ⚠️ {e}")
 
     check_game_starts_and_scores()
+    _check_telegram_commands()
 
     # Morning summary entre 6-11 AM (una vez por dia)
     h = datetime.now(TZ).hour
