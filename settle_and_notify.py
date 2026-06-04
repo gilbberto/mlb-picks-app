@@ -23,17 +23,20 @@ TG_OFFSET_PATH = os.path.join(os.path.dirname(__file__), ".telegram_offset")
 def send_telegram(msg):
     if not TELEGRAM_TOKEN or not CHAT_ID:
         print("Telegram no configurado — salteando")
-        return
+        return False
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     try:
         print(f"  Enviando a Telegram (len={len(msg)} chars)...")
         r = requests.post(url, json={"chat_id": CHAT_ID, "text": msg, "parse_mode": "Markdown"}, timeout=15)
         if r.status_code == 200:
             print("  Notificación enviada a Telegram")
+            return True
         else:
             print(f"  Error Telegram ({r.status_code}): {r.text[:200]}")
+            return False
     except Exception as e:
         print(f"  Error Telegram: {e}")
+        return False
 
 def _load_tg_offset():
     try:
@@ -276,8 +279,8 @@ def check_game_starts_and_scores():
                 if gid not in notified_ended:
                     msg = _game_ended_msg(label, away_abbr, home_abbr, away_runs, home_runs)
                     print(f"  {label} — JUEGO TERMINADO ({away_runs}-{home_runs})")
-                    send_telegram(msg)
-                    notified_ended.add(gid)
+                    if send_telegram(msg):
+                        notified_ended.add(gid)
                 continue
 
             if state_code not in ("L", "I"):
@@ -287,8 +290,8 @@ def check_game_starts_and_scores():
             if gid not in notified_starts:
                 msg = f"⚾ *JUEGO INICIADO*\n{label}"
                 print(f"  {label} — notificando inicio")
-                send_telegram(msg)
-                notified_starts.add(gid)
+                if send_telegram(msg):
+                    notified_starts.add(gid)
 
     state["notified_starts"] = list(notified_starts)
     state["notified_ended"] = list(notified_ended)
@@ -333,12 +336,12 @@ def main():
             lines.append(f"📈 *Profit:* ${pnl['profit']:.2f} ({pnl['roi']}%)")
             msg = "\n".join(lines)
             print(f"\nMensaje:\n{msg}")
-            send_telegram(msg)
-            # Mark these IDs as notified so other workflows skip
-            st = load_state()
-            st.setdefault("notified_settled", [])
-            st["notified_settled"] = list(set(st["notified_settled"]) | fresh_ids)
-            save_state(st)
+            if send_telegram(msg):
+                # Mark these IDs as notified so other workflows skip
+                st = load_state()
+                st.setdefault("notified_settled", [])
+                st["notified_settled"] = list(set(st["notified_settled"]) | fresh_ids)
+                save_state(st)
 
     pred_count, pred_errors = settle_predictions()
     if pred_count > 0:
