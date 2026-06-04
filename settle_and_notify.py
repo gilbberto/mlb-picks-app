@@ -71,8 +71,16 @@ def _build_resultados_response():
                     label = f"{away_abbr} @ {home_abbr}"
                     sc = g.get("status", {}).get("codedGameState", "")
                     sd = g.get("status", {}).get("detailedState", "Programado")
+                    ls = g.get("linescore", {})
+                    inning = ""
+                    if sc in ("F", "O"):
+                        inning = "Final"
+                    elif sc in ("L", "I"):
+                        inn = ls.get("currentInningOrdinal", "")
+                        side = ls.get("inningState", "")
+                        inning = f"{'🔝' if side=='Top' else '🔽'} {inn}" if inn else sd
                     games_map[label] = {
-                        "state": sc, "state_str": sd,
+                        "state": sc, "state_str": sd, "inning": inning,
                         "away_runs": away.get("score", 0),
                         "home_runs": home.get("score", 0),
                     }
@@ -89,8 +97,11 @@ def _build_resultados_response():
                 lines.append(f"{icon} {gl} → {lp}: *{result}* (${profit:+.2f})")
             elif gl in games_map and games_map[gl]["state"] in ("L", "I"):
                 gm = games_map[gl]
-                gs = gm["state_str"]
-                lines.append(f"⚾ {gl} → {lp}: *EN VIVO* ({gm['away_runs']}-{gm['home_runs']})")
+                inn = gm.get("inning", "")
+                lines.append(f"⚾ {gl} → {lp}: *{gm['away_runs']}-{gm['home_runs']}* {inn}")
+            elif gl in games_map and games_map[gl]["state"] in ("F", "O"):
+                gm = games_map[gl]
+                lines.append(f"✅ {gl} → {lp}: *Final* {gm['away_runs']}-{gm['home_runs']}")
             else:
                 gs = games_map.get(gl, {}).get("state_str", "Programado")
                 lines.append(f"⏳ {gl} → {lp}: {gs}")
