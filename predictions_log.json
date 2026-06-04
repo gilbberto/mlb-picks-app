@@ -72,8 +72,8 @@
       "odds": "N/A",
       "edge": null,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "823456_spread_minus",
@@ -87,8 +87,8 @@
       "odds": "N/A",
       "edge": null,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "823456_spread_plus",
@@ -102,8 +102,8 @@
       "odds": "N/A",
       "edge": null,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "823456_total",
@@ -132,8 +132,8 @@
       "odds": "N/A",
       "edge": null,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "W",
+      "settled": true
     },
     {
       "id": "824755_spread_minus",
@@ -147,8 +147,8 @@
       "odds": "N/A",
       "edge": null,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "824755_spread_plus",
@@ -162,8 +162,8 @@
       "odds": "N/A",
       "edge": null,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "824755_total",
@@ -192,8 +192,8 @@
       "odds": "N/A",
       "edge": null,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "823540_spread_minus",
@@ -207,8 +207,8 @@
       "odds": "N/A",
       "edge": null,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "823540_spread_plus",
@@ -222,8 +222,8 @@
       "odds": "N/A",
       "edge": null,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "823540_total",
@@ -252,8 +252,8 @@
       "odds": "N/A",
       "edge": null,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "824509_spread_minus",
@@ -267,8 +267,8 @@
       "odds": "N/A",
       "edge": null,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "824509_spread_plus",
@@ -282,8 +282,8 @@
       "odds": "N/A",
       "edge": null,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "824509_total",
@@ -312,8 +312,8 @@
       "odds": "N/A",
       "edge": null,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "824917_spread_minus",
@@ -327,8 +327,8 @@
       "odds": "N/A",
       "edge": null,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "824917_spread_plus",
@@ -342,8 +342,8 @@
       "odds": "N/A",
       "edge": null,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "824917_total",
@@ -372,8 +372,8 @@
       "odds": "N/A",
       "edge": null,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "W",
+      "settled": true
     },
     {
       "id": "823780_spread_minus",
@@ -387,8 +387,8 @@
       "odds": "N/A",
       "edge": null,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "823780_spread_plus",
@@ -402,8 +402,8 @@
       "odds": "N/A",
       "edge": null,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "823780_total",
@@ -432,8 +432,8 @@
       "odds": "N/A",
       "edge": null,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "W",
+      "settled": true
     },
     {
       "id": "823051_spread_minus",
@@ -447,8 +447,8 @@
       "odds": "N/A",
       "edge": null,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "823051_spread_plus",
@@ -462,8 +462,8 @@
       "odds": "N/A",
       "edge": null,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "823051_total",
@@ -492,8 +492,8 @@
       "odds": "N/A",
       "edge": null,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "824671_spread_minus",
@@ -507,8 +507,8 @@
       "odds": "N/A",
       "edge": null,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "824671_spread_plus",
@@ -522,8 +522,8 @@
       "odds": "N/A",
       "edge": null,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "824671_total",
@@ -552,8 +552,8 @@
       "odds": "N/A",
       "edge": null,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "824188_spread_minus",
@@ -567,8 +567,8 @@
       "odds": "N/A",
       "edge": null,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "824188_spread_plus",
@@ -582,8 +582,8 @@
       "odds": "N/A",
       "edge": null,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "824188_total",
@@ -612,8 +612,8 @@
       "odds": "N/A",
       "edge": null,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "W",
+      "settled": true
     },
     {
       "id": "824024_spread_minus",
@@ -627,8 +627,8 @@
       "odds": "N/A",
       "edge": null,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "824024_spread_plus",
@@ -642,8 +642,8 @@
       "odds": "N/A",
       "edge": null,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "824024_total",
@@ -672,8 +672,8 @@
       "odds": "N/A",
       "edge": null,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "W",
+      "settled": true
     },
     {
       "id": "825077_spread_minus",
@@ -687,8 +687,8 @@
       "odds": "N/A",
       "edge": null,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "825077_spread_plus",
@@ -702,8 +702,8 @@
       "odds": "N/A",
       "edge": null,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "825077_total",
