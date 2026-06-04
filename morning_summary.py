@@ -514,17 +514,6 @@ def main():
     recs = sorted(best_per_game.values(), key=lambda x: x["edge"], reverse=True)
     top = recs[:4]
 
-    # Export all recommendations for Telegram /picks command
-    try:
-        all_export = [{"game": r["game"], "market": r["market"], "team": r["team"],
-                       "prob": r["prob"], "odds": r["odds"], "edge": r["edge"],
-                       "detail": r.get("detail", "")} for r in recs[:20]]
-        with open(os.path.join(BASE, ".recs_cache.json"), "w") as f:
-            json.dump({"ts": datetime.now().timestamp(), "top": all_export,
-                       "hash_top": hash(str(recs[:4]))}, f)
-    except:
-        pass
-
     # Format message
     lines = [f"☀️ *Buenos dias! — {today}*\n"]
     lines.append(f"🏟️ *Recomendaciones del modelo* ({len(games)} juegos)\n")
@@ -571,18 +560,6 @@ def main():
     print(f"\nMensaje:\n{msg}")
     send_telegram(msg)
     return top
-
-def refresh_cache():
-    """Run prediction logic without Telegram, just update .recs_cache.json."""
-    global _QUIET
-    _QUIET = True
-    try:
-        main()
-    except Exception as e:
-        import traceback
-        print(f"  Error en refresh_cache: {e}\n{traceback.format_exc()}")
-    finally:
-        _QUIET = False
 
 if __name__ == "__main__":
     h = datetime.now(TZ).hour

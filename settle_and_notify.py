@@ -88,44 +88,8 @@ def _build_resultados_response():
     except Exception as e:
         return f"❌ Error al obtener resultados: {e}"
 
-def _refresh_recs_cache():
-    """Re-compute recommendations and save to .recs_cache.json (no Telegram)."""
-    import subprocess
-    r = subprocess.run(
-        ["python3", "-c", "from morning_summary import refresh_cache; refresh_cache()"],
-        capture_output=True, text=True, cwd=os.path.dirname(__file__))
-    if r.returncode != 0:
-        print(f"  Error refresh_cache: {r.stderr[:200]}")
-
-def _register_pick_from_cache(idx):
-    """Register pick #idx (1-based) from .recs_cache.json."""
-    try:
-        import os, json
-        path = os.path.join(os.path.dirname(__file__), ".recs_cache.json")
-        with open(path) as f:
-            cache = json.load(f)
-        recs = cache.get("top", [])
-        if idx < 1 or idx > len(recs):
-            return None, "Número inválido"
-        r = recs[idx - 1]
-        from bankroll import add_pick, load_picks, recommend_stake
-        d = load_picks()
-        bk = d["bankroll"]
-        gl = r["game"]
-        odds_val = r.get("odds", 0)
-        prob_val = r.get("prob", 50) / 100.0
-        sk, _, sl = recommend_stake(prob_val, odds_val, bankroll=bk)
-        if sk <= 0:
-            return None, "Stake muy bajo para registrar"
-        ts = datetime.now(TZ).strftime("%Y-%m-%d")
-        pid = add_pick(ts, gl, r["market"], prob_val, odds_val, sk, bk, sl,
-                       r["team"], r.get("detail", ""))
-        return pid, f"✅ Registrado: {gl} → {r['market']} {r['team']} (${sk:.0f})"
-    except Exception as e:
-        return None, f"Error: {e}"
-
 def _check_telegram_commands():
-    """Poll Telegram for user commands."""
+    """Poll Telegram for user commands like /resultados."""
     global LAST_UPDATE_ID
     if not TELEGRAM_TOKEN or not CHAT_ID:
         return
@@ -141,48 +105,9 @@ def _check_telegram_commands():
                 LAST_UPDATE_ID = update_id
             msg = update.get("message", {}) or update.get("callback_query", {}).get("message", {})
             chat_id = msg.get("chat", {}).get("id")
-            text_full = (msg.get("text") or "").strip()
-            text = text_full.lower()
-            if not chat_id or chat_id != int(CHAT_ID):
-                continue
-
-            # /resultados
-            if text in ("resultados", "/resultados"):
+            text = (msg.get("text") or "").strip().lower()
+            if chat_id and chat_id == int(CHAT_ID) and text in ("resultados", "/resultados"):
                 resp = _build_resultados_response()
-                send_telegram(resp)
-
-            # /picks — show top recommendations
-            elif text in ("picks", "/picks"):
-                send_telegram("⏳ Calculando predicciones...")
-                _refresh_recs_cache()
-                path = os.path.join(os.path.dirname(__file__), ".recs_cache.json")
-                try:
-                    with open(path) as f:
-                        cache = json.load(f)
-                except:
-                    send_telegram("❌ Error al leer recomendaciones")
-                    continue
-                recs = cache.get("top", [])
-                if not recs:
-                    send_telegram("📭 Sin recomendaciones hoy")
-                    continue
-                lines = ["🏆 *Recomendaciones del día*\n"]
-                for i, r in enumerate(recs, 1):
-                    detail = f" {r.get('detail','')}" if r.get('detail') else ""
-                    flames = "🔥" if r["edge"] >= 8 else ("⭐" if r["edge"] >= 5 else "✅")
-                    lines.append(f"{i}. {flames} {r['game']} → {r['market']} {r['team']}{detail}")
-                    lines.append(f"   Prob: {r['prob']:.0f}%  Edge: +{r['edge']:.1f}%")
-                lines.append(f"\nResponde *reg <N>* para registrar uno")
-                send_telegram("\n".join(lines))
-
-            # /reg <N> — register pick by number
-            elif text.startswith("reg ") or text.startswith("/reg "):
-                try:
-                    idx = int(text_full.split(" ", 1)[1])
-                except:
-                    send_telegram("❌ Usa: reg <número> (ej: reg 1)")
-                    continue
-                pid, resp = _register_pick_from_cache(idx)
                 send_telegram(resp)
     except Exception as e:
         print(f"  Error polling Telegram: {e}")
