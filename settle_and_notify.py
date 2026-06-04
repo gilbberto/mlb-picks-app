@@ -379,25 +379,8 @@ def _git_commit():
         subprocess.run(["git", "push"], capture_output=True, cwd=cwd)
 
 if __name__ == "__main__":
-    import time
-    in_actions = bool(os.environ.get("GITHUB_ACTIONS"))
-    if in_actions:
+    if os.environ.get("GITHUB_ACTIONS"):
         _git_pull()
     main()
-    if in_actions:
+    if os.environ.get("GITHUB_ACTIONS"):
         _git_commit()
-    for _ in range(10):
-        h = datetime.now(TZ).hour
-        if h >= 22 or h < 6:
-            sleep_min = 120
-        elif 12 <= h < 18:
-            sleep_min = 30
-        else:
-            sleep_min = 15
-        print(f"  Durmiendo {sleep_min} min (hora Chihuahua: {h})...")
-        time.sleep(sleep_min * 60)
-        if in_actions:
-            _git_pull()
-        main()
-        if in_actions:
-            _git_commit()

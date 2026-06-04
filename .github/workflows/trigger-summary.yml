@@ -12,6 +12,8 @@ concurrency:
 jobs:
   trigger:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v6
         with:
@@ -38,3 +40,14 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
         run: python morning_summary.py
+
+      - name: Commit state
+        run: |
+          git config user.name "MLB Picks Bot"
+          git config user.email "bot@mlb-picks.local"
+          for f in .morning_sent; do
+            [ -f "$f" ] && git add "$f"
+          done
+          git diff --cached --quiet && exit 0
+          git commit -m "auto-summary: mark morning_sent"
+          git push

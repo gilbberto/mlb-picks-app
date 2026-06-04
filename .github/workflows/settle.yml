@@ -1,6 +1,8 @@
 name: Settle MLB Picks
 
 on:
+  schedule:
+    - cron: '*/15 * * * *'   # Every 15 min during game season (10 AM - midnight Chihuahua)
   workflow_dispatch:
   push:
     branches: [main]
@@ -45,5 +47,3 @@ jobs:
           git diff --cached --quiet && exit 0
           git commit -m "auto-settle: update picks.json + game starts"
           git pull --rebase -X theirs origin main && git push
-
-
