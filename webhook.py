@@ -2,7 +2,7 @@
 webhook.py — Telegram webhook handler for instant /resultados response.
 Railway expone este servicio como HTTPS para que Telegram lo llame.
 """
-import os, sys
+import os, sys, hashlib
 from flask import Flask, request
 
 sys.path.insert(0, os.path.dirname(__file__))
@@ -12,8 +12,9 @@ app = Flask(__name__)
 
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN", "")
 CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
+WEBHOOK_PATH = hashlib.sha256(TELEGRAM_TOKEN.encode()).hexdigest()[:16]
 
-@app.route(f"/webhook/{TELEGRAM_TOKEN}", methods=["POST"])
+@app.route(f"/webhook/{WEBHOOK_PATH}", methods=["POST"])
 def webhook():
     update = request.json
     msg = (update or {}).get("message", {})
