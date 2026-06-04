@@ -1606,6 +1606,15 @@ def main():
                 is_regd = (r["game"].strip(), r["market"].strip(), r["pick"].strip()) in existing
                 icon = "🔥" if r["edge"] > 8 else "⭐" if r["edge"] > 5 else "✅"
                 pick_str = fmt_ou(r["pick"], r.get("entry",{}).get("detail",""))
+                # Warning for O/U when predicted total is close to the line
+                warn = ""
+                if r["market"] == "O/U" and r.get("entry",{}).get("detail",""):
+                    try:
+                        ov_point = float(r["entry"]["detail"].replace("o","").replace("u",""))
+                        exp_tot = r.get("pick_dict",{}).get("exp_total")
+                        if exp_tot and abs(exp_tot - ov_point) < 0.5:
+                            warn = "⚠️ "
+                    except: pass
                 stake_str = f"${r['stake']:.0f}" if r["stake"] > 0 else "—"
                 if is_regd:
                     btn = "<span style='color:#58a6ff'>✅</span>"
@@ -1614,7 +1623,7 @@ def main():
                 html_rows += f"""<tr style="background:{'#0d1b2a' if i%2==0 else '#1b2838'}">
                     <td style="padding:6px 8px;border-bottom:1px solid #2d3748">{r['game']}</td>
                     <td style="padding:6px 8px;border-bottom:1px solid #2d3748">{r['market']}</td>
-                    <td style="padding:6px 8px;border-bottom:1px solid #2d3748">{pick_str}</td>
+                    <td style="padding:6px 8px;border-bottom:1px solid #2d3748">{warn}{pick_str}</td>
                     <td style="padding:6px 8px;border-bottom:1px solid #2d3748">{icon} {r['edge']:+.1f}%</td>
                     <td style="padding:6px 8px;border-bottom:1px solid #2d3748">{stake_str}</td>
                     <td style="padding:6px 8px;border-bottom:1px solid #2d3748;text-align:center">{btn}</td>
