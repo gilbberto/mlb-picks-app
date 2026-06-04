@@ -1,46 +1,79 @@
 """
 worker.py — Railway background process.
-Runs settle_and_notify.py in a continuous loop (30s interval)
-for instant Telegram responses and 24/7 auto-settlement.
+Uses GitHub API (no git CLI needed) for state sync.
+Runs settle_and_notify.py every 30s for instant Telegram response.
 """
-import subprocess, time, os
+import subprocess, time, os, json, base64, requests
 
 CWD = os.path.dirname(os.path.abspath(__file__))
 ENV = os.environ.copy()
 ENV["PYTHONUNBUFFERED"] = "1"
 
-def setup_git():
-    token = os.environ.get("GITHUB_TOKEN", "")
-    if token:
-        url = f"https://gilbberto:{token}@github.com/gilbberto/mlb-picks-app.git"
-        subprocess.run(["git", "remote", "set-url", "origin", url], cwd=CWD, capture_output=True)
-    subprocess.run(["git", "config", "user.name", "MLB Picks Bot"], cwd=CWD, capture_output=True)
-    subprocess.run(["git", "config", "user.email", "bot@mlb-picks.local"], cwd=CWD, capture_output=True)
+REPO = "gilbberto/mlb-picks-app"
+BRANCH = "main"
+FILES_TO_SYNC = ("picks.json", "game_starts_notified.json", "predictions_log.json", ".morning_sent", ".telegram_offset")
 
-def git_pull():
-    subprocess.run(["git", "pull", "--rebase", "-X", "theirs"], cwd=CWD, capture_output=True)
+def _gh_headers():
+    tok = os.environ.get("GITHUB_TOKEN", "")
+    if not tok:
+        return None
+    return {"Authorization": f"Bearer {tok}", "Accept": "application/vnd.github+json"}
 
-def git_commit():
-    for f in ("picks.json", "game_starts_notified.json", "predictions_log.json", ".morning_sent", ".telegram_offset"):
-        fp = os.path.join(CWD, f)
-        if os.path.isfile(fp):
-            subprocess.run(["git", "add", f], cwd=CWD, capture_output=True)
-    r = subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=CWD, capture_output=True)
-    if r.returncode != 0:
-        subprocess.run(["git", "commit", "-m", "sync state"], cwd=CWD, capture_output=True)
-        subprocess.run(["git", "pull", "--rebase", "-X", "theirs"], cwd=CWD, capture_output=True)
-        subprocess.run(["git", "push"], cwd=CWD, capture_output=True)
+def _gh_get(path):
+    """Get a file from GitHub. Returns (content_str, sha) or (None, None)."""
+    headers = _gh_headers()
+    if not headers:
+        return None, None
+    url = f"https://api.github.com/repos/{REPO}/contents/{path}?ref={BRANCH}"
+    r = requests.get(url, headers=headers, timeout=10)
+    if r.status_code == 200:
+        data = r.json()
+        content = base64.b64decode(data["content"]).decode()
+        return content, data.get("sha", "")
+    return None, None
+
+def _gh_put(path, content, sha=None):
+    """Write a file to GitHub. Returns True on success."""
+    headers = _gh_headers()
+    if not headers:
+        return False
+    url = f"https://api.github.com/repos/{REPO}/contents/{path}"
+    data = {"message": f"sync {path} from worker", "content": base64.b64encode(content.encode()).decode(), "branch": BRANCH}
+    if sha:
+        data["sha"] = sha
+    r = requests.put(url, json=data, headers=headers, timeout=10)
+    return r.status_code in (200, 201)
+
+def sync_from_github():
+    """Pull latest state files from GitHub."""
+    for fname in FILES_TO_SYNC:
+        content, _ = _gh_get(fname)
+        if content:
+            with open(os.path.join(CWD, fname), "w") as f:
+                f.write(content)
+
+def sync_to_github():
+    """Push changed state files to GitHub."""
+    for fname in FILES_TO_SYNC:
+        fp = os.path.join(CWD, fname)
+        if not os.path.isfile(fp):
+            continue
+        with open(fp) as f:
+            local_content = f.read()
+        remote_content, sha = _gh_get(fname)
+        if remote_content == local_content:
+            continue
+        _gh_put(fname, local_content, sha)
 
 def main():
     print("=== Worker iniciado en Railway ===")
-    setup_git()
-    git_pull()
+    sync_from_github()
     cycle = 0
     while True:
         if cycle > 0 and cycle % 20 == 0:
-            git_pull()
+            sync_from_github()
         subprocess.run(["python3", "settle_and_notify.py"], cwd=CWD, env=ENV)
-        git_commit()
+        sync_to_github()
         time.sleep(30)
         cycle += 1
 
