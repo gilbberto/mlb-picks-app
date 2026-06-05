@@ -1795,18 +1795,13 @@ def main():
                 display_name = fmt_ou(pick_name, p.get("detail","")) if mk == "total" else pick_name
                 flames = ""
                 if edge is not None and edge > 2:
-                    flames = "🔥" if edge <= 5 else "🔥🔥" if edge <= 8 else "🔥🔥🔥"
-                elif prob_val is not None and prob_val >= 55:
-                    if prob_val >= 85:
-                        flames = "🔥🔥🔥"
-                    elif prob_val >= 75:
-                        flames = "🔥🔥"
-                    elif prob_val >= 65:
-                        flames = "🔥"
-                    elif prob_val >= 60:
-                        flames = "⭐"
-                    else:
-                        flames = "✅"
+                    if edge > 8: flames = "🔥🔥🔥"
+                    elif edge > 5: flames = "🔥🔥"
+                    else: flames = "🔥"
+                elif edge is None and prob_val is not None and prob_val >= 65:
+                    if prob_val >= 85: flames = "🔥🔥🔥"
+                    elif prob_val >= 75: flames = "🔥🔥🔥"
+                    elif prob_val >= 65: flames = "🔥🔥"
                     edge = round(prob_val - 50, 1)
                 display_pick = f"{flames} {display_name}" if flames else display_name
                 flat_rows.append({
@@ -1928,7 +1923,7 @@ def main():
             html_rows = ""
             for i, r in enumerate(recs[:4]):
                 is_regd = (r["game"].strip(), r["market"].strip(), r["pick"].strip()) in existing
-                icon = "🔥" if r["edge"] > 8 else "⭐" if r["edge"] > 5 else "✅"
+                icon = "🔥🔥🔥" if r["edge"] > 8 else "🔥🔥" if r["edge"] > 5 else "🔥"
                 pick_str = fmt_ou(r["pick"], r.get("entry",{}).get("detail",""))
                 # Warning for O/U when predicted total is close to the line
                 warn = ""
