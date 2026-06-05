@@ -967,17 +967,24 @@ def render_card(pick, key_suffix="", game_idx=0):
             with col_c:
                 if odds and odds != "N/A":
                     st.markdown(f"`{odds}`")
+                if edge is not None:
+                    if edge > 8: flame = "🔥🔥🔥"
+                    elif edge > 5: flame = "🔥🔥"
+                    elif edge > 2: flame = "🔥"
+                    else: flame = ""
+                elif prob_val is not None and prob_val >= 55:
+                    if prob_val >= 85: flame = "🔥🔥🔥"
+                    elif prob_val >= 75: flame = "🔥🔥🔥"
+                    elif prob_val >= 65: flame = "🔥🔥"
+                    elif prob_val >= 60: flame = "🔥"
+                    else: flame = "✅"
+                else:
+                    flame = ""
+                if flame:
+                    st.markdown(f"<span style='font-size:18px'>{flame}</span>", unsafe_allow_html=True)
                 log_key = f"lg_{pick.get('game_id','')}_{mkt_key}"
-                _is_regd = (pick.get("away_abbrev","") + " @ " + pick.get("home_abbrev",""), mkt_label, pick_name) in _existing_picks
-                if _is_regd or st.session_state.get(log_key, False):
-                    st.markdown("<span style='color:#00cc66'>✅</span>", unsafe_allow_html=True)
-                elif edge is not None and edge > 2:
-                    if role == "admin":
-                        btn = st.button("📝", key=log_key)
-                    else:
-                        st.markdown("<span style='color:#666'>🔒</span>", unsafe_allow_html=True)
-                        btn = False
-                    if btn:
+                if role == "admin" and edge is not None and edge > 2:
+                    if st.button("📝", key=log_key):
                         try:
                             from bankroll import add_pick, load_picks, recommend_stake
                             d = load_picks(); bk = d["bankroll"]
@@ -996,13 +1003,6 @@ def render_card(pick, key_suffix="", game_idx=0):
                                 st.caption("⚠️ Kelly=0")
                         except Exception as ex:
                             st.caption(f"❌ {ex}")
-                elif recommended:
-                    st.markdown("<span style='color:#ffcc00'>⭐</span>", unsafe_allow_html=True)
-                elif edge is not None:
-                    ec = "#00cc66" if edge > 5 else "#88cc00" if edge > 2 else "#cccc00"
-                    st.markdown(f"<span style='color:{ec}'>{edge:+.1f}%</span>", unsafe_allow_html=True)
-                elif book:
-                    st.markdown(f"{book}" if book else "")
         st.markdown(f"*Prob: {hn} {hp:.0f}% / {an} {ap:.0f}%*")
         st.divider()
 
