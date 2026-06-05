@@ -924,14 +924,17 @@ def render_card(pick, key_suffix="", game_idx=0):
         if cgs == "I":
             status_label = "🔴 EN VIVO "
             status_col = "#ff4444"
-        elif cgs != "F" and game_dt is not None:
+        elif cgs == "F":
+            status_label = "✅ FINAL "
+            status_col = "#888"
+        elif pick.get("final", ""):
+            status_label = "✅ FINAL "
+            status_col = "#888"
+        elif game_dt is not None:
             mins_to_start = (game_dt - now_tz).total_seconds() / 60.0
             if 0 <= mins_to_start <= 15:
                 status_label = "⏳ POR INICIAR "
                 status_col = "#ffaa00"
-            elif mins_to_start < 0:
-                status_label = "🔴 EN VIVO "
-                status_col = "#ff4444"
         score_str = f"**{pick['final']}** " if pick.get("final") else ""
         time_str = f"🕐 {pick['game_time']}  " if pick.get("game_time") else ""
         st.markdown(f"### {time_str}{status_label}{score_str}**{an}** @ **{hn}**" + "".join(f" `{s}`" for s in srcs) + badge + pitcher_line)
