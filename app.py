@@ -1186,10 +1186,7 @@ def _get_perms(username):
     return {**_default_perms(), **u.get("permissions", {})}
 
 def _login_form():
-    st.markdown("<style>div[data-testid='stImage'] { display: flex; justify-content: center; }</style>", unsafe_allow_html=True)
-    _, ic, _ = st.columns([1, 1, 1])
-    with ic:
-        st.image("https://www.mlbstatic.com/team-logos/league-on-dark/1.svg", width=120)
+    st.markdown("<p style='text-align:center'><img src='https://www.mlbstatic.com/team-logos/league-on-dark/1.svg' width='100'></p>", unsafe_allow_html=True)
     _, tc, _ = st.columns([1, 4, 1])
     with tc:
         st.markdown("<h2 style='text-align:center;margin:5px 0 0 0'>MLB Picks AI</h2>", unsafe_allow_html=True)
