@@ -1186,22 +1186,22 @@ def _get_perms(username):
     return {**_default_perms(), **u.get("permissions", {})}
 
 def _login_form():
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
+    _, c2, _ = st.columns([1, 3, 1])
+    with c2:
         st.image("https://www.mlbstatic.com/team-logos/league-on-dark/1.svg", width=100)
-    st.markdown("<h2 style='text-align:center'>MLB Picks AI</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center;color:#aaa;font-size:15px;margin-bottom:30px'>We don't promise to win every day.<br>We promise to be on the right side of the numbers. ⚾📈💰</p>", unsafe_allow_html=True)
-    with st.form("login_form"):
-        user = st.text_input("Usuario").strip().lower()
-        pwd = st.text_input("Contraseña", type="password")
-        if st.form_submit_button("🔑 Entrar", use_container_width=True):
-            users = _load_users()
-            if user in users and users[user]["password"] == pwd:
-                st.session_state.user = user
-                st.session_state.role = users[user]["role"]
-                st.rerun()
-            else:
-                st.error("Usuario o contraseña incorrectos")
+        st.markdown("<h2 style='text-align:center'>MLB Picks AI</h2>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align:center;color:#aaa;font-size:15px;margin-bottom:30px'>We don't promise to win every day.<br>We promise to be on the right side of the numbers. ⚾📈💰</p>", unsafe_allow_html=True)
+        with st.form("login_form"):
+            user = st.text_input("Usuario").strip().lower()
+            pwd = st.text_input("Contraseña", type="password")
+            if st.form_submit_button("🔑 Entrar", use_container_width=True):
+                users = _load_users()
+                if user in users and users[user]["password"] == pwd:
+                    st.session_state.user = user
+                    st.session_state.role = users[user]["role"]
+                    st.rerun()
+                else:
+                    st.error("Usuario o contraseña incorrectos")
 
 def _admin_panel():
     users = _load_users()
