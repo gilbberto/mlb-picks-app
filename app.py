@@ -689,9 +689,13 @@ def ev_label(ev):
 
 def _secret(key, default=""):
     try:
-        return st.secrets.get(key, os.environ.get(key, default))
-    except Exception:
+        try:
+            return st.secrets.get(key, os.environ.get(key, default))
+        except Exception:
+            pass
         return os.environ.get(key, default)
+    except Exception:
+        return default
 
 
 def send_telegram(msg):
@@ -2039,22 +2043,15 @@ def main():
             sd2 = df[cols_avail].copy()
             st.dataframe(sd2, use_container_width=True, hide_index=True)
 
-    with st.expander("⚙️ Debug"):
+    st.markdown("---")
+    st.markdown("### 🔧 Debug")
+    try:
         tok = _secret("TELEGRAM_TOKEN"); cid = _secret("TELEGRAM_CHAT_ID")
         gt = _secret("GITHUB_TOKEN"); rp = _secret("REPO")
-        rows = [
-            {"Variable": "TELEGRAM_TOKEN", "Estado": "✅ Configurado" if tok else "❌ FALTA"},
-            {"Variable": "TELEGRAM_CHAT_ID", "Estado": "✅ Configurado" if cid else "❌ FALTA"},
-            {"Variable": "GITHUB_TOKEN", "Estado": "✅ Configurado" if gt else "❌ FALTA"},
-            {"Variable": "REPO", "Estado": f"✅ {rp}" if rp else "❌ FALTA"},
-        ]
-        st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
-        if st.button("🔍 Test Telegram"):
-            mid = send_telegram("🧪 Prueba desde mlb-picks-app")
-            st.caption(f"message_id: {mid}" if mid else "❌ Falló")
-        if st.button("🔍 Test GitHub Sync"):
-            sync_picks_to_github()
-            st.caption("✅ Intento de sync completado")
+        for k, v in [("TELEGRAM_TOKEN", tok), ("TELEGRAM_CHAT_ID", cid), ("GITHUB_TOKEN", gt), ("REPO", rp)]:
+            st.write(f"**{k}**: {'✅' if v else '❌'} {v[:4] + '...' if v and len(v) > 8 else v or 'FALTA'}")
+    except Exception as ex:
+        st.error(f"Error leyendo env vars: {ex}")
 
 
 if __name__ == "__main__":
