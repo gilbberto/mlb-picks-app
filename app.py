@@ -1140,9 +1140,43 @@ def _load_users():
     except:
         return {"admin": {"password": _secret("ADMIN_PASSWORD", "admin2024"), "role": "admin"}}
 
+def _sync_users_from_github():
+    try:
+        owner, repo_name, branch, headers = _gh_headers()
+        if not owner:
+            return
+        url = f"https://api.github.com/repos/{owner}/{repo_name}/contents/users.json?ref={branch}"
+        r = requests.get(url, headers=headers, timeout=10)
+        if r.status_code == 200:
+            import base64
+            content = base64.b64decode(r.json()["content"]).decode()
+            with open(USERS_PATH, "w") as f:
+                f.write(content)
+    except:
+        pass
+
 def _save_users(u):
     with open(USERS_PATH, "w") as f:
         json.dump(u, f, indent=2)
+    _sync_users_to_github()
+
+def _sync_users_to_github():
+    try:
+        owner, repo_name, branch, headers = _gh_headers()
+        if not owner:
+            return
+        import base64
+        with open(USERS_PATH, "r") as f:
+            content = f.read()
+        url = f"https://api.github.com/repos/{owner}/{repo_name}/contents/users.json"
+        r = requests.get(url + f"?ref={branch}", headers=headers, timeout=10)
+        sha = r.json().get("sha", "") if r.ok else ""
+        data = {"message": "sync users.json from app", "content": base64.b64encode(content.encode()).decode(), "branch": branch}
+        if sha:
+            data["sha"] = sha
+        requests.put(url, json=data, headers=headers, timeout=10)
+    except:
+        pass
 
 def _get_perms(username):
     users = _load_users()
@@ -1219,6 +1253,7 @@ def main():
     if "user" not in st.session_state:
         st.session_state.user = None
         st.session_state.role = None
+    _sync_users_from_github()
     if not st.session_state.role:
         _login_form()
         return
