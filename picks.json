@@ -312,6 +312,22 @@
       "profit": null,
       "label": "\ud83d\udd25 High",
       "settled": false
+    },
+    {
+      "id": 20,
+      "date": "2026-06-05",
+      "game": "TB @ MIA",
+      "market": "O/U",
+      "team": "Over",
+      "detail": "o7.5",
+      "model_prob": 0.754,
+      "odds": -121,
+      "stake": 166.77,
+      "bankroll_before": 1460.94,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ]
 }
