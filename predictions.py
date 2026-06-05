@@ -268,11 +268,11 @@ def log_all_todays_predictions():
             })
             new_count += 1
 
-        # O/U
+        # O/U (solo si hay odds — sin línea no se puede liquidar)
         mkt = "O/U"
         pid = f"{gid}_total"
-        if pid not in existing_ids:
-            ov_price, _, ov_point = extract_market_odds(og, "totals") if og else (None, None, None)
+        if pid not in existing_ids and og:
+            ov_price, _, ov_point = extract_market_odds(og, "totals")
             if ov_price and ov_point:
                 over_prob = norm_cdf(exp_total - ov_point, 0, total_std)
                 if over_prob > 0.5:
@@ -290,21 +290,15 @@ def log_all_todays_predictions():
                 ip = american_to_prob(ou_odds)
                 if ip:
                     ou_edge = round(ou_prob - ip * 100, 1)
-            else:
-                ou_team = "Over" if exp_total > 8.5 else "Under"
-                ou_detail = f"~{exp_total:.1f}"
-                ou_prob = max(norm_cdf(exp_total - 8.5, 0, total_std), 1 - norm_cdf(exp_total - 8.5, 0, total_std)) * 100
-                ou_odds = "N/A"
-                ou_edge = None
-            log_data["predictions"].append({
-                "id": pid, "date": today_str, "game": gl,
-                "away_abbrev": aa, "home_abbrev": ha,
-                "market": mkt, "pick": ou_team,
-                "prob": round(ou_prob, 1), "odds": ou_odds,
-                "edge": ou_edge, "detail": ou_detail,
-                "result": None, "settled": False,
-            })
-            new_count += 1
+                log_data["predictions"].append({
+                    "id": pid, "date": today_str, "game": gl,
+                    "away_abbrev": aa, "home_abbrev": ha,
+                    "market": mkt, "pick": ou_team,
+                    "prob": round(ou_prob, 1), "odds": ou_odds,
+                    "edge": ou_edge, "detail": ou_detail,
+                    "result": None, "settled": False,
+                })
+                new_count += 1
 
     if new_count > 0:
         os.makedirs(os.path.dirname(PRED_LOG_PATH) or ".", exist_ok=True)

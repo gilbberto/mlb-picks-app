@@ -322,6 +322,9 @@ def log_predictions(picks, today=None):
             entry = pick.get(mkt_key)
             if not entry:
                 continue
+            pick_name = entry.get("pick", "")
+            if not pick_name:
+                continue
             pid = f"{gid}_{mkt_key}"
             if pid in existing_ids:
                 continue
@@ -396,14 +399,13 @@ def settle_predictions():
                     else:
                         won = away_runs > home_runs
                 elif market in ("RL -1.5", "RL +1.5"):
-                    fav = True if market == "RL -1.5" else False
                     margin = home_runs - away_runs
-                    if fav:
-                        won = (pick_side == game["home_name"] and margin >= 1) or \
-                              (pick_side == game["away_name"] and -margin >= 1)
+                    if market == "RL -1.5":
+                        won = (pick_side == game["home_name"] and margin >= 2) or \
+                              (pick_side == game["away_name"] and margin <= -2)
                     else:
-                        won = (pick_side == game["home_name"] and -margin < 1) or \
-                              (pick_side == game["away_name"] and margin < 1)
+                        won = (pick_side == game["home_name"] and margin >= -1) or \
+                              (pick_side == game["away_name"] and margin <= 1)
                 elif market == "O/U":
                     total = home_runs + away_runs
                     line = None
