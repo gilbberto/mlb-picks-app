@@ -1186,11 +1186,11 @@ def _get_perms(username):
     return {**_default_perms(), **u.get("permissions", {})}
 
 def _login_form():
-    c1, c2, c3 = st.columns([1, 2, 1])
-    with c2:
-        st.image("https://www.mlbstatic.com/team-logos/league-on-dark/1.svg", width=120)
-    st.markdown("""<div style='text-align:center;font-size:28px;font-weight:700;margin:10px 0 5px 0'>MLB Picks AI</div>""", unsafe_allow_html=True)
-    st.markdown("""<div style='text-align:center;font-size:15px;color:#aaa;margin-bottom:30px'>We don't promise to win every day. We promise to be on the right side of the numbers. ⚾📈💰</div>""", unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.image("https://www.mlbstatic.com/team-logos/league-on-dark/1.svg", width=100)
+    st.markdown("<h2 style='text-align:center'>MLB Picks AI</h2>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center;color:#aaa;font-size:15px;margin-bottom:30px'>We don't promise to win every day.<br>We promise to be on the right side of the numbers. ⚾📈💰</p>", unsafe_allow_html=True)
     with st.form("login_form"):
         user = st.text_input("Usuario").strip().lower()
         pwd = st.text_input("Contraseña", type="password")
