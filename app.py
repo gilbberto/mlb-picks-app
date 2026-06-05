@@ -757,19 +757,40 @@ def sync_picks_from_github():
                 f.write(content)
     except: pass
 
+def _merge_picks(local_str, remote_str):
+    import json
+    remote = json.loads(remote_str)
+    local = json.loads(local_str)
+    remote_ids = {p.get("id") for p in remote.get("history", [])}
+    for p in local.get("history", []):
+        if p.get("id") not in remote_ids:
+            remote["history"].append(p)
+    remote["bankroll"] = min(remote.get("bankroll", 1000), local.get("bankroll", 1000))
+    remote["history"].sort(key=lambda x: x.get("id", 0))
+    return json.dumps(remote, indent=2)
+
 def sync_picks_to_github():
     try:
         owner, repo_name, branch, headers = _gh_headers()
         if not owner: return
         import base64
         with open("picks.json", "r") as f:
-            content = f.read()
+            local = f.read()
         url = f"https://api.github.com/repos/{owner}/{repo_name}/contents/picks.json"
-        r = requests.get(url + f"?ref={branch}", headers=headers, timeout=10)
-        sha = r.json().get("sha", "") if r.ok else ""
-        data = {"message": "sync picks.json from app", "content": base64.b64encode(content.encode()).decode(), "branch": branch}
-        if sha: data["sha"] = sha
-        requests.put(url, json=data, headers=headers, timeout=10)
+        for attempt in range(3):
+            r = requests.get(url + f"?ref={branch}", headers=headers, timeout=10)
+            if r.status_code == 200:
+                remote = r.json()
+                local = _merge_picks(local, base64.b64decode(remote["content"]).decode())
+                sha = remote["sha"]
+            else:
+                sha = ""
+            data = {"message": "sync picks.json from app", "content": base64.b64encode(local.encode()).decode(), "branch": branch}
+            if sha: data["sha"] = sha
+            r2 = requests.put(url, json=data, headers=headers, timeout=10)
+            if r2.status_code == 409:
+                time.sleep(0.5); continue
+            break
     except: pass
 
 
