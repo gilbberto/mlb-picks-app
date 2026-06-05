@@ -44,9 +44,9 @@ def _send_telegram(msg):
 def check():
     import morning_summary as ms
     ms._QUIET = True
+    from predictions import _MODELS_LOADED
 
-    was_loaded = ms._MODELS_LOADED
-    if not was_loaded:
+    if not _MODELS_LOADED:
         print("  Modelos no cargados — salteando")
         return
 
