@@ -2039,6 +2039,23 @@ def main():
             sd2 = df[cols_avail].copy()
             st.dataframe(sd2, use_container_width=True, hide_index=True)
 
+    with st.expander("⚙️ Debug"):
+        tok = _secret("TELEGRAM_TOKEN"); cid = _secret("TELEGRAM_CHAT_ID")
+        gt = _secret("GITHUB_TOKEN"); rp = _secret("REPO")
+        rows = [
+            {"Variable": "TELEGRAM_TOKEN", "Estado": "✅ Configurado" if tok else "❌ FALTA"},
+            {"Variable": "TELEGRAM_CHAT_ID", "Estado": "✅ Configurado" if cid else "❌ FALTA"},
+            {"Variable": "GITHUB_TOKEN", "Estado": "✅ Configurado" if gt else "❌ FALTA"},
+            {"Variable": "REPO", "Estado": f"✅ {rp}" if rp else "❌ FALTA"},
+        ]
+        st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
+        if st.button("🔍 Test Telegram"):
+            mid = send_telegram("🧪 Prueba desde mlb-picks-app")
+            st.caption(f"message_id: {mid}" if mid else "❌ Falló")
+        if st.button("🔍 Test GitHub Sync"):
+            sync_picks_to_github()
+            st.caption("✅ Intento de sync completado")
+
 
 if __name__ == "__main__":
     try:
