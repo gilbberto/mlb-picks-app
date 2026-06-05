@@ -264,6 +264,23 @@
       "label": "\ud83d\udd25 High",
       "settled": true,
       "telegram_msg_id": 125
+    },
+    {
+      "id": 17,
+      "date": "2026-06-05",
+      "game": "BAL @ TOR",
+      "market": "RL +1.5",
+      "team": "Baltimore Orioles",
+      "detail": "+1.5",
+      "model_prob": 0.846,
+      "odds": -170,
+      "stake": 213.45,
+      "bankroll_before": 1460.94,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false,
+      "telegram_msg_id": 209
     }
   ]
 }
