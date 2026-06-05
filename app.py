@@ -110,9 +110,9 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 try:
-    ODDS_API_KEY = st.secrets.get("ODDS_API_KEY", "")
+    ODDS_API_KEY = st.secrets.get("ODDS_API_KEY", "b09f7e5fb08081c87e7e34272fda4ea0")
 except Exception:
-    ODDS_API_KEY = os.getenv("ODDS_API_KEY", "")
+    ODDS_API_KEY = os.getenv("ODDS_API_KEY", "b09f7e5fb08081c87e7e34272fda4ea0")
 SHARPAPI_KEY = os.getenv("SHARPAPI_KEY", "")
 
 # ─── ML Models (XGBoost first, fallback RandomForest + Monte Carlo) ───
@@ -1440,60 +1440,68 @@ def main():
                     spr_price, spr_book, _ = extract_market_odds(og, "spreads", spr_fav_team, expect_point=-1.5)
                     if spr_price and spr_fav_prob > 0:
                         ev_spr = compute_ev(spr_fav_prob*100, spr_price)
+                        spr_p = american_to_prob(spr_price)
+                        spr_edge = round(spr_fav_prob*100 - (spr_p*100 if spr_p else 0), 1) if spr_p else None
                         pick_entry["spread_minus"] = {
                             "pick": spr_fav_team, "prob": spr_fav_prob*100, "detail": "-1.5",
-                            "ev": ev_spr, "odds": spr_price, "book": spr_book,
+                            "ev": ev_spr, "odds": spr_price, "book": spr_book, "edge": spr_edge,
                         }
                         l_spr, _ = ev_label(ev_spr)
                         if l_spr in ("🔥 HIGH VALUE", "✅ VALUE"): border = spr_book and "#00cc66" or border
                     else:
-                        pick_entry["spread_minus"] = {"pick": spr_fav_team, "prob": spr_fav_prob*100, "detail": "-1.5", "ev": None, "odds": "N/A", "book": ""}
+                        pick_entry["spread_minus"] = {"pick": spr_fav_team, "prob": spr_fav_prob*100, "detail": "-1.5", "ev": None, "odds": "N/A", "book": "", "edge": None}
 
                     # Spread odds — underdog +1.5
                     spr_dog_price, spr_dog_book, _ = extract_market_odds(og, "spreads", spr_dog_team, expect_point=1.5)
                     if spr_dog_price and spr_dog_prob > 0:
                         ev_spr_dog = compute_ev(spr_dog_prob*100, spr_dog_price)
+                        spr_dog_p = american_to_prob(spr_dog_price)
+                        spr_dog_edge = round(spr_dog_prob*100 - (spr_dog_p*100 if spr_dog_p else 0), 1) if spr_dog_p else None
                         pick_entry["spread_plus"] = {
                             "pick": spr_dog_team, "prob": spr_dog_prob*100, "detail": "+1.5",
-                            "ev": ev_spr_dog, "odds": spr_dog_price, "book": spr_dog_book,
+                            "ev": ev_spr_dog, "odds": spr_dog_price, "book": spr_dog_book, "edge": spr_dog_edge,
                         }
                     else:
-                        pick_entry["spread_plus"] = {"pick": spr_dog_team, "prob": spr_dog_prob*100, "detail": "+1.5", "ev": None, "odds": "N/A", "book": ""}
+                        pick_entry["spread_plus"] = {"pick": spr_dog_team, "prob": spr_dog_prob*100, "detail": "+1.5", "ev": None, "odds": "N/A", "book": "", "edge": None}
 
                     # Totals odds
                     ov_price, ov_book, ov_point = extract_market_odds(og, "totals")
                     if ov_price and ov_point:
                         over_prob = norm_cdf(exp_total - ov_point, 0, total_std)
                         if over_prob > 0.5:
+                            ov_p = american_to_prob(ov_price)
+                            ov_edge = round(over_prob*100 - (ov_p*100 if ov_p else 0), 1) if ov_p else None
                             pick_entry["total"] = {
                                 "pick": "Over", "prob": over_prob*100,
                                 "detail": f"o{ov_point}", "odds": ov_price, "book": ov_book,
-                                "ev": compute_ev(over_prob*100, ov_price),
+                                "ev": compute_ev(over_prob*100, ov_price), "edge": ov_edge,
                             }
                         else:
                             un_price, un_book, _ = extract_market_odds(og, "totals", "Under")
+                            un_p = american_to_prob(un_price or ov_price)
+                            un_edge = round((1-over_prob)*100 - (un_p*100 if un_p else 0), 1) if un_p else None
                             pick_entry["total"] = {
                                 "pick": "Under", "prob": (1-over_prob)*100,
                                 "detail": f"u{ov_point}", "odds": un_price or ov_price,
                                 "book": un_book or ov_book,
-                                "ev": compute_ev((1-over_prob)*100, un_price or ov_price),
+                                "ev": compute_ev((1-over_prob)*100, un_price or ov_price), "edge": un_edge,
                             }
                     else:
-                        pick_entry["total"] = {"pick": ov_verdict, "prob": ov_pct, "detail": f"~{exp_total:.1f}", "ev": None, "odds": "N/A", "book": ""}
+                        pick_entry["total"] = {"pick": ov_verdict, "prob": ov_pct, "detail": f"~{exp_total:.1f}", "ev": None, "odds": "N/A", "book": "", "edge": None}
                 else:
                     cal_p = max(cal_hp, cal_ap) if cal_hp else max(ml_hp, ml_ap)
                     raw_p = max(ml_hp, ml_ap)
                     pick_entry["moneyline"] = {"pick": hn if ml_hp > 0.50 else an, "prob": cal_p*100, "raw_prob": raw_p*100, "ev": None, "odds": "N/A", "book": "", "edge": None}
-                    pick_entry["spread_minus"] = {"pick": spr_fav_team, "prob": spr_fav_prob*100, "detail": "-1.5", "ev": None, "odds": "N/A", "book": ""}
-                    pick_entry["spread_plus"] = {"pick": spr_dog_team, "prob": spr_dog_prob*100, "detail": "+1.5", "ev": None, "odds": "N/A", "book": ""}
-                    pick_entry["total"] = {"pick": ov_verdict, "prob": ov_pct, "detail": f"~{exp_total:.1f}", "ev": None, "odds": "N/A", "book": ""}
+                    pick_entry["spread_minus"] = {"pick": spr_fav_team, "prob": spr_fav_prob*100, "detail": "-1.5", "ev": None, "odds": "N/A", "book": "", "edge": None}
+                    pick_entry["spread_plus"] = {"pick": spr_dog_team, "prob": spr_dog_prob*100, "detail": "+1.5", "ev": None, "odds": "N/A", "book": "", "edge": None}
+                    pick_entry["total"] = {"pick": ov_verdict, "prob": ov_pct, "detail": f"~{exp_total:.1f}", "ev": None, "odds": "N/A", "book": "", "edge": None}
             else:
                 cal_p = max(cal_hp, cal_ap) if cal_hp else max(ml_hp, ml_ap)
                 raw_p = max(ml_hp, ml_ap)
                 pick_entry["moneyline"] = {"pick": hn if ml_hp > 0.50 else an, "prob": cal_p*100, "raw_prob": raw_p*100, "ev": None, "odds": "N/A", "book": "", "edge": None}
-                pick_entry["spread_minus"] = {"pick": spr_fav_team, "prob": spr_fav_prob*100, "detail": "-1.5", "ev": None, "odds": "N/A", "book": ""}
-                pick_entry["spread_plus"] = {"pick": spr_dog_team, "prob": spr_dog_prob*100, "detail": "+1.5", "ev": None, "odds": "N/A", "book": ""}
-                pick_entry["total"] = {"pick": ov_verdict, "prob": ov_pct, "detail": f"~{exp_total:.1f}", "ev": None, "odds": "N/A", "book": ""}
+                pick_entry["spread_minus"] = {"pick": spr_fav_team, "prob": spr_fav_prob*100, "detail": "-1.5", "ev": None, "odds": "N/A", "book": "", "edge": None}
+                pick_entry["spread_plus"] = {"pick": spr_dog_team, "prob": spr_dog_prob*100, "detail": "+1.5", "ev": None, "odds": "N/A", "book": "", "edge": None}
+                pick_entry["total"] = {"pick": ov_verdict, "prob": ov_pct, "detail": f"~{exp_total:.1f}", "ev": None, "odds": "N/A", "book": "", "edge": None}
 
             pick_entry["border_color"] = border
             picks.append(pick_entry)
@@ -1583,6 +1591,18 @@ def main():
                 flames = ""
                 if edge is not None and edge > 2:
                     flames = "🔥" if edge <= 5 else "🔥🔥" if edge <= 8 else "🔥🔥🔥"
+                elif edge is None and prob_val is not None and prob_val >= 55:
+                    if prob_val >= 85:
+                        flames = "🔥🔥🔥"
+                    elif prob_val >= 75:
+                        flames = "🔥🔥"
+                    elif prob_val >= 65:
+                        flames = "🔥"
+                    elif prob_val >= 60:
+                        flames = "⭐"
+                    else:
+                        flames = "✅"
+                    edge = round(prob_val - 50, 1)
                 display_pick = f"{flames} {display_name}" if flames else display_name
                 flat_rows.append({
                     "Juego": gl, "Hora": t, "M": ml,
@@ -1635,16 +1655,26 @@ def main():
                 entry = p.get(mkt_key)
                 if not entry: continue
                 edge = entry.get("edge") if mkt_key == "moneyline" else get_edge(entry)
-                if edge is None or edge <= 2: continue
+                prob = entry.get("prob", 0)
+                if edge is None:
+                    if prob < 55: continue
+                    edge = round((prob - 50) * 0.5, 1)
+                elif edge <= 2:
+                    continue
 
                 pick_team = entry.get("pick", "")
-                prob = entry.get("prob", 0)
                 odds_str = entry.get("odds", "N/A")
                 odds_int = 0
-                try: odds_int = int(str(odds_str).replace("$",""))
+                has_real_odds = False
+                try:
+                    odds_int = int(str(odds_str).replace("$",""))
+                    has_real_odds = True
                 except: pass
 
-                stake, units, stake_label = recommend_stake(prob/100, odds_int, bankroll=actual_bankroll)
+                if has_real_odds:
+                    stake, units, stake_label = recommend_stake(prob/100, odds_int, bankroll=actual_bankroll)
+                else:
+                    stake, units, stake_label = 0, 0, "—"
 
                 recs.append({
                     "game": gl,
@@ -1671,7 +1701,11 @@ def main():
             recs = sorted(best_per_game.values(), key=lambda x: x["edge"], reverse=True)
             st.divider()
             st.markdown("## 🏆 Recomendaciones del Día")
-            st.caption(f"Top {min(len(recs),4)} de {len(recs)} — Kelly Criterion (25% fraccional, bankroll ${actual_bankroll:,.0f}).")
+            has_real_odds = any(r.get("odds","N/A") not in ("N/A","—","") for r in recs)
+            if has_real_odds:
+                st.caption(f"Top {min(len(recs),4)} de {len(recs)} — Kelly Criterion (25% fraccional, bankroll ${actual_bankroll:,.0f}).")
+            else:
+                st.caption(f"Top {min(len(recs),4)} de {len(recs)} — Basado en probabilidad del modelo (sin odds disponibles).")
 
             # HTML table with inline form buttons (safe: requires click, no bot auto-follow)
             from bankroll import load_picks
