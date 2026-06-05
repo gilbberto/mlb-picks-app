@@ -53,11 +53,12 @@ def _save_tg_offset(offset):
 
 def _sync_picks_from_github():
     """Fetch latest picks.json from GitHub to get fresh bankroll."""
-    if not GITHUB_TOKEN:
-        return
     url = f"https://api.github.com/repos/gilbberto/mlb-picks-app/contents/picks.json?ref=main"
     try:
-        r = requests.get(url, headers={"Authorization": f"Bearer {GITHUB_TOKEN}", "Accept": "application/vnd.github+json"}, timeout=10)
+        headers = {"Accept": "application/vnd.github+json"}
+        if GITHUB_TOKEN:
+            headers["Authorization"] = f"Bearer {GITHUB_TOKEN}"
+        r = requests.get(url, headers=headers, timeout=10)
         if r.status_code == 200:
             content = base64.b64decode(r.json()["content"]).decode()
             with open(PICKS_PATH, "w") as f:
