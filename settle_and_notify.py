@@ -131,13 +131,72 @@ def _check_telegram_commands():
             msg = update.get("message", {}) or update.get("callback_query", {}).get("message", {})
             chat_id = msg.get("chat", {}).get("id")
             text = (msg.get("text") or "").strip().lower()
-            if chat_id and chat_id == int(CHAT_ID) and text in ("resultados", "/resultados"):
+            if not chat_id or chat_id != int(CHAT_ID):
+                continue
+            if text in ("resultados", "/resultados"):
                 resp = _build_resultados_response()
                 send_telegram(resp)
+            elif text in ("/status", "/diagnostico"):
+                send_telegram(_cmd_status(text == "/diagnostico"))
+            elif text == "/reiniciar_worker":
+                msg = _cmd_restart("449aff70-31f8-4e67-88ab-c6ccedcc1546", "Worker")
+                send_telegram(msg)
+            elif text == "/reiniciar_web":
+                msg = _cmd_restart("e5af2645-5349-4176-a305-419ce60353da", "Web")
+                send_telegram(msg)
+            elif text == "/reiniciar_webhook":
+                msg = _cmd_restart("e722f196-dd7f-48f9-9654-2c9335ad0c0f", "Webhook")
+                send_telegram(msg)
         if max_id > offset:
             _save_tg_offset(max_id)
     except Exception as e:
         print(f"  Error polling Telegram: {e}")
+
+def _railway_headers():
+    tok = os.environ.get("RAILWAY_TOKEN", "")
+    if not tok:
+        return None
+    return {"Authorization": f"Bearer {tok}", "Content-Type": "application/json"}
+
+def _railway_graphql(query):
+    headers = _railway_headers()
+    if not headers:
+        return None
+    try:
+        r = requests.post("https://backboard.railway.app/graphql/v2", json={"query": query}, headers=headers, timeout=15)
+        return r.json()
+    except:
+        return None
+
+def _cmd_status(verbose=False):
+    q = '{ project(id: "aea9b11d-3919-4278-b429-77dc91ebadb9") { services { edges { node { name serviceInstances { edges { node { activeDeployments { status } } } } } } } } }'
+    data = _railway_graphql(q)
+    if not data:
+        return "❌ No pude conectar con Railway API"
+    lines = ["🚦 *Estado del Sistema*\n"]
+    ok = True
+    for e in data.get("data", {}).get("project", {}).get("services", {}).get("edges", []):
+        srv = e["node"]
+        statuses = [dep["status"] for inst in srv["serviceInstances"]["edges"] for dep in inst["node"]["activeDeployments"]]
+        s = statuses[0] if statuses else "DOWN"
+        icon = "✅" if s == "SUCCESS" else ("⚠️" if s in ("QUEUED","BUILDING") else "❌")
+        if s != "SUCCESS":
+            ok = False
+        lines.append(f"{icon} *{srv['name']}*: {s}")
+    lines.append(f"\n{'✅ Todo bien' if ok else '⚠️ Hay servicios caídos'}")
+    if verbose:
+        lines.append("\nComandos disponibles:")
+        lines.append("/reiniciar-worker — Reinicia el Worker")
+        lines.append("/reiniciar-web — Reinicia la Web")
+        lines.append("/reiniciar-webhook — Reinicia el Webhook")
+    return "\n".join(lines)
+
+def _cmd_restart(service_id, name):
+    q = f'mutation {{ serviceInstanceRedeploy(environmentId: "4d3a8996-f03c-4ab3-bcc4-dbb394d6f057", serviceId: "{service_id}") }}'
+    data = _railway_graphql(q)
+    if data and data.get("data", {}).get("serviceInstanceRedeploy"):
+        return f"🔄 *{name}* reiniciándose..."
+    return f"❌ Error al reiniciar {name}"
 
 def load_state():
     try:
