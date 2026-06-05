@@ -968,7 +968,8 @@ def render_card(pick, key_suffix="", game_idx=0):
                 if odds and odds != "N/A":
                     st.markdown(f"`{odds}`")
                 log_key = f"lg_{pick.get('game_id','')}_{mkt_key}"
-                if st.session_state.get(log_key, False):
+                _is_regd = (pick.get("away_abbrev","") + " @ " + pick.get("home_abbrev",""), mkt_label, pick_name) in _existing_picks
+                if _is_regd or st.session_state.get(log_key, False):
                     st.markdown("<span style='color:#00cc66'>✅</span>", unsafe_allow_html=True)
                 elif edge is not None and edge > 2:
                     if role == "admin":
@@ -1735,6 +1736,15 @@ def main():
         st.markdown(f"### 📋 Picks del Día ({len(upcoming)} juegos)")
         flat_rows = []
         now_tz = datetime.now(TZ)
+        _existing_picks = set()
+        try:
+            from bankroll import load_picks
+            _today_str = datetime.now(TZ).strftime("%Y-%m-%d")
+            for ep in load_picks().get("history", []):
+                if ep.get("date", "") == _today_str:
+                    _existing_picks.add((ep.get("game", "").strip(), ep.get("market", "").strip(), ep.get("team", "").strip()))
+        except:
+            pass
         for _, r in upcoming.iterrows():
             gl = f"{r['away_abbrev']} @ {r['home_abbrev']}"
             cgs = r.get("coded_game_state", "")
