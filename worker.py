@@ -56,8 +56,21 @@ def sync_from_github():
             with open(os.path.join(CWD, fname), "w") as f:
                 f.write(content)
 
+def _merge_picks(local_str, remote_str):
+    """Merge picks: keep remote entries + add any local entries not in remote."""
+    import json
+    remote = json.loads(remote_str)
+    local = json.loads(local_str)
+    remote_ids = {p.get("id") for p in remote.get("history", [])}
+    for p in local.get("history", []):
+        if p.get("id") not in remote_ids:
+            remote["history"].append(p)
+    remote["bankroll"] = min(remote.get("bankroll", 1000), local.get("bankroll", 1000))
+    remote["history"].sort(key=lambda x: x.get("id", 0))
+    return json.dumps(remote, indent=2)
+
 def sync_to_github():
-    """Push changed state files to GitHub."""
+    """Push changed state files to GitHub (merge picks.json, overwrite others)."""
     for fname in FILES_TO_SYNC:
         fp = os.path.join(CWD, fname)
         if not os.path.isfile(fp):
@@ -67,6 +80,8 @@ def sync_to_github():
         remote_content, sha = _gh_get(fname)
         if remote_content == local_content:
             continue
+        if fname == "picks.json" and remote_content:
+            local_content = _merge_picks(local_content, remote_content)
         _gh_put(fname, local_content, sha)
 
 def main():
@@ -74,7 +89,7 @@ def main():
     sync_from_github()
     cycle = 0
     while True:
-        sync_from_github()  # Siempre obtener picks actualizados antes de settle
+        sync_from_github()
         subprocess.run(["python3", "settle_and_notify.py"], cwd=CWD, env=ENV)
         sync_to_github()
         if cycle > 0 and cycle % 240 == 0:
