@@ -1380,7 +1380,10 @@ def main():
     soon_count = 0
     alive_count = 0
     for g in games:
-        if g.get("status",{}).get("codedGameState") == "F":
+        cgs = g.get("status",{}).get("codedGameState", "")
+        if cgs == "F":
+            continue
+        if g.get("teams",{}).get("away",{}).get("score") is not None and g.get("teams",{}).get("home",{}).get("score") is not None:
             continue
         gd = g.get("gameDate","")
         try:
