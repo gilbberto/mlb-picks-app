@@ -12,7 +12,7 @@ except:
 
 CURRENT_SEASON = 2026
 MLB_API_BASE = "https://statsapi.mlb.com/api/v1"
-ODDS_API_KEY = os.environ.get("ODDS_API_KEY", "b09f7e5fb08081c87e7e34272fda4ea0")
+ODDS_API_KEY = "b09f7e5fb08081c87e7e34272fda4ea0"
 BASE = os.path.join(os.path.dirname(__file__), "")
 
 PARK_FACTORS = {

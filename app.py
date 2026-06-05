@@ -109,10 +109,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-try:
-    ODDS_API_KEY = st.secrets.get("ODDS_API_KEY", "b09f7e5fb08081c87e7e34272fda4ea0")
-except Exception:
-    ODDS_API_KEY = os.getenv("ODDS_API_KEY", "b09f7e5fb08081c87e7e34272fda4ea0")
+ODDS_API_KEY = "b09f7e5fb08081c87e7e34272fda4ea0"
 SHARPAPI_KEY = os.getenv("SHARPAPI_KEY", "")
 
 # ─── ML Models (XGBoost first, fallback RandomForest + Monte Carlo) ───
