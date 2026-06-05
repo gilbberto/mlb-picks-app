@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta, timezone
 import os
+import json
 import pickle
 import math
 import time
@@ -1186,7 +1187,7 @@ def _get_perms(username):
     return {**_default_perms(), **u.get("permissions", {})}
 
 def _login_form():
-    _, c, _ = st.columns([2, 1, 2])
+    _, c, _ = st.columns([3, 1, 3])
     with c:
         st.image("https://www.mlbstatic.com/team-logos/league-on-dark/1.svg", use_container_width=True)
         st.markdown("<h2 style='text-align:center;margin:5px 0 0 0'>MLB Picks AI</h2>", unsafe_allow_html=True)
