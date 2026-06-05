@@ -1099,6 +1099,7 @@ def render_parlay(parlay, idx):
 # ─── Main ───
 
 def main():
+    st.markdown("### 🐛 DEBUG: main() se ejecutó")
     # ── Auto-settlement al iniciar ──
     try:
         from bankroll import auto_settle
