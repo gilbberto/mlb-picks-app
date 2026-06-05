@@ -1123,52 +1123,91 @@ def render_parlay(parlay, idx):
 
 # ─── Auth ───
 
-PERMS_PATH = os.path.join(os.path.dirname(__file__), "user_permissions.json")
+USERS_PATH = os.path.join(os.path.dirname(__file__), "users.json")
+MODULES = [("daily_picks", "Picks del Día"), ("recommendations", "Recomendaciones"),
+           ("calibration", "Calibración"), ("model_stats", "Estadísticas"),
+           ("detailed_table", "Tabla Detallada")]
 
-def _load_perms():
+def _default_perms():
+    return {k: v for k, v in [("daily_picks", True), ("recommendations", True),
+                               ("calibration", False), ("model_stats", False),
+                               ("detailed_table", False)]}
+
+def _load_users():
     try:
-        with open(PERMS_PATH) as f:
+        with open(USERS_PATH) as f:
             return json.load(f)
     except:
-        return {"daily_picks": True, "recommendations": True, "calibration": False, "model_stats": False, "detailed_table": False}
+        return {"admin": {"password": _secret("ADMIN_PASSWORD", "admin2024"), "role": "admin"}}
 
-def _save_perms(p):
-    with open(PERMS_PATH, "w") as f:
-        json.dump(p, f, indent=2)
+def _save_users(u):
+    with open(USERS_PATH, "w") as f:
+        json.dump(u, f, indent=2)
 
-ADMIN_PWD = _secret("ADMIN_PASSWORD", "admin2024")
-VIEWER_PWD = _secret("VIEWER_PASSWORD", "vista2024")
+def _get_perms(username):
+    users = _load_users()
+    u = users.get(username, {})
+    if u.get("role") == "admin":
+        return {k: True for k, _ in MODULES}
+    return {**_default_perms(), **u.get("permissions", {})}
 
 def _login_form():
     st.markdown("## 🔐 Acceso")
     with st.form("login_form"):
+        user = st.text_input("Usuario").strip().lower()
         pwd = st.text_input("Contraseña", type="password")
-        col1, col2 = st.columns([1, 1])
-        if col1.form_submit_button("🔑 Entrar"):
-            if pwd == ADMIN_PWD:
-                st.session_state.role = "admin"
-                st.rerun()
-            elif pwd == VIEWER_PWD:
-                st.session_state.role = "viewer"
+        if st.form_submit_button("🔑 Entrar"):
+            users = _load_users()
+            if user in users and users[user]["password"] == pwd:
+                st.session_state.user = user
+                st.session_state.role = users[user]["role"]
                 st.rerun()
             else:
-                st.error("Contraseña incorrecta")
+                st.error("Usuario o contraseña incorrectos")
 
 def _admin_panel():
-    perms = _load_perms()
+    users = _load_users()
     st.sidebar.divider()
-    st.sidebar.markdown("### ⚙️ Admin")
-    st.sidebar.markdown(f"👤 Rol: **Admin**")
-    changed = False
-    for key, label in [("daily_picks", "Picks del Día"), ("recommendations", "Recomendaciones"),
-                        ("calibration", "Calibración"), ("model_stats", "Estadísticas"),
-                        ("detailed_table", "Tabla Detallada")]:
-        val = st.sidebar.checkbox(label, value=perms.get(key, False), key=f"perm_{key}")
-        if val != perms.get(key):
-            perms[key] = val
-            changed = True
-    if changed:
-        _save_perms(perms)
+    st.sidebar.markdown(f"### ⚙️ Admin")
+    st.sidebar.markdown(f"👤 **{st.session_state.user}** (Admin)")
+
+    with st.sidebar.expander("👥 Usuarios", expanded=False):
+        for uname, udata in users.items():
+            if uname == "admin":
+                continue
+            cols = st.columns([3, 1])
+            cols[0].markdown(f"**{uname}** — {udata.get('role','?')}")
+            if cols[1].button("🗑", key=f"del_{uname}"):
+                del users[uname]
+                _save_users(users)
+                st.rerun()
+
+        st.divider()
+        st.markdown("**Nuevo usuario**")
+        nu = st.text_input("Usuario", key="nu_name").strip().lower()
+        np = st.text_input("Contraseña", type="password", key="nu_pass")
+        nr = st.selectbox("Rol", ["viewer"], key="nu_role")
+        if st.button("➕ Crear") and nu and np:
+            if nu in users:
+                st.error("Ya existe")
+            else:
+                users[nu] = {"password": np, "role": nr, "permissions": _default_perms()}
+                _save_users(users)
+                st.rerun()
+
+    with st.sidebar.expander("🔧 Permisos", expanded=False):
+        sel = st.selectbox("Usuario", [u for u in users if u != "admin"], key="perm_user")
+        if sel:
+            perms = users[sel].setdefault("permissions", _default_perms())
+            changed = False
+            for key, label in MODULES:
+                val = st.checkbox(label, value=perms.get(key, False), key=f"p_{sel}_{key}")
+                if val != perms.get(key):
+                    perms[key] = val
+                    changed = True
+            if changed:
+                _save_users(users)
+
     if st.sidebar.button("🔒 Cerrar sesión"):
         st.session_state.clear()
         st.rerun()
@@ -1177,7 +1216,8 @@ def _admin_panel():
 # ─── Main ───
 
 def main():
-    if "role" not in st.session_state:
+    if "user" not in st.session_state:
+        st.session_state.user = None
         st.session_state.role = None
     if not st.session_state.role:
         _login_form()
@@ -1245,8 +1285,9 @@ def main():
             pass
         st.divider()
         st.caption(f"🕐 {datetime.now(TZ).strftime('%H:%M')} Chihuahua")
+        st.sidebar.markdown(f"👤 **{st.session_state.user}** ({role})")
         if role == "viewer":
-            st.sidebar.markdown("👁️ **Modo Vista** — solo lectura")
+            st.sidebar.markdown("👁️ Solo lectura")
             if st.sidebar.button("🔒 Cerrar sesión"):
                 st.session_state.clear()
                 st.rerun()
@@ -1643,7 +1684,7 @@ def main():
 
     completed = df[df["status"] == "Final"]
 
-    if _load_perms().get("daily_picks", True) and len(upcoming) > 0:
+    if _get_perms(st.session_state.user).get("daily_picks", True) and len(upcoming) > 0:
         st.markdown(f"### 📋 Picks del Día ({len(upcoming)} juegos)")
         flat_rows = []
         now_tz = datetime.now(TZ)
@@ -1785,7 +1826,7 @@ def main():
                     "entry": entry,
                 })
 
-        if recs and _load_perms().get("recommendations", True):
+        if recs and _get_perms(st.session_state.user).get("recommendations", True):
             # One recommendation per game (best edge)
             best_per_game = {}
             for r in recs:
@@ -2098,12 +2139,12 @@ def main():
                             "Esperado": f"{predicted}%",
                             "Diff": f"{actual - predicted:+.0f}%",
                         })
-                if cal_rows and _load_perms().get("calibration", False):
+                if cal_rows and _get_perms(st.session_state.user).get("calibration", False):
                     with st.expander("📐 Calibración del modelo", expanded=False):
                         st.dataframe(pd.DataFrame(cal_rows), hide_index=True, use_container_width=True)
 
             # ── Predicciones history ──
-            if _load_perms().get("model_stats", True):
+            if _get_perms(st.session_state.user).get("model_stats", True):
                 try:
                     with open(os.path.join(os.path.dirname(__file__), "predictions_log.json")) as f:
                         pred_data = json.load(f)
@@ -2134,7 +2175,7 @@ def main():
     except ImportError:
         pass
 
-    if _load_perms().get("detailed_table", False):
+    if _get_perms(st.session_state.user).get("detailed_table", False):
         st.divider()
         with st.expander("🔬 Tabla detallada"):
             cols_avail = [c for c in ["away_team","home_team","ml_home_prob","ml_away_prob","exp_total","spr_team","spr_prob"] if c in df.columns]
