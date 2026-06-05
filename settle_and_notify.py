@@ -3,7 +3,7 @@ settle_and_notify.py — GitHub Actions: auto-settle + Telegram notification.
 Usage: python3 settle_and_notify.py
 Envs: TELEGRAM_TOKEN, TELEGRAM_CHAT_ID
 """
-import os, sys, json, math
+import os, sys, json, math, base64
 from datetime import datetime, timezone, timedelta
 sys.path.insert(0, os.path.dirname(__file__))
 from bankroll import auto_settle, settle_predictions, load_picks, get_pnl, REV_TEAM, MLB_API
@@ -17,8 +17,10 @@ except:
 
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN", "")
 CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
+GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
 NOTIFIED_PATH = os.path.join(os.path.dirname(__file__), "game_starts_notified.json")
 TG_OFFSET_PATH = os.path.join(os.path.dirname(__file__), ".telegram_offset")
+PICKS_PATH = os.path.join(os.path.dirname(__file__), "picks.json")
 
 def send_telegram(msg):
     if not TELEGRAM_TOKEN or not CHAT_ID:
@@ -49,9 +51,24 @@ def _save_tg_offset(offset):
     with open(TG_OFFSET_PATH, "w") as f:
         f.write(str(offset))
 
+def _sync_picks_from_github():
+    """Fetch latest picks.json from GitHub to get fresh bankroll."""
+    if not GITHUB_TOKEN:
+        return
+    url = f"https://api.github.com/repos/gilbberto/mlb-picks-app/contents/picks.json?ref=main"
+    try:
+        r = requests.get(url, headers={"Authorization": f"Bearer {GITHUB_TOKEN}", "Accept": "application/vnd.github+json"}, timeout=10)
+        if r.status_code == 200:
+            content = base64.b64decode(r.json()["content"]).decode()
+            with open(PICKS_PATH, "w") as f:
+                f.write(content)
+    except:
+        pass
+
 def _build_resultados_response():
     """Build current game results message for registered picks."""
     try:
+        _sync_picks_from_github()
         data = load_picks()
         today = datetime.now(TZ).strftime("%Y-%m-%d")
         picks = [p for p in data["history"] if p.get("date") == today]
@@ -93,7 +110,7 @@ def _build_resultados_response():
             if p.get("settled"):
                 icon = "✅" if p.get("result") == "W" else "❌"
                 result = "GANADA" if p.get("result") == "W" else "PERDIDA"
-                profit = p.get("profit", 0)
+                profit = p.get("profit") or 0
                 lines.append(f"{icon} {gl} → {lp}: *{result}* (${profit:+.2f})")
             elif gl in games_map and games_map[gl]["state"] in ("L", "I"):
                 gm = games_map[gl]
@@ -101,7 +118,7 @@ def _build_resultados_response():
                 lines.append(f"⚾ {gl} → {lp}: *{gm['away_runs']}-{gm['home_runs']}* {inn}")
             elif gl in games_map and games_map[gl]["state"] in ("F", "O"):
                 gm = games_map[gl]
-                lines.append(f"✅ {gl} → {lp}: *Final* {gm['away_runs']}-{gm['home_runs']}")
+                lines.append(f"⏳ {gl} → {lp}: *Final* {gm['away_runs']}-{gm['home_runs']} (pendiente)")
             else:
                 gs = games_map.get(gl, {}).get("state_str", "Programado")
                 lines.append(f"⏳ {gl} → {lp}: {gs}")
@@ -291,7 +308,7 @@ def _game_ended_msg(label, away_abbr, home_abbr, away_runs, home_runs):
         if settled:
             icon = "✅" if pk.get("result") == "W" else "❌"
             result = "GANADA" if pk.get("result") == "W" else "PERDIDA"
-            profit = pk.get("profit", 0)
+            profit = pk.get("profit") or 0
             lp = f"{market} {team}" + (f" {detail}" if detail else "")
             result_lines.append(f"{icon} {lp}: *{result}* (${profit:+.2f})")
         else:
@@ -396,7 +413,7 @@ def main():
             lines = ["⚾ *Resultados MLB*"]
             for p in after["history"]:
                 if p["id"] in fresh_ids:
-                    profit = p.get("profit", 0)
+                    profit = p.get("profit") or 0
                     icon = "✅" if p.get("result") == "W" else "❌"
                     result = "GANADA" if p.get("result") == "W" else "PERDIDA"
                     lines.append(f"{icon} *{p['game']}* → {p.get('market','?')} {p.get('team','?')} {icon} *{result}* (${profit:+.2f})")
