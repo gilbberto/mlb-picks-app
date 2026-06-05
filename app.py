@@ -1186,15 +1186,19 @@ def _get_perms(username):
     return {**_default_perms(), **u.get("permissions", {})}
 
 def _login_form():
-    _, c2, _ = st.columns([1, 3, 1])
+    _, c2, _ = st.columns([1, 2, 1])
     with c2:
-        st.image("https://www.mlbstatic.com/team-logos/league-on-dark/1.svg", width=100)
-        st.markdown("<h2 style='text-align:center'>MLB Picks AI</h2>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align:center;color:#aaa;font-size:15px;margin-bottom:30px'>We don't promise to win every day.<br>We promise to be on the right side of the numbers. ⚾📈💰</p>", unsafe_allow_html=True)
+        ii, ic, id = st.columns([1, 2, 1])
+        with ic:
+            st.image("https://www.mlbstatic.com/team-logos/league-on-dark/1.svg", width=110)
+        st.markdown("<h2 style='text-align:center;margin:2px 0 0 0'>MLB Picks AI</h2>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align:center;color:#888;font-size:13px;margin-bottom:20px'>We don't promise to win every day.<br>We promise to be on the right side of the numbers. ⚾📈💰</p>", unsafe_allow_html=True)
         with st.form("login_form"):
-            user = st.text_input("Usuario").strip().lower()
-            pwd = st.text_input("Contraseña", type="password")
+            u = st.text_input("Usuario")
+            p = st.text_input("Contraseña", type="password")
             if st.form_submit_button("🔑 Entrar", use_container_width=True):
+                user = u.strip().lower()
+                pwd = p
                 users = _load_users()
                 if user in users and users[user]["password"] == pwd:
                     st.session_state.user = user
