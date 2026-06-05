@@ -1591,7 +1591,7 @@ def main():
                 flames = ""
                 if edge is not None and edge > 2:
                     flames = "🔥" if edge <= 5 else "🔥🔥" if edge <= 8 else "🔥🔥🔥"
-                elif edge is None and prob_val is not None and prob_val >= 55:
+                elif prob_val is not None and prob_val >= 55:
                     if prob_val >= 85:
                         flames = "🔥🔥🔥"
                     elif prob_val >= 75:
@@ -1656,10 +1656,11 @@ def main():
                 if not entry: continue
                 edge = entry.get("edge") if mkt_key == "moneyline" else get_edge(entry)
                 prob = entry.get("prob", 0)
-                if edge is None:
-                    if prob < 55: continue
+                if edge is not None and edge > 2:
+                    pass
+                elif prob >= 55:
                     edge = round((prob - 50) * 0.5, 1)
-                elif edge <= 2:
+                else:
                     continue
 
                 pick_team = entry.get("pick", "")
