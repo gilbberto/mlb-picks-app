@@ -967,17 +967,14 @@ def render_card(pick, key_suffix="", game_idx=0):
             with col_c:
                 if odds and odds != "N/A":
                     st.markdown(f"`{odds}`")
-                if edge is not None:
+                if edge is not None and edge > 2:
                     if edge > 8: flame = "🔥🔥🔥"
                     elif edge > 5: flame = "🔥🔥"
-                    elif edge > 2: flame = "🔥"
-                    else: flame = ""
-                elif prob_val is not None and prob_val >= 55:
+                    else: flame = "🔥"
+                elif edge is None and prob_val is not None and prob_val >= 65:
                     if prob_val >= 85: flame = "🔥🔥🔥"
                     elif prob_val >= 75: flame = "🔥🔥🔥"
                     elif prob_val >= 65: flame = "🔥🔥"
-                    elif prob_val >= 60: flame = "🔥"
-                    else: flame = "✅"
                 else:
                     flame = ""
                 if flame:
