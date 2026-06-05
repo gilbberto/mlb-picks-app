@@ -280,6 +280,22 @@
       "profit": null,
       "label": "\ud83d\udd25 High",
       "settled": false
+    },
+    {
+      "id": 18,
+      "date": "2026-06-05",
+      "game": "BAL @ TOR",
+      "market": "O/U",
+      "team": "Under",
+      "detail": "u8.5",
+      "model_prob": 0.801,
+      "odds": -122,
+      "stake": 203.55,
+      "bankroll_before": 1460.94,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ]
 }
