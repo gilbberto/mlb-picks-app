@@ -164,6 +164,12 @@ def _check_telegram_commands():
             elif text == "/reiniciar_webhook":
                 msg = _cmd_restart("e722f196-dd7f-48f9-9654-2c9335ad0c0f", "Webhook")
                 send_telegram(msg)
+            elif text in ("/rendimiento", "/modelo"):
+                try:
+                    from predictions import compute_model_stats
+                    send_telegram(compute_model_stats())
+                except Exception as e:
+                    send_telegram(f"❌ Error: {e}")
         if max_id > offset:
             _save_tg_offset(max_id)
     except Exception as e:
@@ -436,6 +442,15 @@ def main():
         if pred_errors:
             for e in pred_errors:
                 print(f"  ⚠️ {e}")
+
+    # Log all predictions for today (runs once per day via dedup)
+    try:
+        from predictions import log_all_todays_predictions
+        logged = log_all_todays_predictions()
+        if logged > 0:
+            print(f"  Predicciones guardadas hoy: {logged}")
+    except Exception as e:
+        print(f"  Error guardando predicciones: {e}")
 
     check_game_starts_and_scores()
     _check_telegram_commands()

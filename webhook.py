@@ -33,6 +33,12 @@ def webhook():
             send_telegram(_cmd_restart("e5af2645-5349-4176-a305-419ce60353da", "Web"))
         elif text == "/reiniciar_webhook":
             send_telegram(_cmd_restart("e722f196-dd7f-48f9-9654-2c9335ad0c0f", "Webhook"))
+        elif text in ("/rendimiento", "/modelo"):
+            try:
+                from predictions import compute_model_stats
+                send_telegram(compute_model_stats())
+            except Exception as e:
+                send_telegram(f"❌ Error: {e}")
 
     return {"ok": True}
 

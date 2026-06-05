@@ -74,24 +74,292 @@ def fetch_todays_schedule():
     return []
 
 def fetch_team_stats_mlb(tid, season=CURRENT_SEASON):
+    url = f"{MLB_API_BASE}/teams/{tid}/stats?season={season}&group=hitting,pitching&stats=season"
     try:
-        url = f"{MLB_API_BASE}/teams/{tid}/stats?season={season}&group=hitting,pitching&stats=season"
         resp = requests.get(url, timeout=10)
         if resp.status_code != 200:
             return {}
-        result = {"hitting": {}, "pitching": {}}
-        for sg in resp.json().get("stats", []):
-            g = sg.get("group", {}).get("displayName", "").lower()
-            splits = sg.get("splits", [])
-            if splits:
-                s = splits[0].get("stat", {})
-                if g == "hitting":
-                    result["hitting"] = {k: safe_float(s.get(k)) for k in ["avg","runs","hr","obp","slg","ops","hits","strikeOuts","baseOnBalls"]}
-                elif g == "pitching":
-                    result["pitching"] = {k: safe_float(s.get(k)) for k in ["era","whip","runs","strikeouts","baseOnBalls","homeRuns"]}
-        return result
     except:
         return {}
+    result = {"hitting": {}, "pitching": {}}
+    for sg in resp.json().get("stats", []):
+        g = sg.get("group", {}).get("displayName", "").lower()
+        splits = sg.get("splits", [])
+        if splits:
+            s = splits[0].get("stat", {})
+            if g == "hitting":
+                result["hitting"] = {k: safe_float(s.get(k)) for k in ["avg","runs","hr","obp","slg","ops","hits","strikeOuts","baseOnBalls"]}
+            elif g == "pitching":
+                result["pitching"] = {k: safe_float(s.get(k)) for k in ["era","whip","runs","strikeouts","baseOnBalls","homeRuns"]}
+    return result
+
+PRED_LOG_PATH = os.path.join(os.path.dirname(__file__), "predictions_log.json")
+
+def log_all_todays_predictions():
+    """Run full pipeline and log ALL markets for every game to predictions_log.json.
+    Returns number of new predictions logged."""
+    from bankroll import calibrate_ml, calibrate_rl
+
+    today_str = datetime.now(TZ).strftime("%Y-%m-%d")
+    games = fetch_todays_schedule()
+    odds_raw = fetch_odds()
+    ab_map = fetch_team_abbrevs()
+
+    try:
+        with open(PRED_LOG_PATH) as f:
+            log_data = json.load(f)
+    except:
+        log_data = {"predictions": []}
+
+    existing_ids = {p["id"] for p in log_data["predictions"] if p.get("date") == today_str}
+    new_count = 0
+
+    for g in games:
+        sc = g.get("status",{}).get("codedGameState","S")
+        sd = g.get("status",{}).get("detailedState","Scheduled")
+        if sc in ("F", "O") or sd == "Final":
+            continue
+        t = g["teams"]
+        hi, ai = t["home"]["team"], t["away"]["team"]
+        hid, aid = hi["id"], ai["id"]
+        hn, an = hi["name"], ai["name"]
+        ha, aa = ab_map.get(hid, "??"), ab_map.get(aid, "??")
+
+        hs = fetch_team_stats_mlb(hid) if hid else {}
+        aws = fetch_team_stats_mlb(aid) if aid else {}
+        hr = fetch_recent_games(hid) if hid else []
+        ar = fetch_recent_games(aid) if aid else []
+        hf = compute_form(hr, hid)
+        af = compute_form(ar, aid)
+
+        hp_info = g.get("teams",{}).get("home",{}).get("probablePitcher") or {}
+        ap_info = g.get("teams",{}).get("away",{}).get("probablePitcher") or {}
+        hpitch = fetch_pitcher_stats(hp_info.get("id")) if hp_info.get("id") else {}
+        apitch = fetch_pitcher_stats(ap_info.get("id")) if ap_info.get("id") else {}
+        hprec = fetch_pitcher_recent_form(hp_info.get("id")) if hp_info.get("id") else {}
+        aprec = fetch_pitcher_recent_form(ap_info.get("id")) if ap_info.get("id") else {}
+        _, h_elo, a_elo = compute_elo(hr, ar, hid, aid)
+        venue_name = g.get("venue",{}).get("name", "")
+        park_f = PARK_FACTORS.get(venue_name, 1.0)
+
+        mc = monte_carlo_predict(hs, aws, hf, af, h_elo, a_elo,
+                                 hpitch if hpitch.get("ip",0) >= 10 else None,
+                                 apitch if apitch.get("ip",0) >= 10 else None,
+                                 park_f, hp_rec=hprec, ap_rec=aprec)
+
+        ml_hp = mc["ml_hp"]
+        if ml_hp is None:
+            continue
+        cal_hp = calibrate_ml(ml_hp)
+        cal_ap = 1.0 - cal_hp
+        spr_home_minus = mc["spr_home_minus"]
+        spr_home_plus = mc["spr_home_plus"]
+        spr_away_minus = mc["spr_away_minus"]
+        spr_away_plus = mc["spr_away_plus"]
+        spr_exp_margin = mc["spr_exp_margin"]
+        exp_total = mc["exp_total"]
+        total_std = mc["total_std"]
+
+        gl = f"{aa} @ {ha}"
+        gid = str(g.get("gamePk", ""))
+        if not gid:
+            continue
+
+        og = match_game(odds_raw, hn, an) if odds_raw else None
+        spr_fav_team = hn if spr_exp_margin >= 0 else an
+        spr_dog_team = an if spr_exp_margin >= 0 else hn
+        spr_fav_prob = spr_home_minus if spr_exp_margin >= 0 else spr_away_minus
+        spr_dog_prob = spr_away_plus if spr_exp_margin >= 0 else spr_home_plus
+
+        if og:
+            m_fav, m_dog = None, None
+            for book in og.get("bookmakers", []):
+                for mkt in book.get("markets", []):
+                    if mkt.get("key") == "spreads":
+                        oc = mkt.get("outcomes", [])
+                        if len(oc) >= 2:
+                            for o in oc:
+                                if o.get("point", 0) < 0: m_fav = o["name"]
+                                elif o.get("point", 0) > 0: m_dog = o["name"]
+                        break
+                if m_fav: break
+            if m_fav and m_dog:
+                spr_fav_team = m_fav
+                spr_dog_team = m_dog
+                if m_fav == hn:
+                    spr_fav_prob = spr_home_minus
+                    spr_dog_prob = spr_away_plus
+                else:
+                    spr_fav_prob = spr_away_minus
+                    spr_dog_prob = spr_home_plus
+                spr_fav_prob = calibrate_rl(spr_fav_prob)
+                spr_dog_prob = 1.0 - spr_fav_prob
+
+        # ML
+        ml_team = hn if ml_hp > 0.50 else an
+        ml_prob = max(cal_hp, cal_ap)
+        ml_odds = "N/A"
+        ml_edge = None
+        if og:
+            ml_price, _, _ = extract_market_odds(og, "h2h", ml_team)
+            if ml_price:
+                ml_odds = ml_price
+                ip = american_to_prob(ml_price)
+                if ip:
+                    ml_edge = round(ml_prob * 100 - ip * 100, 1)
+
+        pid = f"{gid}_moneyline"
+        if pid not in existing_ids:
+            log_data["predictions"].append({
+                "id": pid, "date": today_str, "game": gl,
+                "away_abbrev": aa, "home_abbrev": ha,
+                "market": "ML", "pick": ml_team,
+                "prob": round(ml_prob * 100, 1), "odds": ml_odds,
+                "edge": ml_edge, "detail": "",
+                "result": None, "settled": False,
+            })
+            new_count += 1
+
+        # RL -1.5
+        mkt = "RL -1.5"
+        pid = f"{gid}_spread_minus"
+        if pid not in existing_ids:
+            rl_prob = spr_fav_prob
+            rl_odds = "N/A"
+            rl_edge = None
+            if og:
+                spr_price, _, _ = extract_market_odds(og, "spreads", spr_fav_team, expect_point=-1.5)
+                if spr_price:
+                    rl_odds = spr_price
+                    ip = american_to_prob(spr_price)
+                    if ip:
+                        rl_edge = round(rl_prob * 100 - ip * 100, 1) if rl_prob > 0 else None
+            log_data["predictions"].append({
+                "id": pid, "date": today_str, "game": gl,
+                "away_abbrev": aa, "home_abbrev": ha,
+                "market": mkt, "pick": spr_fav_team,
+                "prob": round(rl_prob * 100, 1) if rl_prob > 0 else 0,
+                "odds": rl_odds, "edge": rl_edge, "detail": "-1.5",
+                "result": None, "settled": False,
+            })
+            new_count += 1
+
+        # RL +1.5
+        mkt = "RL +1.5"
+        pid = f"{gid}_spread_plus"
+        if pid not in existing_ids:
+            rl_dog_prob = spr_dog_prob
+            rl_dog_odds = "N/A"
+            rl_dog_edge = None
+            if og:
+                spr_dog_price, _, _ = extract_market_odds(og, "spreads", spr_dog_team, expect_point=1.5)
+                if spr_dog_price:
+                    rl_dog_odds = spr_dog_price
+                    ip = american_to_prob(spr_dog_price)
+                    if ip:
+                        rl_dog_edge = round(rl_dog_prob * 100 - ip * 100, 1) if rl_dog_prob > 0 else None
+            log_data["predictions"].append({
+                "id": pid, "date": today_str, "game": gl,
+                "away_abbrev": aa, "home_abbrev": ha,
+                "market": mkt, "pick": spr_dog_team,
+                "prob": round(rl_dog_prob * 100, 1) if rl_dog_prob > 0 else 0,
+                "odds": rl_dog_odds, "edge": rl_dog_edge, "detail": "+1.5",
+                "result": None, "settled": False,
+            })
+            new_count += 1
+
+        # O/U
+        mkt = "O/U"
+        pid = f"{gid}_total"
+        if pid not in existing_ids:
+            ov_price, _, ov_point = extract_market_odds(og, "totals") if og else (None, None, None)
+            if ov_price and ov_point:
+                over_prob = norm_cdf(exp_total - ov_point, 0, total_std)
+                if over_prob > 0.5:
+                    ou_team = "Over"
+                    ou_detail = f"o{ov_point}"
+                    ou_prob = over_prob * 100
+                    ou_odds = ov_price
+                else:
+                    un_price, _, _ = extract_market_odds(og, "totals", "Under")
+                    ou_team = "Under"
+                    ou_detail = f"u{ov_point}"
+                    ou_prob = (1 - over_prob) * 100
+                    ou_odds = un_price or ov_price
+                ou_edge = None
+                ip = american_to_prob(ou_odds)
+                if ip:
+                    ou_edge = round(ou_prob - ip * 100, 1)
+            else:
+                ou_team = "Over" if exp_total > 8.5 else "Under"
+                ou_detail = f"~{exp_total:.1f}"
+                ou_prob = max(norm_cdf(exp_total - 8.5, 0, total_std), 1 - norm_cdf(exp_total - 8.5, 0, total_std)) * 100
+                ou_odds = "N/A"
+                ou_edge = None
+            log_data["predictions"].append({
+                "id": pid, "date": today_str, "game": gl,
+                "away_abbrev": aa, "home_abbrev": ha,
+                "market": mkt, "pick": ou_team,
+                "prob": round(ou_prob, 1), "odds": ou_odds,
+                "edge": ou_edge, "detail": ou_detail,
+                "result": None, "settled": False,
+            })
+            new_count += 1
+
+    if new_count > 0:
+        os.makedirs(os.path.dirname(PRED_LOG_PATH) or ".", exist_ok=True)
+        with open(PRED_LOG_PATH, "w") as f:
+            json.dump(log_data, f, indent=2)
+    return new_count
+
+
+def compute_model_stats():
+    """Compute model performance from predictions_log.json.
+    Returns formatted string."""
+    try:
+        with open(PRED_LOG_PATH) as f:
+            data = json.load(f)
+    except:
+        return "❌ No hay datos de predicciones."
+
+    settled = [p for p in data["predictions"] if p.get("settled")]
+    if not settled:
+        return "📊 Sin predicciones liquidadas aún."
+
+    lines = ["📊 *Rendimiento del Modelo*\n"]
+    markets = {}
+    for p in settled:
+        m = p["market"]
+        if m not in markets:
+            markets[m] = {"w": 0, "l": 0, "prob_sum": 0, "count": 0}
+        if p.get("result") == "W":
+            markets[m]["w"] += 1
+        else:
+            markets[m]["l"] += 1
+        markets[m]["prob_sum"] += p.get("prob", 0)
+        markets[m]["count"] += 1
+
+    total_w = sum(m["w"] for m in markets.values())
+    total_l = sum(m["l"] for m in markets.values())
+    total = total_w + total_l
+
+    lines.append(f"*Total:* {total_w}-{total_l} ({total_w/total*100:.1f}%)\n" if total > 0 else "*Total:* 0\n")
+
+    for m in ["ML", "RL -1.5", "RL +1.5", "O/U"]:
+        if m not in markets:
+            continue
+        s = markets[m]
+        n = s["w"] + s["l"]
+        pct = s["w"] / n * 100 if n > 0 else 0
+        avg_prob = s["prob_sum"] / n if n > 0 else 0
+        lines.append(f"• *{m}:* {s['w']}-{s['l']} ({pct:.1f}%) | Prob prom: {avg_prob:.0f}%")
+
+    # Fechas
+    dates = sorted(set(p["date"] for p in settled))
+    lines.append(f"\n📅 Datos desde: {dates[0]} hasta {dates[-1]} ({len(dates)} días)")
+    lines.append(f"📈 Total predicciones: {len(data['predictions'])} ({len(settled)} liquidadas, {len(data['predictions'])-len(settled)} pendientes)")
+
+    return "\n".join(lines)
 
 def fetch_team_abbrevs():
     try:
