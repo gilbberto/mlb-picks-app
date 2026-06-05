@@ -74,8 +74,7 @@ def main():
     sync_from_github()
     cycle = 0
     while True:
-        if cycle > 0 and cycle % 20 == 0:
-            sync_from_github()
+        sync_from_github()  # Siempre obtener picks actualizados antes de settle
         subprocess.run(["python3", "settle_and_notify.py"], cwd=CWD, env=ENV)
         sync_to_github()
         if cycle > 0 and cycle % 240 == 0:
