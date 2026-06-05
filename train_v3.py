@@ -38,6 +38,8 @@ PARK = {"Coors Field": 1.18, "Great American Ball Park": 1.05, "Citizens Bank Pa
         "Comerica Park": 0.99, "Citi Field": 0.99, "T-Mobile Park": 0.98,
         "Oracle Park": 0.98, "Petco Park": 0.97, "PNC Park": 0.97,
         "Tropicana Field": 0.96, "Target Field": 0.96, "Oakland Coliseum": 0.97}
+DOME_VENUES = {"Tropicana Field", "Rogers Centre", "Chase Field", "Globe Life Field",
+               "American Family Field", "Minute Maid Park", "loanDepot park", "Marlins Park"}
 
 # ─── Step 1: Fetch games for all seasons ───
 print("=== Step 1: Fetching games ===")
@@ -287,7 +289,8 @@ for i, g in enumerate(all_games):
         return 3
 
     hr = rest(htid, gd); ar = rest(atid, gd)
-    pf = PARK.get(g.get("venue", {}).get("name", ""), 1.0)
+    vname = g.get("venue", {}).get("name", "")
+    pf = PARK.get(vname, 1.0)
 
     # Fetch team stats for the correct season
     def get_team_stats(tid, ssn):
@@ -336,6 +339,8 @@ for i, g in enumerate(all_games):
         "hp_rec_bb9": hp_rec.get("rec_bb9", hpe[2]), "hp_rec_hr9": hp_rec.get("rec_hr9", hpe[3]),
         "ap_rec_era": ap_rec.get("rec_era", ape[0]), "ap_rec_k9": ap_rec.get("rec_k9", ape[1]),
         "ap_rec_bb9": ap_rec.get("rec_bb9", ape[2]), "ap_rec_hr9": ap_rec.get("rec_hr9", ape[3]),
+        "temp_f": 72.0, "wind_mph": 0.0, "humidity": 50,
+        "is_dome": 1 if vname in DOME_VENUES else 0,
         "hw": 1 if hs > as_ else 0,
         "rd": hs - as_,
         "tot": hs + as_,
@@ -361,7 +366,8 @@ cols = ["h_elo", "a_elo", "h_wp", "a_wp", "h_rs", "a_rs", "h_ra", "a_ra",
         "ap_era", "ap_k9", "ap_bb9", "ap_hr9", "ap_v",
         "ap_fip", "ap_babip", "ap_kbb", "ap_gb_rate",
         "hp_rec_era", "hp_rec_k9", "hp_rec_bb9", "hp_rec_hr9",
-        "ap_rec_era", "ap_rec_k9", "ap_rec_bb9", "ap_rec_hr9"]
+        "ap_rec_era", "ap_rec_k9", "ap_rec_bb9", "ap_rec_hr9",
+        "temp_f", "wind_mph", "humidity", "is_dome"]
 
 X = np.array([[f[c] for c in cols] for f in features])
 y_hw = np.array([f["hw"] for f in features])

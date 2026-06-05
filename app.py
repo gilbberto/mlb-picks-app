@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, timezone
 import os
 import pickle
 import math
+import time
 from dotenv import load_dotenv
 
 try:
@@ -422,6 +423,65 @@ PARK_FACTORS = {
     "Tropicana Field": 0.96, "Target Field": 0.96, "PNC Park": 0.97,
 }
 
+STADIUM_COORDS = {
+    "Coors Field": (39.7559, -104.9942), "Great American Ball Park": (39.0976, -84.5066),
+    "Citizens Bank Park": (39.9054, -75.1665), "Fenway Park": (42.3467, -71.0972),
+    "Yankee Stadium": (40.8296, -73.9265), "Globe Life Field": (32.7474, -97.0831),
+    "American Family Field": (43.0281, -87.9712), "Busch Stadium": (38.6226, -90.1928),
+    "Chase Field": (33.4455, -112.0667), "Comerica Park": (42.3390, -83.0486),
+    "Citi Field": (40.7571, -73.8458), "T-Mobile Park": (47.5914, -122.3329),
+    "Oracle Park": (37.7786, -122.3893), "Petco Park": (32.7076, -117.1571),
+    "RingCentral Coliseum": (37.7516, -122.2005), "Oakland Coliseum": (37.7516, -122.2005),
+    "Tropicana Field": (27.7682, -82.6532), "Target Field": (44.9817, -93.2779),
+    "PNC Park": (40.4469, -79.9962), "Dodger Stadium": (34.0739, -118.2400),
+    "Wrigley Field": (41.9484, -87.6553), "Angel Stadium": (33.8003, -117.8827),
+    "Nationals Park": (38.8730, -77.0075), "Progressive Field": (41.4962, -81.6852),
+    "loanDepot park": (25.7781, -80.2197), "Marlins Park": (25.7781, -80.2197),
+    "Kauffman Stadium": (39.0517, -94.4802), "Rogers Centre": (43.6414, -79.3894),
+    "Guaranteed Rate Field": (41.8302, -87.6338), "Truist Park": (33.8909, -84.4676),
+    "Oriole Park at Camden Yards": (39.2839, -76.6216), "Minute Maid Park": (29.7572, -95.3555),
+    "Cleveland Guardians": (41.4962, -81.6852),
+}
+
+DOME_VENUES = {"Tropicana Field", "Rogers Centre", "Chase Field", "Globe Life Field",
+               "American Family Field", "Minute Maid Park", "loanDepot park", "Marlins Park"}
+
+WEATHER_CACHE = {}
+WEATHER_CACHE_TTL = 3600
+OWM_API_KEY = os.environ.get("OPENWEATHER_API_KEY", "")
+
+def fetch_weather(venue_name):
+    if venue_name in DOME_VENUES:
+        return {"temp_f": 72.0, "wind_mph": 0.0, "humidity": 50, "clouds": 0, "conditions": "dome"}
+    if not OWM_API_KEY:
+        return {}
+    now = time.time()
+    cached = WEATHER_CACHE.get(venue_name)
+    if cached and now - cached["ts"] < WEATHER_CACHE_TTL:
+        return cached["data"]
+    coords = STADIUM_COORDS.get(venue_name)
+    if not coords:
+        return {}
+    lat, lon = coords
+    try:
+        r = requests.get(f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={OWM_API_KEY}&units=imperial", timeout=8)
+        if r.status_code == 200:
+            d = r.json()
+            w = d.get("main", {})
+            wind = d.get("wind", {})
+            data = {
+                "temp_f": w.get("temp", 72.0),
+                "wind_mph": wind.get("speed", 0.0),
+                "humidity": w.get("humidity", 50),
+                "clouds": d.get("clouds", {}).get("all", 0),
+                "conditions": d.get("weather", [{}])[0].get("description", "clear"),
+            }
+            WEATHER_CACHE[venue_name] = {"data": data, "ts": now}
+            return data
+    except:
+        pass
+    return {}
+
 def safe_float(v, d=0.0):
     if v is None: return d
     try: return float(v)
@@ -518,11 +578,8 @@ def compute_ev(prob, odds):
 # ─── RandomForest + Monte Carlo ───
 
 def build_rf_feature_row(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f,
-                          hp_rec=None, ap_rec=None):
-    """Build a feature dict matching the training format.
-    hp_rec/ap_rec: recent form dicts from fetch_pitcher_recent_form().
-    These rec_* features exist in the feature space but may not yet
-    have nonzero coefficients until the model is retrained with them."""
+                          hp_rec=None, ap_rec=None, weather=None):
+    weather = weather or {}
     f = {
         "h_elo": h_elo, "a_elo": a_elo,
         "h_wp": hf.get("wp", 0.5), "a_wp": af.get("wp", 0.5),
@@ -562,13 +619,15 @@ def build_rf_feature_row(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f,
         "ap_rec_k9": ap_rec.get("rec_k9", apitch.get("k9", 8.0)) if ap_rec else 8.0,
         "ap_rec_bb9": ap_rec.get("rec_bb9", apitch.get("bb9", 3.0)) if ap_rec else 3.0,
         "ap_rec_hr9": ap_rec.get("rec_hr9", apitch.get("hr9", 1.2)) if ap_rec else 1.2,
+        "temp_f": weather.get("temp_f", 72.0), "wind_mph": weather.get("wind_mph", 0.0),
+        "humidity": weather.get("humidity", 50), "is_dome": 1 if weather.get("conditions") == "dome" else 0,
     }
     return f
 
 
 @st.cache_data(ttl=3600)
 def monte_carlo_predict(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f,
-                         hp_rec=None, ap_rec=None, n_sims=5000):
+                         hp_rec=None, ap_rec=None, n_sims=5000, weather=None):
     """Run Monte Carlo simulation using trained models. Returns dict."""
     if not _MODELS_LOADED:
         return {"ml_hp": None, "ml_ap": None,
@@ -577,7 +636,7 @@ def monte_carlo_predict(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f,
                 "exp_total": None, "total_std": 3.2}
 
     row = build_rf_feature_row(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f,
-                                hp_rec=hp_rec, ap_rec=ap_rec)
+                                hp_rec=hp_rec, ap_rec=ap_rec, weather=weather)
     x = np.array([[row[c] for c in _cols]])
 
     if _xgb_hw is not None:
@@ -1205,11 +1264,14 @@ def main():
             venue_name = g.get("venue",{}).get("name", "")
             park_f = PARK_FACTORS.get(venue_name, 1.0)
 
+            # ── Weather ──
+            weather = fetch_weather(venue_name)
+
             # ── RandomForest + Monte Carlo ──
             mc = monte_carlo_predict(hs, aws, hf, af, h_elo, a_elo,
                                      hpitch if hpitch.get("ip",0) >= 10 else None,
                                      apitch if apitch.get("ip",0) >= 10 else None,
-                                     park_f, hp_rec=hprec, ap_rec=aprec)
+                                     park_f, hp_rec=hprec, ap_rec=aprec, weather=weather)
 
             ml_hp = mc["ml_hp"]
             ml_ap = mc["ml_ap"]
