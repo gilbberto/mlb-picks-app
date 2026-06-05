@@ -2064,13 +2064,6 @@ def main():
             sd2 = df[cols_avail].copy()
             st.dataframe(sd2, use_container_width=True, hide_index=True)
 
-    with st.expander("⚙️ Debug"):
-        tok = _secret("TELEGRAM_TOKEN"); cid = _secret("TELEGRAM_CHAT_ID")
-        gt = _secret("GITHUB_TOKEN"); rp = _secret("REPO")
-        for k, v in [("TELEGRAM_TOKEN", tok), ("TELEGRAM_CHAT_ID", cid), ("GITHUB_TOKEN", gt), ("REPO", rp)]:
-            st.write(f"**{k}**: {'✅' if v else '❌'} {v[:4] + '...' if v and len(v) > 8 else v or 'FALTA'}")
-
-
 if __name__ == "__main__":
     try:
         sync_picks_from_github()
