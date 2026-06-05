@@ -1284,47 +1284,52 @@ def main():
     with st.sidebar:
         st.image("https://www.mlbstatic.com/team-logos/league-on-dark/1.svg", width=55)
         st.markdown("### MLB Picks AI")
-        st.markdown(f"**Modelo:** {_model_type} + Monte Carlo (27 vars)" if _model_type else "**Modelo:** No cargado")
-        st.markdown("**3 mercados:** Moneyline · Run Line · Over/Under")
-        st.divider()
-        min_conf = st.selectbox("Filtrar por confianza", ["Todas","🔥 HIGH VALUE","✅ VALUE","⚠️ LOW VALUE"], index=0)
-        require_odds = st.checkbox("Requiere odds del mercado", value=True)
-        use_adv = st.checkbox("Usar sabermetrics (pybaseball)", value=True)
-        st.divider()
-        st.markdown("#### ⚙️ APIs")
-        for n, ok, d in [
-            ("MLB Stats API", True, "Siempre disponible"),
-            ("ESPN API", True, "Siempre disponible"),
-            ("PyBaseball", _check_pybaseball(), "Opcional"),
-            ("The Odds API", bool(ODDS_API_KEY), f"{'✅' if ODDS_API_KEY else '❌'}"),
-            ("SharpAPI", bool(SHARPAPI_KEY), f"{'✅' if SHARPAPI_KEY else '❌'}"),
-        ]:
-            st.markdown(f"{'✅' if ok else '⬜'} **{n}** — {d}")
-        if not ODDS_API_KEY and not SHARPAPI_KEY:
+        if role == "admin":
+            st.markdown(f"**Modelo:** {_model_type} + Monte Carlo (27 vars)" if _model_type else "**Modelo:** No cargado")
+            st.markdown("**3 mercados:** Moneyline · Run Line · Over/Under")
             st.divider()
-            st.markdown("🔌 APIs de odds gratis: the-odds-api.com · sharpapi.io")
-        st.divider()
-        st.markdown("#### 📊 Metodología")
-        with st.expander("Ver"):
-            st.markdown(f"""
-            **{_model_type} + Monte Carlo**: 27 features (Elo, forma, OPS/WHIP/ERA, park factor, pitcher real).
-            **Entrenado**: 2023–2026 (8,174 juegos, 1,385 pitcher-season stats).
-            **Calibración ML**: Ajuste lineal por tramos según validación.
-            **Kelly Criterion**: 25% fraccional para sizing de apuestas.
+            min_conf = st.selectbox("Filtrar por confianza", ["Todas","🔥 HIGH VALUE","✅ VALUE","⚠️ LOW VALUE"], index=0)
+            require_odds = st.checkbox("Requiere odds del mercado", value=True)
+            use_adv = st.checkbox("Usar sabermetrics (pybaseball)", value=True)
+            st.divider()
+            st.markdown("#### ⚙️ APIs")
+            for n, ok, d in [
+                ("MLB Stats API", True, "Siempre disponible"),
+                ("ESPN API", True, "Siempre disponible"),
+                ("PyBaseball", _check_pybaseball(), "Opcional"),
+                ("The Odds API", bool(ODDS_API_KEY), f"{'✅' if ODDS_API_KEY else '❌'}"),
+                ("SharpAPI", bool(SHARPAPI_KEY), f"{'✅' if SHARPAPI_KEY else '❌'}"),
+            ]:
+                st.markdown(f"{'✅' if ok else '⬜'} **{n}** — {d}")
+            if not ODDS_API_KEY and not SHARPAPI_KEY:
+                st.divider()
+                st.markdown("🔌 APIs de odds gratis: the-odds-api.com · sharpapi.io")
+            st.divider()
+            st.markdown("#### 📊 Metodología")
+            with st.expander("Ver"):
+                st.markdown(f"""
+                **{_model_type} + Monte Carlo**: 27 features (Elo, forma, OPS/WHIP/ERA, park factor, pitcher real).
+                **Entrenado**: 2023–2026 (8,174 juegos, 1,385 pitcher-season stats).
+                **Calibración ML**: Ajuste lineal por tramos según validación.
+                **Kelly Criterion**: 25% fraccional para sizing de apuestas.
 
-            **Value**: Cuando la prob del modelo supera la prob implícita de la cuota.
-            """)
-        try:
-            from bankroll import get_pnl
-            pnl = get_pnl()
-            st.divider()
-            st.markdown("#### 💰 P&L Tracker")
-            c1, c2 = st.columns(2)
-            c1.metric("Bankroll", f"${pnl['bankroll']:.0f}")
-            c2.metric("Profit", f"${pnl['profit']:+.0f}", delta=f"{pnl['roi']:+.0f}%")
-            st.caption(f"{pnl['wins']}-{pnl['losses']} ({pnl['pct']}%) · {pnl['open']} pendientes")
-        except ImportError:
-            pass
+                **Value**: Cuando la prob del modelo supera la prob implícita de la cuota.
+                """)
+            try:
+                from bankroll import get_pnl
+                pnl = get_pnl()
+                st.divider()
+                st.markdown("#### 💰 P&L Tracker")
+                c1, c2 = st.columns(2)
+                c1.metric("Bankroll", f"${pnl['bankroll']:.0f}")
+                c2.metric("Profit", f"${pnl['profit']:+.0f}", delta=f"{pnl['roi']:+.0f}%")
+                st.caption(f"{pnl['wins']}-{pnl['losses']} ({pnl['pct']}%) · {pnl['open']} pendientes")
+            except ImportError:
+                pass
+        else:
+            min_conf = "Todas"
+            require_odds = True
+            use_adv = False
         st.divider()
         st.caption(f"🕐 {datetime.now(TZ).strftime('%H:%M')} Chihuahua")
         st.sidebar.markdown(f"👤 **{st.session_state.user}** ({role})")
