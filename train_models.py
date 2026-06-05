@@ -221,6 +221,8 @@ for i, g in enumerate(all_games):
         "park": pf,
         "hp_era": hpe[0], "hp_k9": hpe[1], "hp_bb9": hpe[2], "hp_hr9": hpe[3], "hp_v": hpe[4],
         "ap_era": ape[0], "ap_k9": ape[1], "ap_bb9": ape[2], "ap_hr9": ape[3], "ap_v": ape[4],
+        "hp_rec_era": hpe[0], "hp_rec_k9": hpe[1], "hp_rec_bb9": hpe[2], "hp_rec_hr9": hpe[3],
+        "ap_rec_era": ape[0], "ap_rec_k9": ape[1], "ap_rec_bb9": ape[2], "ap_rec_hr9": ape[3],
         "hw": 1 if hs>aws else 0,
         "rd": hs-aws,
         "tot": hs+aws,
@@ -239,7 +241,9 @@ print(f"  Done! {len(features)} rows")
 print("\nTraining...")
 cols = ["h_elo","a_elo","h_wp","a_wp","h_rs","a_rs","h_ra","a_ra",
         "h_rest","a_rest","h_ops","a_ops","h_whip","a_whip","h_era","a_era",
-        "park","hp_era","hp_k9","hp_bb9","hp_hr9","hp_v","ap_era","ap_k9","ap_bb9","ap_hr9","ap_v"]
+        "park","hp_era","hp_k9","hp_bb9","hp_hr9","hp_v","ap_era","ap_k9","ap_bb9","ap_hr9","ap_v",
+        "hp_rec_era","hp_rec_k9","hp_rec_bb9","hp_rec_hr9",
+        "ap_rec_era","ap_rec_k9","ap_rec_bb9","ap_rec_hr9"]
 X = np.array([[f[c] for c in cols] for f in features])
 y_hw = np.array([f["hw"] for f in features])
 y_rd = np.array([f["rd"] for f in features])

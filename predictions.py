@@ -541,7 +541,7 @@ def build_rf_feature_row(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f, 
         "ap_rec_bb9": ap_rec.get("rec_bb9", apitch.get("bb9", 3.0)) if ap_rec else 3.0,
         "ap_rec_hr9": ap_rec.get("rec_hr9", apitch.get("hr9", 1.2)) if ap_rec else 1.2,
     }
-    return {k: v for k, v in f.items() if not k.startswith(("hp_rec_", "ap_rec_"))}
+    return f
 
 def monte_carlo_predict(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f, hp_rec=None, ap_rec=None, n_sims=5000):
     if not _MODELS_LOADED:

@@ -563,10 +563,7 @@ def build_rf_feature_row(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f,
         "ap_rec_bb9": ap_rec.get("rec_bb9", apitch.get("bb9", 3.0)) if ap_rec else 3.0,
         "ap_rec_hr9": ap_rec.get("rec_hr9", apitch.get("hr9", 1.2)) if ap_rec else 1.2,
     }
-    # The model was trained with only 35 features (no rec_*). Adding rec_*
-    # here will cause a feature mismatch until the model is retrained.
-    # For now, strip rec_* features to keep compatibility:
-    return {k: v for k, v in f.items() if not k.startswith(("hp_rec_", "ap_rec_"))}
+    return f
 
 
 @st.cache_data(ttl=3600)

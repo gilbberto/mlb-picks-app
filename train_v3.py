@@ -73,13 +73,15 @@ print(f"  Total: {len(all_games)} games")
 PITCHER_CACHE_FILE = BASE + "pitcher_cache.json"
 game_pitchers = {}
 pitcher_stats_db = {}  # (pid, season) -> stats
+pitcher_rec_form = {}  # (pid, season) -> rec form stats
 
 if os.path.exists(PITCHER_CACHE_FILE):
     with open(PITCHER_CACHE_FILE) as f:
         cached = json.load(f)
     game_pitchers = {int(k): v for k, v in cached.get("game_pitchers", {}).items()}
     pitcher_stats_db = {tuple(k.split("_")): v for k, v in cached.get("pitcher_stats", {}).items()}
-    print(f"\n=== Loaded cached data: {len(game_pitchers)} games, {len(pitcher_stats_db)} pitcher-stats ===")
+    pitcher_rec_form = {tuple(k.split("_")): v for k, v in cached.get("rec_form", {}).items()}
+    print(f"\n=== Loaded cached data: {len(game_pitchers)} games, {len(pitcher_stats_db)} pitcher-stats, {len(pitcher_rec_form)} rec-form ===")
 
 print("\n=== Step 2: Fetching starting pitchers ===")
 
@@ -118,6 +120,41 @@ def fetch_season_pitcher_stats(pid, season):
                 "ao": sf(s.get("airOuts")),
             }
 
+def fetch_pitcher_rec_form(pid, season):
+    key = (str(pid), str(season))
+    if key in pitcher_rec_form:
+        return
+    try:
+        d = cget(f"{MLB_API}/people/{pid}/stats?stats=gameLog&season={season}&group=pitching")
+        if d:
+            splits = d.get("stats", [{}])[0].get("splits", [])
+            starts = [s for s in splits if sf(s.get("stat", {}).get("inningsPitched", "0")) > 0]
+            recent = starts[-5:]
+            if recent:
+                eras, k9s, bbs, hrs = [], [], [], []
+                for s in recent:
+                    st = s.get("stat", {})
+                    ip_s = st.get("inningsPitched", "0")
+                    ipv = parse_ip(ip_s)
+                    er = sf(st.get("earnedRuns"))
+                    eras.append(9 * er / ipv if ipv > 0 else 4.5)
+                    k9s.append(sf(st.get("strikeoutsPer9Inn")))
+                    bbs.append(sf(st.get("walksPer9Inn")))
+                    hrs.append(sf(st.get("homeRunsPer9")))
+                pitcher_rec_form[key] = {"rec_era": np.mean(eras), "rec_k9": np.mean(k9s), "rec_bb9": np.mean(bbs), "rec_hr9": np.mean(hrs)}
+    except:
+        pass
+
+# Build pid_seasons from game_pitchers (cached or just fetched)
+pid_seasons = set()
+for g in all_games:
+    gp = game_pitchers.get(g["gamePk"], {})
+    season = g.get("_season", 2026)
+    if gp.get("h"):
+        pid_seasons.add((str(gp["h"]), str(season)))
+    if gp.get("a"):
+        pid_seasons.add((str(gp["a"]), str(season)))
+
 # Fetch boxscores for games not yet fetched
 game_pks_to_fetch = [g["gamePk"] for g in all_games if g["gamePk"] not in game_pitchers]
 if game_pks_to_fetch:
@@ -150,17 +187,6 @@ if game_pks_to_fetch:
     # ─── Step 3: Fetch pitcher stats per season ───
     print(f"\n=== Step 3: Fetching pitcher stats ({len(all_pids)} unique) ===")
     
-    # Collect (pid, season) pairs needed
-    pid_seasons = set()
-    for g in all_games:
-        gp = game_pitchers.get(g["gamePk"], {})
-        season = g.get("_season", 2026)
-        if gp.get("h"):
-            pid_seasons.add((str(gp["h"]), str(season)))
-        if gp.get("a"):
-            pid_seasons.add((str(gp["a"]), str(season)))
-    
-    # Filter already fetched
     to_fetch = [ps for ps in pid_seasons if tuple(ps) not in pitcher_stats_db]
     print(f"  {len(to_fetch)} pitcher-season combos to fetch ({len(pid_seasons) - len(to_fetch)} cached)")
     
@@ -172,14 +198,27 @@ if game_pks_to_fetch:
         batch += 1
     print(f"  Total pitcher-season stats: {len(pitcher_stats_db)}")
 
-    # Save cache
-    serializable = {
-        "game_pitchers": {str(k): v for k, v in game_pitchers.items()},
-        "pitcher_stats": {"_".join(k): v for k, v in pitcher_stats_db.items()},
-    }
-    with open(PITCHER_CACHE_FILE, "w") as f:
-        json.dump(serializable, f)
-    print(f"  Cache saved to {PITCHER_CACHE_FILE}")
+# ─── Step 3b: Fetch pitcher recent form (rec_* features) ───
+print(f"\n=== Step 3b: Fetching pitcher game logs (rec_*) ===")
+rec_to_fetch = [ps for ps in pid_seasons if tuple(ps) not in pitcher_rec_form]
+print(f"  {len(rec_to_fetch)} pitcher-seasons to fetch ({len(pid_seasons) - len(rec_to_fetch)} cached)")
+batch = 1
+for pid, season in rec_to_fetch:
+    fetch_pitcher_rec_form(int(pid), int(season))
+    if batch % 100 == 0:
+        print(f"    {batch}/{len(rec_to_fetch)}")
+    batch += 1
+print(f"  Total pitcher rec-form: {len(pitcher_rec_form)}")
+
+# Save cache
+serializable = {
+    "game_pitchers": {str(k): v for k, v in game_pitchers.items()},
+    "pitcher_stats": {"_".join(k): v for k, v in pitcher_stats_db.items()},
+    "rec_form": {"_".join(k): v for k, v in pitcher_rec_form.items()},
+}
+with open(PITCHER_CACHE_FILE, "w") as f:
+    json.dump(serializable, f)
+print(f"  Cache saved to {PITCHER_CACHE_FILE}")
 
 def get_pitcher_feats(pid, season):
     key = (str(pid), str(season))
@@ -276,6 +315,8 @@ for i, g in enumerate(all_games):
     gp = game_pitchers.get(g["gamePk"], {})
     hpe = get_pitcher_feats(gp.get("h"), season)
     ape = get_pitcher_feats(gp.get("a"), season)
+    hp_rec = pitcher_rec_form.get((str(gp.get("h")), str(season)), {})
+    ap_rec = pitcher_rec_form.get((str(gp.get("a")), str(season)), {})
 
     features.append({
         "h_elo": h_elo, "a_elo": a_elo,
@@ -291,6 +332,10 @@ for i, g in enumerate(all_games):
         "hp_fip": hpe[5], "hp_babip": hpe[6], "hp_kbb": hpe[7], "hp_gb_rate": hpe[8],
         "ap_era": ape[0], "ap_k9": ape[1], "ap_bb9": ape[2], "ap_hr9": ape[3], "ap_v": ape[4],
         "ap_fip": ape[5], "ap_babip": ape[6], "ap_kbb": ape[7], "ap_gb_rate": ape[8],
+        "hp_rec_era": hp_rec.get("rec_era", hpe[0]), "hp_rec_k9": hp_rec.get("rec_k9", hpe[1]),
+        "hp_rec_bb9": hp_rec.get("rec_bb9", hpe[2]), "hp_rec_hr9": hp_rec.get("rec_hr9", hpe[3]),
+        "ap_rec_era": ap_rec.get("rec_era", ape[0]), "ap_rec_k9": ap_rec.get("rec_k9", ape[1]),
+        "ap_rec_bb9": ap_rec.get("rec_bb9", ape[2]), "ap_rec_hr9": ap_rec.get("rec_hr9", ape[3]),
         "hw": 1 if hs > as_ else 0,
         "rd": hs - as_,
         "tot": hs + as_,
@@ -314,7 +359,9 @@ cols = ["h_elo", "a_elo", "h_wp", "a_wp", "h_rs", "a_rs", "h_ra", "a_ra",
         "hp_era", "hp_k9", "hp_bb9", "hp_hr9", "hp_v",
         "hp_fip", "hp_babip", "hp_kbb", "hp_gb_rate",
         "ap_era", "ap_k9", "ap_bb9", "ap_hr9", "ap_v",
-        "ap_fip", "ap_babip", "ap_kbb", "ap_gb_rate"]
+        "ap_fip", "ap_babip", "ap_kbb", "ap_gb_rate",
+        "hp_rec_era", "hp_rec_k9", "hp_rec_bb9", "hp_rec_hr9",
+        "ap_rec_era", "ap_rec_k9", "ap_rec_bb9", "ap_rec_hr9"]
 
 X = np.array([[f[c] for c in cols] for f in features])
 y_hw = np.array([f["hw"] for f in features])
