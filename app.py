@@ -1203,6 +1203,7 @@ def _login_form():
                 if user in users and users[user]["password"] == pwd:
                     st.session_state.user = user
                     st.session_state.role = users[user]["role"]
+                    st.query_params["u"] = user
                     st.rerun()
                 else:
                     st.error("Usuario o contraseña incorrectos")
@@ -1252,6 +1253,7 @@ def _admin_panel():
 
     if st.sidebar.button("🔒 Cerrar sesión"):
         st.session_state.clear()
+        st.query_params.clear()
         st.rerun()
 
 
@@ -1262,6 +1264,14 @@ def main():
         st.session_state.user = None
         st.session_state.role = None
     _sync_users_from_github()
+    if not st.session_state.role:
+        _u = st.query_params.get("u")
+        if _u:
+            users = _load_users()
+            if _u in users:
+                st.session_state.user = _u
+                st.session_state.role = users[_u]["role"]
+                st.rerun()
     if not st.session_state.role:
         _login_form()
         return
@@ -1338,6 +1348,7 @@ def main():
             st.sidebar.markdown("👁️ Solo lectura")
             if st.sidebar.button("🔒 Cerrar sesión"):
                 st.session_state.clear()
+                st.query_params.clear()
                 st.rerun()
         else:
             _admin_panel()
