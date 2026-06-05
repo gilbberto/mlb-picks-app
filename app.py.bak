@@ -970,11 +970,7 @@ def render_card(pick, key_suffix="", game_idx=0):
                 if st.session_state.get(log_key, False):
                     st.markdown("<span style='color:#00cc66'>✅</span>", unsafe_allow_html=True)
                 elif edge is not None and edge > 2:
-                    if role == "admin":
-                        btn = st.button("📝", key=log_key)
-                    else:
-                        st.markdown("<span style='color:#666'>🔒</span>", unsafe_allow_html=True)
-                        btn = False
+                    btn = st.button("📝", key=log_key)
                     if btn:
                         try:
                             from bankroll import add_pick, load_picks, recommend_stake
@@ -1121,69 +1117,9 @@ def render_parlay(parlay, idx):
                f"$10 → ${payout_10:.2f}  |  $25 → ${payout_25:.2f}  |  $50 → ${payout_50:.2f}")
 
 
-# ─── Auth ───
-
-PERMS_PATH = os.path.join(os.path.dirname(__file__), "user_permissions.json")
-
-def _load_perms():
-    try:
-        with open(PERMS_PATH) as f:
-            return json.load(f)
-    except:
-        return {"daily_picks": True, "recommendations": True, "calibration": False, "model_stats": False, "detailed_table": False}
-
-def _save_perms(p):
-    with open(PERMS_PATH, "w") as f:
-        json.dump(p, f, indent=2)
-
-ADMIN_PWD = _secret("ADMIN_PASSWORD", "admin2024")
-VIEWER_PWD = _secret("VIEWER_PASSWORD", "vista2024")
-
-def _login_form():
-    st.markdown("## 🔐 Acceso")
-    with st.form("login_form"):
-        pwd = st.text_input("Contraseña", type="password")
-        col1, col2 = st.columns([1, 1])
-        if col1.form_submit_button("🔑 Entrar"):
-            if pwd == ADMIN_PWD:
-                st.session_state.role = "admin"
-                st.rerun()
-            elif pwd == VIEWER_PWD:
-                st.session_state.role = "viewer"
-                st.rerun()
-            else:
-                st.error("Contraseña incorrecta")
-
-def _admin_panel():
-    perms = _load_perms()
-    st.sidebar.divider()
-    st.sidebar.markdown("### ⚙️ Admin")
-    st.sidebar.markdown(f"👤 Rol: **Admin**")
-    changed = False
-    for key, label in [("daily_picks", "Picks del Día"), ("recommendations", "Recomendaciones"),
-                        ("calibration", "Calibración"), ("model_stats", "Estadísticas"),
-                        ("detailed_table", "Tabla Detallada")]:
-        val = st.sidebar.checkbox(label, value=perms.get(key, False), key=f"perm_{key}")
-        if val != perms.get(key):
-            perms[key] = val
-            changed = True
-    if changed:
-        _save_perms(perms)
-    if st.sidebar.button("🔒 Cerrar sesión"):
-        st.session_state.clear()
-        st.rerun()
-
-
 # ─── Main ───
 
 def main():
-    if "role" not in st.session_state:
-        st.session_state.role = None
-    if not st.session_state.role:
-        _login_form()
-        return
-    role = st.session_state.role
-
     # ── Auto-settlement al iniciar ──
     try:
         from bankroll import auto_settle
@@ -1245,13 +1181,6 @@ def main():
             pass
         st.divider()
         st.caption(f"🕐 {datetime.now(TZ).strftime('%H:%M')} Chihuahua")
-        if role == "viewer":
-            st.sidebar.markdown("👁️ **Modo Vista** — solo lectura")
-            if st.sidebar.button("🔒 Cerrar sesión"):
-                st.session_state.clear()
-                st.rerun()
-        else:
-            _admin_panel()
         st.caption("MLB Picks AI v3.0 · Solo informativo · No garantiza ganancias")
 
     st.markdown("""
@@ -1643,7 +1572,7 @@ def main():
 
     completed = df[df["status"] == "Final"]
 
-    if _load_perms().get("daily_picks", True) and len(upcoming) > 0:
+    if len(upcoming) > 0:
         st.markdown(f"### 📋 Picks del Día ({len(upcoming)} juegos)")
         flat_rows = []
         now_tz = datetime.now(TZ)
@@ -1785,7 +1714,7 @@ def main():
                     "entry": entry,
                 })
 
-        if recs and _load_perms().get("recommendations", True):
+        if recs:
             # One recommendation per game (best edge)
             best_per_game = {}
             for r in recs:
@@ -1830,10 +1759,8 @@ def main():
                 stake_str = f"${r['stake']:.0f}" if r["stake"] > 0 else "—"
                 if is_regd:
                     btn = "<span style='color:#58a6ff'>✅</span>"
-                elif role == "admin":
-                    btn = f"<form action='' method='GET' style='display:inline;margin:0;padding:0'><input type='hidden' name='reg_pick' value='{i}'><button type='submit' style='background:none;border:none;cursor:pointer;font-size:18px;padding:0;color:#58a6ff' title='Registrar'>📝</button></form>"
                 else:
-                    btn = "<span style='color:#666'>🔒</span>"
+                    btn = f"<form action='' method='GET' style='display:inline;margin:0;padding:0'><input type='hidden' name='reg_pick' value='{i}'><button type='submit' style='background:none;border:none;cursor:pointer;font-size:18px;padding:0;color:#58a6ff' title='Registrar'>📝</button></form>"
                 html_rows += f"""<tr style="background:{'#0d1b2a' if i%2==0 else '#1b2838'}">
                     <td style="padding:6px 8px;border-bottom:1px solid #2d3748">{r['game']}</td>
                     <td style="padding:6px 8px;border-bottom:1px solid #2d3748">{r['market']}</td>
@@ -1856,7 +1783,7 @@ def main():
             </table></div>""", unsafe_allow_html=True)
 
             # Handle form submission via query param
-            reg_idx = st.query_params.get("reg_pick") if role == "admin" else None
+            reg_idx = st.query_params.get("reg_pick")
             if reg_idx is not None:
                 proc_key = f"processed_reg_{reg_idx}"
                 if not st.session_state.get(proc_key, False):
@@ -1890,257 +1817,252 @@ def main():
         data = load_picks()
         st.divider()
         st.markdown("## 📋 Mis Picks Registrados")
-        if role != "admin":
-            st.info("👁️ Sección visible solo para administradores")
-            st.divider()
-        else:
-            # Build game status lookup from current schedule
-            game_status = {}
-            for g in games:
+
+        # Build game status lookup from current schedule
+        game_status = {}
+        for g in games:
+            try:
+                t = g["teams"]
+                hid = t["home"]["team"]["id"]
+                aid = t["away"]["team"]["id"]
+                ha = ab_map.get(hid, "??")
+                aa = ab_map.get(aid, "??")
+                key = f"{aa} @ {ha}"
+                sc = g.get("status",{}).get("codedGameState","")
+                sd = g.get("status",{}).get("detailedState","")
+                gd = g.get("gameDate","")
+                gt = None
                 try:
-                    t = g["teams"]
-                    hid = t["home"]["team"]["id"]
-                    aid = t["away"]["team"]["id"]
-                    ha = ab_map.get(hid, "??")
-                    aa = ab_map.get(aid, "??")
-                    key = f"{aa} @ {ha}"
-                    sc = g.get("status",{}).get("codedGameState","")
-                    sd = g.get("status",{}).get("detailedState","")
-                    gd = g.get("gameDate","")
-                    gt = None
-                    try:
-                        utc_dt = datetime.fromisoformat(gd.replace("Z","+00:00"))
-                        gt = utc_dt.astimezone(TZ)
-                    except:
-                        pass
-                    game_status[key] = (sc, sd, gt)
+                    utc_dt = datetime.fromisoformat(gd.replace("Z","+00:00"))
+                    gt = utc_dt.astimezone(TZ)
+                except:
+                    pass
+                game_status[key] = (sc, sd, gt)
+            except:
+                pass
+
+        if data["history"]:
+            mc1, mc2, mc3, mc4 = st.columns(4)
+            mc1.metric("Bankroll", f"${pnl['bankroll']:.0f}")
+            mc2.metric("Profit", f"${pnl['profit']:+.0f}", delta=f"{pnl['roi']:+.0f}%")
+            mc3.metric("Record", f"{pnl['wins']}-{pnl['losses']}", delta=f"{pnl['pct']}%")
+            mc4.metric("Pendientes", pnl["open"])
+
+            # ── Win rate by market ──
+            settled = [p for p in data["history"] if p.get("result") in ("W", "L")]
+            if settled:
+                markets = {}
+                for p in settled:
+                    mkt = p.get("market", "?")
+                    if mkt not in markets:
+                        markets[mkt] = {"w": 0, "l": 0, "profit": 0.0}
+                    if p["result"] == "W":
+                        markets[mkt]["w"] += 1
+                    else:
+                        markets[mkt]["l"] += 1
+                    markets[mkt]["profit"] += p.get("profit", 0) or 0
+                mr = []
+                for mkt in ("ML", "RL -1.5", "RL +1.5", "O/U"):
+                    d = markets.get(mkt)
+                    if d and (d["w"] + d["l"]) > 0:
+                        tot = d["w"] + d["l"]
+                        pct = round(d["w"] / tot * 100)
+                        pf = d["profit"]
+                        icon = "🟢" if pf > 0 else "🔴" if pf < 0 else "⚪"
+                        mr.append(f"{icon} *{mkt}*: {d['w']}-{d['l']} ({pct}%) ${pf:+.0f}")
+                if mr:
+                    with st.expander("📊 Win rate por mercado", expanded=False):
+                        for line in mr:
+                            st.markdown(line)
+
+            # Bankroll chart
+            if len(data["history"]) >= 2:
+                try:
+                    import altair as alt
+                    chart_data = []
+                    br = 1000
+                    for p in data["history"]:  # chronological
+                        if p.get("settled") and p.get("profit") is not None:
+                            br += p["profit"]
+                        chart_data.append({"#": len(chart_data), "Bankroll": br, "Fecha": p.get("date","")})
+                    cdf = pd.DataFrame(chart_data)
+                    chart = alt.Chart(cdf).mark_line(point=True, color="#00cc66").encode(
+                        x=alt.X("#:Q", title="Pick #", axis=alt.Axis(tickMinStep=1)),
+                        y=alt.Y("Bankroll:Q", title="Bankroll ($)", scale=alt.Scale(zero=False)),
+                        tooltip=["Fecha:N", "Bankroll:Q"],
+                    ).properties(height=200)
+                    st.altair_chart(chart, use_container_width=True)
                 except:
                     pass
 
-            if data["history"]:
-                mc1, mc2, mc3, mc4 = st.columns(4)
-                mc1.metric("Bankroll", f"${pnl['bankroll']:.0f}")
-                mc2.metric("Profit", f"${pnl['profit']:+.0f}", delta=f"{pnl['roi']:+.0f}%")
-                mc3.metric("Record", f"{pnl['wins']}-{pnl['losses']}", delta=f"{pnl['pct']}%")
-                mc4.metric("Pendientes", pnl["open"])
-
-                # ── Win rate by market ──
-                settled = [p for p in data["history"] if p.get("result") in ("W", "L")]
-                if settled:
-                    markets = {}
-                    for p in settled:
-                        mkt = p.get("market", "?")
-                        if mkt not in markets:
-                            markets[mkt] = {"w": 0, "l": 0, "profit": 0.0}
-                        if p["result"] == "W":
-                            markets[mkt]["w"] += 1
-                        else:
-                            markets[mkt]["l"] += 1
-                        markets[mkt]["profit"] += p.get("profit", 0) or 0
-                    mr = []
-                    for mkt in ("ML", "RL -1.5", "RL +1.5", "O/U"):
-                        d = markets.get(mkt)
-                        if d and (d["w"] + d["l"]) > 0:
-                            tot = d["w"] + d["l"]
-                            pct = round(d["w"] / tot * 100)
-                            pf = d["profit"]
-                            icon = "🟢" if pf > 0 else "🔴" if pf < 0 else "⚪"
-                            mr.append(f"{icon} *{mkt}*: {d['w']}-{d['l']} ({pct}%) ${pf:+.0f}")
-                    if mr:
-                        with st.expander("📊 Win rate por mercado", expanded=False):
-                            for line in mr:
-                                st.markdown(line)
-
-                # Bankroll chart
-                if len(data["history"]) >= 2:
-                    try:
-                        import altair as alt
-                        chart_data = []
-                        br = 1000
-                        for p in data["history"]:  # chronological
-                            if p.get("settled") and p.get("profit") is not None:
-                                br += p["profit"]
-                            chart_data.append({"#": len(chart_data), "Bankroll": br, "Fecha": p.get("date","")})
-                        cdf = pd.DataFrame(chart_data)
-                        chart = alt.Chart(cdf).mark_line(point=True, color="#00cc66").encode(
-                            x=alt.X("#:Q", title="Pick #", axis=alt.Axis(tickMinStep=1)),
-                            y=alt.Y("Bankroll:Q", title="Bankroll ($)", scale=alt.Scale(zero=False)),
-                            tooltip=["Fecha:N", "Bankroll:Q"],
-                        ).properties(height=200)
-                        st.altair_chart(chart, use_container_width=True)
-                    except:
-                        pass
-
-                total_profit = 0
-                rows = []
-                for p in reversed(data["history"]):
-                    result = p.get("result")
-                    if result == "W":
-                        r_icon = "✅ Ganado"
-                    elif result == "L":
-                        r_icon = "❌ Perdido"
-                    else:
-                        gk = p.get("game", "")
-                        if gk in game_status:
-                            sc, sd, gt = game_status[gk]
-                            if sc == "I":
+            total_profit = 0
+            rows = []
+            for p in reversed(data["history"]):
+                result = p.get("result")
+                if result == "W":
+                    r_icon = "✅ Ganado"
+                elif result == "L":
+                    r_icon = "❌ Perdido"
+                else:
+                    gk = p.get("game", "")
+                    if gk in game_status:
+                        sc, sd, gt = game_status[gk]
+                        if sc == "I":
+                            r_icon = "🔴 En Vivo"
+                        elif sc != "F" and gt is not None:
+                            now_tz = datetime.now(TZ)
+                            mins_to_start = (gt - now_tz).total_seconds() / 60.0
+                            if 0 <= mins_to_start <= 15:
+                                r_icon = "⏳ Por Iniciar"
+                            elif mins_to_start < 0:
                                 r_icon = "🔴 En Vivo"
-                            elif sc != "F" and gt is not None:
-                                now_tz = datetime.now(TZ)
-                                mins_to_start = (gt - now_tz).total_seconds() / 60.0
-                                if 0 <= mins_to_start <= 15:
-                                    r_icon = "⏳ Por Iniciar"
-                                elif mins_to_start < 0:
-                                    r_icon = "🔴 En Vivo"
-                                else:
-                                    r_icon = "⏳ Pendiente"
                             else:
                                 r_icon = "⏳ Pendiente"
                         else:
                             r_icon = "⏳ Pendiente"
+                    else:
+                        r_icon = "⏳ Pendiente"
 
-                    profit = p.get("profit")
-                    if profit is not None:
-                        total_profit += profit
-                    profit_str = f"${profit:+.0f}" if profit is not None else "—"
-                    prob_str = f"{p.get('model_prob', 0):.0%}"
-                    odds_str = f"${p.get('odds', 0):+d}"
-                    stake_str = f"${p.get('stake', 0):.0f}"
+                profit = p.get("profit")
+                if profit is not None:
+                    total_profit += profit
+                profit_str = f"${profit:+.0f}" if profit is not None else "—"
+                prob_str = f"{p.get('model_prob', 0):.0%}"
+                odds_str = f"${p.get('odds', 0):+d}"
+                stake_str = f"${p.get('stake', 0):.0f}"
 
-                    rows.append({
-                        "Fecha": p.get("date",""),
-                        "Juego": p.get("game",""),
-                        "Mercado": p.get("market",""),
-                        "Pick": fmt_ou(p.get("team",""), p.get("detail","")),
-                        "Prob": prob_str,
-                        "Cuota": odds_str,
-                        "Stake": stake_str,
-                        "Estado": r_icon,
-                        "Profit": profit_str,
+                rows.append({
+                    "Fecha": p.get("date",""),
+                    "Juego": p.get("game",""),
+                    "Mercado": p.get("market",""),
+                    "Pick": fmt_ou(p.get("team",""), p.get("detail","")),
+                    "Prob": prob_str,
+                    "Cuota": odds_str,
+                    "Stake": stake_str,
+                    "Estado": r_icon,
+                    "Profit": profit_str,
+                })
+
+            # Tabla de picks con botón eliminar inline
+            if rows:
+                html = """<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;color:#c9d1d9;font-size:13px">
+                <thead><tr style="background:#161b22">
+                    <th style="padding:6px 8px;text-align:left;border-bottom:2px solid #30363d">Fecha</th>
+                    <th style="padding:6px 8px;text-align:left;border-bottom:2px solid #30363d">Juego</th>
+                    <th style="padding:6px 8px;text-align:left;border-bottom:2px solid #30363d">Mercado</th>
+                    <th style="padding:6px 8px;text-align:left;border-bottom:2px solid #30363d">Pick</th>
+                    <th style="padding:6px 8px;text-align:center;border-bottom:2px solid #30363d">Estado</th>
+                    <th style="padding:6px 8px;text-align:right;border-bottom:2px solid #30363d">Profit</th>
+                    <th style="padding:6px 8px;text-align:center;border-bottom:2px solid #30363d">Del</th>
+                </tr></thead><tbody>"""
+                for i, (row, p) in enumerate(zip(rows, list(reversed(data["history"])))):
+                    pid = p.get("id", i + 1)
+                    is_settled = p.get("result") in ("W", "L")
+                    bg = "#0d1b2a" if i % 2 == 0 else "#1b2838"
+                    profit_str = row["Profit"]
+                    estado = row["Estado"]
+                    if is_settled:
+                        del_btn = "—"
+                    else:
+                        del_btn = f"<form action='' method='GET' style='display:inline;margin:0;padding:0'><input type='hidden' name='del_pick' value='{pid}'><button type='submit' style='background:none;border:none;cursor:pointer;font-size:16px;padding:0;color:#ff4444' title='Eliminar'>✕</button></form>"
+                    html += f"""<tr style="background:{bg}">
+                        <td style="padding:4px 6px;border-bottom:1px solid #2d3748">{row['Fecha']}</td>
+                        <td style="padding:4px 6px;border-bottom:1px solid #2d3748">{row['Juego']}</td>
+                        <td style="padding:4px 6px;border-bottom:1px solid #2d3748">{row['Mercado']}</td>
+                        <td style="padding:4px 6px;border-bottom:1px solid #2d3748">{row['Pick']}</td>
+                        <td style="padding:4px 6px;border-bottom:1px solid #2d3748;text-align:center">{estado}</td>
+                        <td style="padding:4px 6px;border-bottom:1px solid #2d3748;text-align:right">{profit_str}</td>
+                        <td style="padding:4px 6px;border-bottom:1px solid #2d3748;text-align:center">{del_btn}</td>
+                    </tr>"""
+                html += "</tbody></table></div>"
+                st.markdown(html, unsafe_allow_html=True)
+
+            # Handle delete via query param
+            del_pid = st.query_params.get("del_pick")
+            proc_key = f"processed_del_{del_pid}"
+            if del_pid is not None and not st.session_state.get(proc_key, False):
+                st.session_state[proc_key] = True
+                pid = int(del_pid)
+                from bankroll import save_picks, load_picks
+                d = load_picks()
+                pick_to_del = next((p for p in d["history"] if p.get("id") == pid), None)
+                if pick_to_del and pick_to_del.get("telegram_msg_id"):
+                    try:
+                        tok = _secret("TELEGRAM_TOKEN")
+                        cid = _secret("TELEGRAM_CHAT_ID")
+                        if tok and cid:
+                            requests.post(f"https://api.telegram.org/bot{tok}/deleteMessage",
+                                          json={"chat_id": cid, "message_id": pick_to_del["telegram_msg_id"]}, timeout=5)
+                    except: pass
+                d["history"] = [x for x in d["history"] if x.get("id") != pid]
+                save_picks(d)
+                st.query_params.clear()
+                st.rerun()
+
+            green = total_profit >= 0
+            st.markdown(f"Profit total: <span style='color:{'#00cc66' if green else '#ff4444'}'><b>${total_profit:+.2f}</b></span>", unsafe_allow_html=True)
+
+            # ── Model calibration ──
+            if settled:
+                bins = [(50, 55), (55, 60), (60, 65), (65, 70), (70, 100)]
+                cal_rows = []
+                for lo, hi in bins:
+                    pool = [p for p in settled if lo <= p.get("model_prob", 0.5) * 100 < hi]
+                    if not pool:
+                        continue
+                    wins = sum(1 for p in pool if p["result"] == "W")
+                    tot = len(pool)
+                    actual = round(wins / tot * 100)
+                    predicted = round((lo + hi) / 2)
+                    cal_rows.append({
+                        "Rango": f"{lo}-{hi}%",
+                        "Picks": tot,
+                        "Ganados": wins,
+                        "Real": f"{actual}%",
+                        "Esperado": f"{predicted}%",
+                        "Diff": f"{actual - predicted:+.0f}%",
                     })
-
-                # Tabla de picks con botón eliminar inline
-                if rows:
-                    html = """<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;color:#c9d1d9;font-size:13px">
-                    <thead><tr style="background:#161b22">
-                        <th style="padding:6px 8px;text-align:left;border-bottom:2px solid #30363d">Fecha</th>
-                        <th style="padding:6px 8px;text-align:left;border-bottom:2px solid #30363d">Juego</th>
-                        <th style="padding:6px 8px;text-align:left;border-bottom:2px solid #30363d">Mercado</th>
-                        <th style="padding:6px 8px;text-align:left;border-bottom:2px solid #30363d">Pick</th>
-                        <th style="padding:6px 8px;text-align:center;border-bottom:2px solid #30363d">Estado</th>
-                        <th style="padding:6px 8px;text-align:right;border-bottom:2px solid #30363d">Profit</th>
-                        <th style="padding:6px 8px;text-align:center;border-bottom:2px solid #30363d">Del</th>
-                    </tr></thead><tbody>"""
-                    for i, (row, p) in enumerate(zip(rows, list(reversed(data["history"])))):
-                        pid = p.get("id", i + 1)
-                        is_settled = p.get("result") in ("W", "L")
-                        bg = "#0d1b2a" if i % 2 == 0 else "#1b2838"
-                        profit_str = row["Profit"]
-                        estado = row["Estado"]
-                        if is_settled:
-                            del_btn = "—"
-                        else:
-                            del_btn = f"<form action='' method='GET' style='display:inline;margin:0;padding:0'><input type='hidden' name='del_pick' value='{pid}'><button type='submit' style='background:none;border:none;cursor:pointer;font-size:16px;padding:0;color:#ff4444' title='Eliminar'>✕</button></form>"
-                        html += f"""<tr style="background:{bg}">
-                            <td style="padding:4px 6px;border-bottom:1px solid #2d3748">{row['Fecha']}</td>
-                            <td style="padding:4px 6px;border-bottom:1px solid #2d3748">{row['Juego']}</td>
-                            <td style="padding:4px 6px;border-bottom:1px solid #2d3748">{row['Mercado']}</td>
-                            <td style="padding:4px 6px;border-bottom:1px solid #2d3748">{row['Pick']}</td>
-                            <td style="padding:4px 6px;border-bottom:1px solid #2d3748;text-align:center">{estado}</td>
-                            <td style="padding:4px 6px;border-bottom:1px solid #2d3748;text-align:right">{profit_str}</td>
-                            <td style="padding:4px 6px;border-bottom:1px solid #2d3748;text-align:center">{del_btn}</td>
-                        </tr>"""
-                    html += "</tbody></table></div>"
-                    st.markdown(html, unsafe_allow_html=True)
-
-                # Handle delete via query param
-                del_pid = st.query_params.get("del_pick")
-                proc_key = f"processed_del_{del_pid}"
-                if del_pid is not None and not st.session_state.get(proc_key, False):
-                    st.session_state[proc_key] = True
-                    pid = int(del_pid)
-                    from bankroll import save_picks, load_picks
-                    d = load_picks()
-                    pick_to_del = next((p for p in d["history"] if p.get("id") == pid), None)
-                    if pick_to_del and pick_to_del.get("telegram_msg_id"):
-                        try:
-                            tok = _secret("TELEGRAM_TOKEN")
-                            cid = _secret("TELEGRAM_CHAT_ID")
-                            if tok and cid:
-                                requests.post(f"https://api.telegram.org/bot{tok}/deleteMessage",
-                                              json={"chat_id": cid, "message_id": pick_to_del["telegram_msg_id"]}, timeout=5)
-                        except: pass
-                    d["history"] = [x for x in d["history"] if x.get("id") != pid]
-                    save_picks(d)
-                    st.query_params.clear()
-                    st.rerun()
-
-                green = total_profit >= 0
-                st.markdown(f"Profit total: <span style='color:{'#00cc66' if green else '#ff4444'}'><b>${total_profit:+.2f}</b></span>", unsafe_allow_html=True)
-
-                # ── Model calibration ──
-                if settled:
-                    bins = [(50, 55), (55, 60), (60, 65), (65, 70), (70, 100)]
-                    cal_rows = []
-                    for lo, hi in bins:
-                        pool = [p for p in settled if lo <= p.get("model_prob", 0.5) * 100 < hi]
-                        if not pool:
-                            continue
-                        wins = sum(1 for p in pool if p["result"] == "W")
-                        tot = len(pool)
-                        actual = round(wins / tot * 100)
-                        predicted = round((lo + hi) / 2)
-                        cal_rows.append({
-                            "Rango": f"{lo}-{hi}%",
-                            "Picks": tot,
-                            "Ganados": wins,
-                            "Real": f"{actual}%",
-                            "Esperado": f"{predicted}%",
-                            "Diff": f"{actual - predicted:+.0f}%",
-                        })
-                if cal_rows and _load_perms().get("calibration", False):
+                if cal_rows:
                     with st.expander("📐 Calibración del modelo", expanded=False):
                         st.dataframe(pd.DataFrame(cal_rows), hide_index=True, use_container_width=True)
 
             # ── Predicciones history ──
-            if _load_perms().get("model_stats", True):
-                try:
-                    with open(os.path.join(os.path.dirname(__file__), "predictions_log.json")) as f:
-                        pred_data = json.load(f)
-                    all_preds = pred_data.get("predictions", [])
-                    settled_preds = [p for p in all_preds if p.get("settled")]
-                    if settled_preds:
-                        pw = sum(1 for p in settled_preds if p["result"] == "W")
-                        pl = sum(1 for p in settled_preds if p["result"] == "L")
-                        pt = pw + pl
-                        pct = round(pw / pt * 100) if pt > 0 else 0
-                        st.markdown(f"**📊 Rendimiento del modelo:** {pw}-{pl} ({pct}%) en {pt} predicciones liquidadas")
-                        # By market
-                        mkt_rows = []
-                        for mkt in ("ML", "RL -1.5", "RL +1.5", "O/U"):
-                            pool = [p for p in settled_preds if p["market"] == mkt]
-                            if not pool:
-                                continue
-                            mw = sum(1 for p in pool if p["result"] == "W")
-                            mt = len(pool)
-                            mp = round(mw / mt * 100)
-                            mkt_rows.append({"Mercado": mkt, "G-P": f"{mw}-{mt-mw}", "Picks": mt, "%": f"{mp}%"})
-                        if mkt_rows:
-                            with st.expander("📊 Por mercado", expanded=False):
-                                st.dataframe(pd.DataFrame(mkt_rows), hide_index=True, use_container_width=True)
-                except: pass
-            else:
-                st.info("💡 Aún no has registrado picks. Usa el botón **📝** en las tarjetas o recomendaciones para empezar.")
+            try:
+                with open(os.path.join(os.path.dirname(__file__), "predictions_log.json")) as f:
+                    pred_data = json.load(f)
+                all_preds = pred_data.get("predictions", [])
+                settled_preds = [p for p in all_preds if p.get("settled")]
+                if settled_preds:
+                    pw = sum(1 for p in settled_preds if p["result"] == "W")
+                    pl = sum(1 for p in settled_preds if p["result"] == "L")
+                    pt = pw + pl
+                    pct = round(pw / pt * 100) if pt > 0 else 0
+                    st.markdown(f"**📊 Rendimiento del modelo:** {pw}-{pl} ({pct}%) en {pt} predicciones liquidadas")
+                    # By market
+                    mkt_rows = []
+                    for mkt in ("ML", "RL -1.5", "RL +1.5", "O/U"):
+                        pool = [p for p in settled_preds if p["market"] == mkt]
+                        if not pool:
+                            continue
+                        mw = sum(1 for p in pool if p["result"] == "W")
+                        mt = len(pool)
+                        mp = round(mw / mt * 100)
+                        mkt_rows.append({"Mercado": mkt, "G-P": f"{mw}-{mt-mw}", "Picks": mt, "%": f"{mp}%"})
+                    if mkt_rows:
+                        with st.expander("📊 Por mercado", expanded=False):
+                            st.dataframe(pd.DataFrame(mkt_rows), hide_index=True, use_container_width=True)
+            except: pass
+        else:
+            st.info("💡 Aún no has registrado picks. Usa el botón **📝** en las tarjetas o recomendaciones para empezar.")
     except ImportError:
         pass
 
-    if _load_perms().get("detailed_table", False):
-        st.divider()
-        with st.expander("🔬 Tabla detallada"):
-            cols_avail = [c for c in ["away_team","home_team","ml_home_prob","ml_away_prob","exp_total","spr_team","spr_prob"] if c in df.columns]
-            if cols_avail:
-                sd2 = df[cols_avail].copy()
-                st.dataframe(sd2, use_container_width=True, hide_index=True)
+    st.divider()
+    with st.expander("🔬 Tabla detallada"):
+        cols_avail = [c for c in ["away_team","home_team","ml_home_prob","ml_away_prob","exp_total","spr_team","spr_prob"] if c in df.columns]
+        if cols_avail:
+            sd2 = df[cols_avail].copy()
+            st.dataframe(sd2, use_container_width=True, hide_index=True)
 
 if __name__ == "__main__":
     try:
