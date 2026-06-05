@@ -296,6 +296,22 @@
       "profit": null,
       "label": "\ud83d\udd25 High",
       "settled": false
+    },
+    {
+      "id": 19,
+      "date": "2026-06-05",
+      "game": "CWS @ PHI",
+      "market": "ML",
+      "team": "Chicago White Sox",
+      "detail": "",
+      "model_prob": 0.669,
+      "odds": 161,
+      "stake": 169.5,
+      "bankroll_before": 1460.94,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ]
 }
