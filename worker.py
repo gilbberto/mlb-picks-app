@@ -92,7 +92,7 @@ def main():
         sync_from_github()
         subprocess.run(["python3", "settle_and_notify.py"], cwd=CWD, env=ENV)
         sync_to_github()
-        if cycle > 0 and cycle % 240 == 0:
+        if cycle == 0 or cycle % 240 == 0:
             h = datetime.now(TZ).hour
             if 6 <= h < 12:
                 pass  # morning_summary handles this window
