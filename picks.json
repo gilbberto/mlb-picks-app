@@ -281,6 +281,23 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 218
+    },
+    {
+      "id": 18,
+      "date": "2026-06-05",
+      "game": "CWS @ PHI",
+      "market": "ML",
+      "team": "Chicago White Sox",
+      "detail": "",
+      "model_prob": 0.668,
+      "odds": 160,
+      "stake": 168.04,
+      "bankroll_before": 1460.94,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false,
+      "telegram_msg_id": 219
     }
   ]
 }
