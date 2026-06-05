@@ -296,6 +296,22 @@
       "profit": null,
       "label": "\ud83d\udd25 High",
       "settled": false
+    },
+    {
+      "id": 19,
+      "date": "2026-06-05",
+      "game": "WSH @ AZ",
+      "market": "ML",
+      "team": "Washington Nationals",
+      "detail": "",
+      "model_prob": 0.699,
+      "odds": 117,
+      "stake": 161.5,
+      "bankroll_before": 1460.94,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ]
 }
