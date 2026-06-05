@@ -687,10 +687,17 @@ def ev_label(ev):
 
 # ─── Telegram ───
 
+def _secret(key, default=""):
+    try:
+        return st.secrets.get(key, os.environ.get(key, default))
+    except Exception:
+        return os.environ.get(key, default)
+
+
 def send_telegram(msg):
     try:
-        tok = st.secrets.get("TELEGRAM_TOKEN", os.environ.get("TELEGRAM_TOKEN", ""))
-        cid = st.secrets.get("TELEGRAM_CHAT_ID", os.environ.get("TELEGRAM_CHAT_ID", ""))
+        tok = _secret("TELEGRAM_TOKEN")
+        cid = _secret("TELEGRAM_CHAT_ID")
         if not tok or not cid: return None
         r = requests.post(f"https://api.telegram.org/bot{tok}/sendMessage",
                        json={"chat_id": cid, "text": msg, "parse_mode": "Markdown"}, timeout=10)
@@ -724,18 +731,11 @@ def notify_pick(gl, market, team, stake, odds, bankroll, pick_id=None):
 # ─── GitHub sync ───
 
 def _gh_headers():
-    tok = os.environ.get("GITHUB_TOKEN", "")
-    repo = os.environ.get("REPO", "")
-    try:
-        tok = st.secrets.get("GITHUB_TOKEN", tok)
-        repo = st.secrets.get("REPO", repo)
-    except: pass
+    tok = _secret("GITHUB_TOKEN")
+    repo = _secret("REPO")
     if not tok or not repo: return None, None, None, None
     owner, repo_name = repo.split("/")
-    branch = os.environ.get("BRANCH", "main")
-    try:
-        branch = st.secrets.get("BRANCH", branch)
-    except: pass
+    branch = _secret("BRANCH", "main")
     headers = {"Authorization": f"Bearer {tok}", "Accept": "application/vnd.github+json"}
     return owner, repo_name, branch, headers
 
@@ -1963,8 +1963,8 @@ def main():
                 pick_to_del = next((p for p in d["history"] if p.get("id") == pid), None)
                 if pick_to_del and pick_to_del.get("telegram_msg_id"):
                     try:
-                        tok = st.secrets.get("TELEGRAM_TOKEN", os.environ.get("TELEGRAM_TOKEN", ""))
-                        cid = st.secrets.get("TELEGRAM_CHAT_ID", os.environ.get("TELEGRAM_CHAT_ID", ""))
+                        tok = _secret("TELEGRAM_TOKEN")
+                        cid = _secret("TELEGRAM_CHAT_ID")
                         if tok and cid:
                             requests.post(f"https://api.telegram.org/bot{tok}/deleteMessage",
                                           json={"chat_id": cid, "message_id": pick_to_del["telegram_msg_id"]}, timeout=5)
