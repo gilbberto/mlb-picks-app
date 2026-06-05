@@ -158,7 +158,7 @@ C = {
 
 # ─── MLB Stats API ───
 
-@st.cache_data(ttl=600)
+@st.cache_data(ttl=3600)
 def fetch_todays_schedule():
     today = datetime.now(TZ).strftime("%m/%d/%Y")
     url = f"{MLB_API_BASE}/schedule?sportId=1&date={today}&hydrate=probablePitcher"
