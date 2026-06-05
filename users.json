@@ -13,5 +13,16 @@
       "model_stats": false,
       "detailed_table": false
     }
+  },
+  "alex": {
+    "password": "alex2024",
+    "role": "viewer",
+    "permissions": {
+      "daily_picks": true,
+      "recommendations": true,
+      "calibration": false,
+      "model_stats": false,
+      "detailed_table": false
+    }
   }
 }
