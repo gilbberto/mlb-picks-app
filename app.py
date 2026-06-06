@@ -1278,6 +1278,28 @@ def main():
         return
     role = st.session_state.role
 
+    # ── Procesar delete de pick antes de cualquier render ──
+    _del_pid = st.query_params.get("del_pick")
+    if _del_pid is not None and role == "admin":
+        _proc_key = f"processed_del_{_del_pid}"
+        if not st.session_state.get(_proc_key, False):
+            st.session_state[_proc_key] = True
+            try:
+                _pid = int(_del_pid)
+                from bankroll import save_picks, load_picks
+                _d = load_picks()
+                _pick = next((p for p in _d["history"] if p.get("id") == _pid), None)
+                if _pick and _pick.get("telegram_msg_id"):
+                    _tok = _secret("TELEGRAM_TOKEN")
+                    _cid = _secret("TELEGRAM_CHAT_ID")
+                    if _tok and _cid:
+                        requests.post(f"https://api.telegram.org/bot{_tok}/deleteMessage",
+                                      json={"chat_id": _cid, "message_id": _pick["telegram_msg_id"]}, timeout=5)
+                _d["history"] = [x for x in _d["history"] if x.get("id") != _pid]
+                save_picks(_d)
+            except:
+                pass
+
     # ── Auto-settlement al iniciar ──
     try:
         from bankroll import auto_settle
@@ -2080,27 +2102,6 @@ def main():
                         st.altair_chart(chart, use_container_width=True)
                     except:
                         pass
-
-                # Handle delete via query param (antes de construir la tabla)
-                del_pid = st.query_params.get("del_pick")
-                proc_key = f"processed_del_{del_pid}"
-                if del_pid is not None and not st.session_state.get(proc_key, False):
-                    st.session_state[proc_key] = True
-                    pid = int(del_pid)
-                    from bankroll import save_picks, load_picks
-                    d = load_picks()
-                    pick_to_del = next((p for p in d["history"] if p.get("id") == pid), None)
-                    if pick_to_del and pick_to_del.get("telegram_msg_id"):
-                        try:
-                            tok = _secret("TELEGRAM_TOKEN")
-                            cid = _secret("TELEGRAM_CHAT_ID")
-                            if tok and cid:
-                                requests.post(f"https://api.telegram.org/bot{tok}/deleteMessage",
-                                              json={"chat_id": cid, "message_id": pick_to_del["telegram_msg_id"]}, timeout=5)
-                        except: pass
-                    d["history"] = [x for x in d["history"] if x.get("id") != pid]
-                    save_picks(d)
-                    data = load_picks()
 
                 total_profit = 0
                 rows = []
