@@ -1986,7 +1986,10 @@ def main():
                             pid = add_pick(ts, gl, r["market"], pv, oi, sk, bk, sl, pt, dtl)
                             notify_pick(gl, r["market"], pt, sk, oi, bk, pick_id=pid)
                             sync_picks_to_github()
+                    _u = st.query_params.get("u", "")
                     st.query_params.clear()
+                    if _u:
+                        st.query_params["u"] = _u
                     st.rerun()
     except ImportError:
         pass
