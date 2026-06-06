@@ -57,14 +57,16 @@ def sync_from_github():
                 f.write(content)
 
 def _merge_picks(local_str, remote_str):
-    """Merge picks: keep remote entries + add any local entries not in remote."""
+    """Merge picks: remote is source of truth for existence; local updates settlements on existing picks."""
     import json
     remote = json.loads(remote_str)
     local = json.loads(local_str)
+    local_by_id = {p.get("id"): p for p in local.get("history", [])}
     remote_ids = {p.get("id") for p in remote.get("history", [])}
-    for p in local.get("history", []):
-        if p.get("id") not in remote_ids:
-            remote["history"].append(p)
+    for p in remote["history"]:
+        lp = local_by_id.get(p.get("id"))
+        if lp and lp.get("settled") and not p.get("settled"):
+            p.update({k: lp[k] for k in ("result", "profit", "settled") if k in lp})
     stakes = sum(p.get("stake", 0) for p in remote["history"])
     profits = sum(p.get("profit") or 0 for p in remote["history"] if p.get("profit") is not None)
     remote["bankroll"] = round(1000 - stakes + profits, 2)
