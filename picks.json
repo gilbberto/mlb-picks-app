@@ -1,5 +1,5 @@
 {
-  "bankroll": -2108.04,
+  "bankroll": -2265.1,
   "history": [
     {
       "id": 1,
@@ -349,6 +349,23 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 276
+    },
+    {
+      "id": 22,
+      "date": "2026-06-06",
+      "game": "CWS @ PHI",
+      "market": "ML",
+      "team": "Chicago White Sox",
+      "detail": "",
+      "model_prob": 0.734,
+      "odds": 120,
+      "stake": 157.06,
+      "bankroll_before": 1225.11,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false,
+      "telegram_msg_id": 277
     }
   ]
 }
