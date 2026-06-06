@@ -1273,7 +1273,6 @@ def main():
             if _u in users:
                 st.session_state.user = _u
                 st.session_state.role = users[_u]["role"]
-                st.rerun()
     if not st.session_state.role:
         _login_form()
         return
