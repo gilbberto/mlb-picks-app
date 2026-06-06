@@ -988,8 +988,8 @@ def render_card(pick, key_suffix="", game_idx=0):
                 if role == "admin" and edge is not None and edge > 2:
                     if st.button("📝", key=log_key):
                         try:
-                            from bankroll import add_pick, load_picks, recommend_stake
-                            d = load_picks(); bk = d["bankroll"]
+                            from bankroll import add_pick, get_pnl, recommend_stake
+                            bk = get_pnl()["bankroll"]
                             gl = f"{pick['away_abbrev']} @ {pick['home_abbrev']}"
                             os_ = str(odds) if odds and odds != "N/A" else ""
                             oi = int(str(os_).replace("$","")) if os_ not in ("N/A","—","") else 0
@@ -1972,8 +1972,8 @@ def main():
                     idx = int(reg_idx)
                     if 0 <= idx < len(recs[:4]):
                         r = recs[idx]
-                        from bankroll import add_pick, load_picks, recommend_stake
-                        d = load_picks(); bk = d["bankroll"]
+                        from bankroll import add_pick, get_pnl, recommend_stake
+                        bk = get_pnl()["bankroll"]
                         gl = f"{r['pick_dict']['away_abbrev']} @ {r['pick_dict']['home_abbrev']}"
                         os_ = r["odds"]
                         oi = int(str(os_).replace("$","")) if os_ not in ("N/A","—","") else 0
