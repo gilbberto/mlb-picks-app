@@ -1444,6 +1444,17 @@ def main():
                 c1.metric("Bankroll", f"${pnl['bankroll']:.0f}")
                 c2.metric("Profit", f"${pnl['profit']:+.0f}", delta=f"{pnl['roi']:+.0f}%")
                 st.caption(f"{pnl['wins']}-{pnl['losses']} ({pnl['pct']}%) · {pnl['open']} pendientes")
+                try:
+                    from bankroll import load_picks
+                    _wh_data = load_picks()
+                    _wh = _wh_data.get("weekly_history", [])
+                    if _wh:
+                        with st.expander("📆 Semanas anteriores"):
+                            _wh_rows = [{"Semana": w["week_start"], "Profit": f"${w['profit']:+.0f}",
+                                        "Record": f"{w['wins']}-{w['losses']}", "Picks": w["picks"]} for w in reversed(_wh[-10:])]
+                            st.dataframe(pd.DataFrame(_wh_rows), hide_index=True, use_container_width=True)
+                except:
+                    pass
             except ImportError:
                 pass
         else:

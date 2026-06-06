@@ -114,6 +114,23 @@ def check_weekly_reset():
     today_str = now.strftime("%Y-%m-%d")
     if last_reset == today_str:
         return
+    ws = data.get("weekly_start", _current_week_start().strftime("%Y-%m-%d"))
+    h = data["history"]
+    weekly_picks = [p for p in h if p.get("date", "") >= ws]
+    weekly_settled = [p for p in weekly_picks if p.get("settled")]
+    weekly_w = sum(1 for p in weekly_settled if p["result"] == "W")
+    weekly_l = sum(1 for p in weekly_settled if p["result"] == "L")
+    weekly_profit = sum(p.get("profit") or 0 for p in weekly_picks if p.get("profit") is not None)
+    weekly_history = data.get("weekly_history", [])
+    weekly_history.append({
+        "week_start": ws,
+        "week_end": (now - timedelta(days=1)).strftime("%Y-%m-%d"),
+        "bankroll_start": data.get("weekly_bankroll", 1000),
+        "profit": round(weekly_profit, 2),
+        "wins": weekly_w, "losses": weekly_l,
+        "picks": len(weekly_settled),
+    })
+    data["weekly_history"] = weekly_history
     data["weekly_bankroll"] = 1000
     data["weekly_start"] = _current_week_start().strftime("%Y-%m-%d")
     data["last_weekly_reset"] = today_str
