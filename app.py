@@ -1830,9 +1830,8 @@ def main():
     # ── Recomendaciones ──
     recs = []
     try:
-        from bankroll import recommend_stake, load_picks
-        bk_data = load_picks()
-        actual_bankroll = bk_data["bankroll"]
+        from bankroll import recommend_stake, get_pnl
+        actual_bankroll = get_pnl()["bankroll"]
         # Helper: compute edge from entry if it has odds + prob
         def get_edge(entry):
             if not entry or not entry.get("odds") or entry["odds"] in ("N/A", "—", ""):
