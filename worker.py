@@ -15,7 +15,7 @@ ENV["PYTHONUNBUFFERED"] = "1"
 
 REPO = "gilbberto/mlb-picks-app"
 BRANCH = "main"
-FILES_TO_SYNC = ("picks.json", "users.json", "game_starts_notified.json", "predictions_log.json", ".morning_sent", ".telegram_offset", ".notified_new_picks.json")
+FILES_TO_SYNC = ("picks.json", "users.json", "game_starts_notified.json", "predictions_log.json", ".morning_sent", ".telegram_offset", ".notified_new_picks.json", ".odds_cache.json")
 
 def _gh_headers():
     tok = os.environ.get("GITHUB_TOKEN", "")
