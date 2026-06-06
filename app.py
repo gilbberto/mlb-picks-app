@@ -2231,19 +2231,28 @@ def main():
                                     x="Rango:N", y="Esperado:Q")
                                 st.altair_chart(chart, use_container_width=True)
 
-                # ── Backtest simple (Kelly vs flat betting) ──
+                # ── Backtest completo ──
                 if settled and _get_perms(st.session_state.user).get("model_stats", True):
-                    with st.expander("📈 Backtest: Estrategias", expanded=False):
-                        total_staked = sum(p.get("stake", 0) for p in settled)
-                        flat_profit = sum(p.get("profit") or 0 for p in settled)
-                        kelly_roi = round(flat_profit / total_staked * 100, 1) if total_staked > 0 else 0
-                        st.markdown(f"""
-                        **Kelly Criterion (25% fraccional)**
-                        - Picks: {len(settled)}
-                        - Profit: ${flat_profit:+.2f}
-                        - ROI: {kelly_roi}%
-                        - Bankroll final: ${pnl['bankroll']:.2f}
-                        """)
+                    with st.expander("📈 Backtest completo", expanded=False):
+                        if st.button("🔄 Ejecutar Backtest"):
+                            with st.spinner("Analizando predicciones..."):
+                                try:
+                                    from predictions import run_backtest
+                                    msg = run_backtest()
+                                    st.markdown(msg.replace("\n", "  \n"))
+                                except Exception as e:
+                                    st.error(f"Error: {e}")
+                        else:
+                            total_staked = sum(p.get("stake", 0) for p in settled)
+                            flat_profit = sum(p.get("profit") or 0 for p in settled)
+                            kelly_roi = round(flat_profit / total_staked * 100, 1) if total_staked > 0 else 0
+                            st.markdown(f"""
+                            **Kelly Criterion (25% fraccional)**
+                            - Picks: {len(settled)}
+                            - Profit: ${flat_profit:+.2f}
+                            - ROI: {kelly_roi}%
+                            - Bankroll final: ${pnl['bankroll']:.2f}
+                            """)
 
             # ── Predicciones history ──
             if _get_perms(st.session_state.user).get("model_stats", True):

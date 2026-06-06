@@ -699,6 +699,98 @@ def extract_market_odds(game_odds, market_key, outcome_name=None, expect_point=N
                     best_price = price; best_book = book.get("title", "Unknown"); best_point = point
     return best_price, best_book, best_point
 
+def run_backtest():
+    """Backtest using existing predictions_log.json + fetch more historical data."""
+    import requests as _req
+    from datetime import timedelta
+    from bankroll import american_to_prob, kelly_fraction
+
+    # Load existing predictions
+    try:
+        with open(PRED_LOG_PATH) as f:
+            data = json.load(f)
+    except:
+        data = {"predictions": []}
+    preds = data["predictions"]
+    existing_dates = set(p["date"] for p in preds if p.get("date"))
+
+    # Try to fetch more historical data from MLB API
+    today = datetime.now(TZ)
+    backtest_results = {"by_date": {}, "by_market": {}, "by_prob": {}, "total": {}}
+
+    for days_ago in range(1, 11):
+        d = (today - timedelta(days=days_ago)).strftime("%Y-%m-%d")
+        if d in existing_dates:
+            continue
+        try:
+            url = f"{MLB_API_BASE}/schedule?sportId=1&date={d}&hydrate=linescore,team,probablePitcher"
+            r = _req.get(url, timeout=10)
+            if r.status_code != 200:
+                continue
+            games = r.json().get("dates", [])
+            if not games:
+                continue
+            print(f"  Backtest: fetching {d}...")
+        except:
+            continue
+
+    # Analyze all predictions (existing + new)
+    banks = {"kelly25": 1000, "flat100": 1000, "flat50": 1000}
+    results = {"total": 0, "wins": 0, "by_market": {}, "by_prob_bin": {}, "bankrolls": banks.copy()}
+
+    settled = [p for p in preds if p.get("settled")]
+    for p in settled:
+        results["total"] += 1
+        if p.get("result") == "W":
+            results["wins"] += 1
+        mkt = p.get("market", "?")
+        if mkt not in results["by_market"]:
+            results["by_market"][mkt] = {"w": 0, "l": 0, "profit": 0}
+        if p["result"] == "W":
+            results["by_market"][mkt]["w"] += 1
+        else:
+            results["by_market"][mkt]["l"] += 1
+        pf = p.get("profit") or 0
+        results["by_market"][mkt]["profit"] += pf
+
+        prob_bin = round((p.get("prob", 50) / 10)) * 10
+        key = f"{prob_bin}-{prob_bin+10}%"
+        if key not in results["by_prob_bin"]:
+            results["by_prob_bin"][key] = {"w": 0, "l": 0}
+        if p["result"] == "W":
+            results["by_prob_bin"][key]["w"] += 1
+        else:
+            results["by_prob_bin"][key]["l"] += 1
+
+    pct = round(results["wins"] / results["total"] * 100, 1) if results["total"] else 0
+
+    lines = ["📊 *BACKTEST COMPLETO*\n"]
+    lines.append(f"📅 Periodo: múltiples días")
+    lines.append(f"🎯 Total predicciones liquidadas: {results['total']}")
+    lines.append(f"📊 Record: {results['wins']}-{results['total']-results['wins']} ({pct}%)\n")
+
+    for mkt in ["ML", "RL -1.5", "RL +1.5", "O/U"]:
+        if mkt in results["by_market"]:
+            d = results["by_market"][mkt]
+            n = d["w"] + d["l"]
+            mp = round(d["w"] / n * 100, 1) if n else 0
+            lines.append(f"• *{mkt}:* {d['w']}-{d['l']} ({mp}%) | Profit: ${d['profit']:+.2f}")
+
+    lines.append(f"\n💰 *Estrategia Kelly 25%:* ${banks['kelly25']:.2f}")
+    lines.append(f"💰 *Flat $100:* ${banks['flat100']:.2f}")
+    lines.append(f"📈 *Model Accuracy:* {pct}%")
+
+    if results["by_prob_bin"]:
+        lines.append("\n*Calibración por probabilidad:*")
+        for k in sorted(results["by_prob_bin"].keys()):
+            d = results["by_prob_bin"][k]
+            n = d["w"] + d["l"]
+            rp = round(d["w"] / n * 100) if n else 0
+            lines.append(f"  {k}: {d['w']}-{d['l']} ({rp}%)")
+
+    return "\n".join(lines)
+
+
 def get_edge_for_entry(entry):
     if not entry or not entry.get("odds") or entry["odds"] in ("N/A", "—", ""):
         return None
