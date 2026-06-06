@@ -158,7 +158,7 @@ C = {
 
 # ─── MLB Stats API ───
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=86400)
 def fetch_todays_schedule():
     today = datetime.now(TZ).strftime("%m/%d/%Y")
     url = f"{MLB_API_BASE}/schedule?sportId=1&date={today}&hydrate=probablePitcher"
@@ -171,7 +171,7 @@ def fetch_todays_schedule():
     return games
 
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=86400)
 def fetch_team_stats_mlb(tid, season=CURRENT_SEASON):
     url = f"{MLB_API_BASE}/teams/{tid}/stats?season={season}&group=hitting,pitching&stats=season"
     resp = requests.get(url, timeout=10)
@@ -195,7 +195,7 @@ def fetch_team_abbrevs():
     teams = requests.get(f"{MLB_API_BASE}/teams?sportIds=1", timeout=10).json()
     return {t["id"]: t.get("abbreviation","??") for t in teams.get("teams",[])}
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=86400)
 def fetch_pitcher_stats(pid):
     if not pid:
         return {}
@@ -241,7 +241,7 @@ def fetch_pitcher_stats(pid):
     return {}
 
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=86400)
 def fetch_pitcher_recent_form(pid, n_starts=5):
     if not pid:
         return {}
@@ -276,7 +276,7 @@ def fetch_pitcher_recent_form(pid, n_starts=5):
     except Exception:
         return {}
 
-@st.cache_data(ttl=600)
+@st.cache_data(ttl=86400)
 def fetch_recent_games(tid, ng=20):
     today = datetime.now(TZ)
     end = today.strftime("%m/%d/%Y")
@@ -295,7 +295,7 @@ def fetch_recent_games(tid, ng=20):
 
 # ─── ESPN API ───
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=86400)
 def fetch_espn_standings():
     try:
         resp = requests.get(f"{ESPN_API_BASE}/standings", timeout=10)
@@ -354,7 +354,7 @@ def fetch_advanced_stats():
 
 # ─── Odds APIs ───
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=1800)
 def fetch_odds():
     odds = []
     if ODDS_API_KEY:
@@ -623,7 +623,7 @@ def build_rf_feature_row(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f,
     return f
 
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=86400)
 def monte_carlo_predict(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f,
                          hp_rec=None, ap_rec=None, n_sims=5000, weather=None):
     """Run Monte Carlo simulation using trained models. Returns dict."""

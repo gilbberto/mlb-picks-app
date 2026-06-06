@@ -656,7 +656,7 @@ def fetch_odds():
         cache_age = time.time() - os.path.getmtime(ODDS_CACHE_PATH)
     except:
         pass
-    if cache_age > 0 and cache_age < 300:
+    if cache_age > 0 and cache_age < 1800:
         try:
             with open(ODDS_CACHE_PATH) as f:
                 return json.load(f)
