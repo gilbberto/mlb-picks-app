@@ -2005,6 +2005,7 @@ def main():
                         sl = r["stake_label"]
                         bk = get_pnl()["bankroll"]
                         if sk > 0:
+                            from bankroll import add_pick
                             pt = r["pick"]
                             dtl = r.get("entry", {}).get("detail", "")
                             gl = f"{r['pick_dict']['away_abbrev']} @ {r['pick_dict']['home_abbrev']}"
