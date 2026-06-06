@@ -1941,7 +1941,7 @@ def main():
                 elif is_regd:
                     btn = "<span style='color:#58a6ff'>✅</span>"
                 else:
-                    btn = f"<form action='' method='GET' style='display:inline;margin:0;padding:0'><input type='hidden' name='reg_pick' value='{i}'><button type='submit' style='background:none;border:none;cursor:pointer;font-size:18px;padding:0;color:#58a6ff' title='Registrar'>📝</button></form>"
+                    btn = f"<form action='' method='GET' style='display:inline;margin:0;padding:0'><input type='hidden' name='reg_pick' value='{i}'><input type='hidden' name='u' value='{st.session_state.user}'><button type='submit' style='background:none;border:none;cursor:pointer;font-size:18px;padding:0;color:#58a6ff' title='Registrar'>📝</button></form>"
                 html_rows += f"""<tr style="background:{'#0d1b2a' if i%2==0 else '#1b2838'}">
                     <td style="padding:6px 8px;border-bottom:1px solid #2d3748">{r['game']}</td>
                     <td style="padding:6px 8px;border-bottom:1px solid #2d3748">{r['market']}</td>
