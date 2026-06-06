@@ -374,7 +374,7 @@ def fetch_advanced_stats():
 
 # ─── Odds APIs ───
 
-@st.cache_data(ttl=1800)
+@st.cache_data(ttl=14400)
 def fetch_odds():
     odds = []
     if ODDS_API_KEY:

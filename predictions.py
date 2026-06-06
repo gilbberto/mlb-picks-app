@@ -67,9 +67,7 @@ def load_models():
         with open(BASE + "xgb_cols.pkl", "rb") as f: _cols = pickle.load(f)
         _MODELS_LOADED = True
     except:
-_xgb_hw_list = []
-_xgb_rd_list = []
-_xgb_tot_list = []
+        pass
     if not _MODELS_LOADED:
         try:
             from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
@@ -658,7 +656,7 @@ def fetch_odds():
         cache_age = time.time() - os.path.getmtime(ODDS_CACHE_PATH)
     except:
         pass
-    if cache_age > 0 and cache_age < 1800:
+    if cache_age > 0 and cache_age < 14400:
         try:
             with open(ODDS_CACHE_PATH) as f:
                 return json.load(f)
