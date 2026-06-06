@@ -417,31 +417,24 @@ m_tot.fit(Xt, ytt, eval_set=[(Xv, ytv)], verbose=False)
 p_tot = m_tot.predict(Xv)
 print(f"  Tot MAE: {mean_absolute_error(ytv, p_tot):.3f}")
 
-# ─── Step 6: MC Validation ───
-print(f"\n=== Step 6: MC Validation ({min(200, len(Xv))} games) ===")
-ns = 2000
-hw = r15 = rn15 = ov = 0
-n = min(200, len(Xv))
-for i in range(n):
-    x = Xv[i].reshape(1, -1)
-    hp = m_hw.predict_proba(x)[0, 1]
-    er = m_rd.predict(x)[0]
-    et = m_tot.predict(x)[0]
-    rs = np.random.normal(er, 3.0, ns)
-    ts = np.random.normal(et, 3.2, ns)
-    hw += int((np.mean(rs > 0) > .5) == bool(yhv[i]))
-    r15 += int((np.mean(rs >= 1.5) > .5) == bool(yrv[i] >= 1.5))
-    rn15 += int((np.mean(rs >= -1.5) > .5) == bool(yrv[i] >= -1.5))
-    ov += int((np.mean(ts > 8.5) > .5) == bool(ytv[i] > 8.5))
+# ─── Ensemble: train 3 seeds ───
+SEEDS = [42, 123, 456]
+ensemble_models = {}
+for seed in SEEDS:
+    print(f"\n=== Training seed={seed} ===")
+    s_hw = xgb.XGBClassifier(n_estimators=400, max_depth=6, learning_rate=0.05,
+        subsample=0.8, colsample_bytree=0.8, random_state=seed, n_jobs=-1, verbosity=0, eval_metric='logloss')
+    s_hw.fit(Xt, yht, eval_set=[(Xv, yhv)], verbose=False)
+    s_rd = xgb.XGBRegressor(n_estimators=400, max_depth=6, learning_rate=0.05,
+        subsample=0.8, colsample_bytree=0.8, random_state=seed, n_jobs=-1, verbosity=0, eval_metric='mae')
+    s_rd.fit(Xt, yrt, eval_set=[(Xv, yrv)], verbose=False)
+    s_tot = xgb.XGBRegressor(n_estimators=400, max_depth=6, learning_rate=0.05,
+        subsample=0.8, colsample_bytree=0.8, random_state=seed, n_jobs=-1, verbosity=0, eval_metric='mae')
+    s_tot.fit(Xt, ytt, eval_set=[(Xv, ytv)], verbose=False)
+    print(f"  HW acc: {accuracy_score(yhv, s_hw.predict(Xv)):.3f} | RD MAE: {mean_absolute_error(yrv, s_rd.predict(Xv)):.3f} | Tot MAE: {mean_absolute_error(ytv, s_tot.predict(Xv)):.3f}")
+    with open(BASE + f"xgb_hw_s{seed}.pkl", "wb") as f: pickle.dump(s_hw, f)
+    with open(BASE + f"xgb_rd_s{seed}.pkl", "wb") as f: pickle.dump(s_rd, f)
+    with open(BASE + f"xgb_tot_s{seed}.pkl", "wb") as f: pickle.dump(s_tot, f)
 
-print(f"  HW: {hw}/{n} ({hw/n*100:.1f}%)")
-print(f"  RL Fav -1.5: {r15}/{n} ({r15/n*100:.1f}%)")
-print(f"  RL Dog +1.5: {rn15}/{n} ({rn15/n*100:.1f}%)")
-print(f"  O/U: {ov}/{n} ({ov/n*100:.1f}%)")
-
-# ─── Save ───
-with open(BASE + "xgb_hw.pkl", "wb") as f: pickle.dump(m_hw, f)
-with open(BASE + "xgb_rd.pkl", "wb") as f: pickle.dump(m_rd, f)
-with open(BASE + "xgb_tot.pkl", "wb") as f: pickle.dump(m_tot, f)
 with open(BASE + "xgb_cols.pkl", "wb") as f: pickle.dump(cols, f)
-print(f"\n✅ XGBoost models saved to {BASE}")
+print(f"\n✅ Ensemble ({len(SEEDS)} seeds) saved to {BASE}")

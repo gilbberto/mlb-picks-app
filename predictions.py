@@ -67,7 +67,9 @@ def load_models():
         with open(BASE + "xgb_cols.pkl", "rb") as f: _cols = pickle.load(f)
         _MODELS_LOADED = True
     except:
-        _xgb_hw = _xgb_rd = _xgb_tot = None
+_xgb_hw_list = []
+_xgb_rd_list = []
+_xgb_tot_list = []
     if not _MODELS_LOADED:
         try:
             from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor

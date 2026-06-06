@@ -113,27 +113,47 @@ st.markdown("""
 ODDS_API_KEY = "b09f7e5fb08081c87e7e34272fda4ea0"
 SHARPAPI_KEY = os.getenv("SHARPAPI_KEY", "")
 
-# ─── ML Models (XGBoost first, fallback RandomForest + Monte Carlo) ───
+# ─── ML Models (Ensemble XGBoost, fallback single XGBoost, fallback RF) ───
 _MODELS_LOADED = False
-_xgb_hw = _xgb_rd = _xgb_tot = None
+_xgb_models_hw = []
+_xgb_models_rd = []
+_xgb_models_tot = []
 _rf_hw = _rf_rd = _rf_tot = None
 _cols = None
 _model_type = ""
 
+def _load_xgb_seeds(base, prefix):
+    models = []
+    for seed in [42, 123, 456]:
+        try:
+            with open(base + f"{prefix}_s{seed}.pkl", "rb") as f:
+                models.append(pickle.load(f))
+        except:
+            pass
+    return models
+
 def load_models():
-    global _xgb_hw, _xgb_rd, _xgb_tot, _rf_hw, _rf_rd, _rf_tot, _cols, _MODELS_LOADED, _model_type
+    global _xgb_models_hw, _xgb_models_rd, _xgb_models_tot, _rf_hw, _rf_rd, _rf_tot, _cols, _MODELS_LOADED, _model_type
     base = os.path.join(os.path.dirname(__file__), "")
-    # Try XGBoost first
     try:
         import xgboost as xgb
-        with open(base + "xgb_hw.pkl", "rb") as f: _xgb_hw = pickle.load(f)
-        with open(base + "xgb_rd.pkl", "rb") as f: _xgb_rd = pickle.load(f)
-        with open(base + "xgb_tot.pkl", "rb") as f: _xgb_tot = pickle.load(f)
-        with open(base + "xgb_cols.pkl", "rb") as f: _cols = pickle.load(f)
-        _model_type = "XGBoost"
-        _MODELS_LOADED = True
+        _xgb_models_hw = _load_xgb_seeds(base, "xgb_hw")
+        _xgb_models_rd = _load_xgb_seeds(base, "xgb_rd")
+        _xgb_models_tot = _load_xgb_seeds(base, "xgb_tot")
+        if _xgb_models_hw:
+            with open(base + "xgb_cols.pkl", "rb") as f: _cols = pickle.load(f)
+            _model_type = f"XGBoost Ensemble ({len(_xgb_models_hw)} seeds)"
+            _MODELS_LOADED = True
+        else:
+            print("No ensemble models, trying single XGBoost...")
+            with open(base + "xgb_hw.pkl", "rb") as f: _xgb_models_hw = [pickle.load(f)]
+            with open(base + "xgb_rd.pkl", "rb") as f: _xgb_models_rd = [pickle.load(f)]
+            with open(base + "xgb_tot.pkl", "rb") as f: _xgb_models_tot = [pickle.load(f)]
+            with open(base + "xgb_cols.pkl", "rb") as f: _cols = pickle.load(f)
+            _model_type = "XGBoost"
+            _MODELS_LOADED = True
     except Exception as e:
-        print(f"XGBoost models not loaded: {e}, trying RF...")
+        print(f"XGBoost not loaded: {e}, trying RF...")
         try:
             with open(base + "rf_hw.pkl", "rb") as f: _rf_hw = pickle.load(f)
             with open(base + "rf_rd.pkl", "rb") as f: _rf_rd = pickle.load(f)
@@ -142,7 +162,7 @@ def load_models():
             _model_type = "RandomForest"
             _MODELS_LOADED = True
         except Exception as e2:
-            print(f"RF models also not loaded: {e2}")
+            print(f"RF also not loaded: {e2}")
 
 load_models()
 
@@ -637,10 +657,13 @@ def monte_carlo_predict(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f,
                                 hp_rec=hp_rec, ap_rec=ap_rec, weather=weather)
     x = np.array([[row[c] for c in _cols]])
 
-    if _xgb_hw is not None:
-        hw_prob = _xgb_hw.predict_proba(x)[0, 1]
-        exp_rdiff = _xgb_rd.predict(x)[0]
-        exp_total = _xgb_tot.predict(x)[0]
+    if _xgb_models_hw:
+        hw_probs = [m.predict_proba(x)[0, 1] for m in _xgb_models_hw]
+        hw_prob = sum(hw_probs) / len(hw_probs)
+        exp_rdiffs = [m.predict(x)[0] for m in _xgb_models_rd]
+        exp_rdiff = sum(exp_rdiffs) / len(exp_rdiffs)
+        exp_totals = [m.predict(x)[0] for m in _xgb_models_tot]
+        exp_total = sum(exp_totals) / len(exp_totals)
     else:
         hw_prob = _rf_hw.predict_proba(x)[0, 1]
         exp_rdiff = _rf_rd.predict(x)[0]
