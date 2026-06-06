@@ -1,0 +1,67 @@
+/Users/comic/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+=== Step 1: Fetching games ===
+  2020: 900 completed games
+  2021: 2438 completed games
+  2022: 2432 completed games
+  2023: 2437 completed games
+  2024: 2429 completed games
+  2025: 2433 completed games
+  2026: 938 completed games
+  Total: 14007 games
+
+=== Loaded cached data: 13968 games, 2446 pitcher-stats, 2446 rec-form ===
+
+=== Step 2: Fetching starting pitchers ===
+  Fetching boxscores for 15 games...
+  Games with both starters: 13983/14007
+
+=== Step 3: Fetching pitcher stats (30 unique) ===
+  0 pitcher-season combos to fetch (2446 cached)
+  Total pitcher-season stats: 2446
+
+=== Step 3b: Fetching pitcher game logs (rec_*) ===
+  0 pitcher-seasons to fetch (2446 cached)
+  Total pitcher rec-form: 2446
+  Cache saved to /Users/comic/Documents/mlb-picks-app/pitcher_cache.json
+
+=== Step 4: Building features ===
+    0/14007 (0%)
+    700/14007 (4%)
+    1400/14007 (9%)
+    2100/14007 (14%)
+    2800/14007 (19%)
+    3500/14007 (24%)
+    4200/14007 (29%)
+    4900/14007 (34%)
+    5600/14007 (39%)
+    6300/14007 (44%)
+    7000/14007 (49%)
+    7700/14007 (54%)
+    8400/14007 (59%)
+    9100/14007 (64%)
+    9800/14007 (69%)
+    10500/14007 (74%)
+    11200/14007 (79%)
+    11900/14007 (84%)
+    12600/14007 (89%)
+    13300/14007 (94%)
+    14000/14007 (99%)
+  Done! 14007 rows
+
+=== Step 5: Training XGBoost ===
+  Train: 11205, Val: 2802
+  HW acc:  0.589
+  RD MAE:  3.444
+  Tot MAE: 3.574
+
+=== Training seed=42 ===
+  HW acc: 0.589 | RD MAE: 3.444 | Tot MAE: 3.574
+
+=== Training seed=123 ===
+  HW acc: 0.580 | RD MAE: 3.469 | Tot MAE: 3.568
+
+=== Training seed=456 ===
+  HW acc: 0.585 | RD MAE: 3.486 | Tot MAE: 3.569
+
+✅ Ensemble (3 seeds) saved to /Users/comic/Documents/mlb-picks-app/
