@@ -173,8 +173,10 @@ def get_pnl():
     losses = [p for p in settled if p["result"] == "L"]
     total_profit = sum(p.get("profit") or 0 for p in settled)
     total_staked = sum(p.get("stake", 0) for p in settled)
+    stakes = sum(p.get("stake", 0) for p in h)
+    profits = sum(p.get("profit") or 0 for p in h if p.get("profit") is not None)
     return {
-        "bankroll": data["bankroll"],
+        "bankroll": round(1000 - stakes + profits, 2),
         "total": len(settled),
         "wins": len(wins),
         "losses": len(losses),
