@@ -1316,6 +1316,16 @@ def _admin_panel():
                     changed = True
             if changed:
                 _save_users(users)
+            st.divider()
+            st.markdown("**⏱ Expiración**")
+            cur_exp = users[sel].get("expires_at", "")
+            st.caption(f"Actual: {cur_exp}" if cur_exp else "Sin expiración")
+            new_dur = st.selectbox("Extender por", [7, 15, 30, 60, 90], index=2, key=f"ext_{sel}",
+                                    format_func=lambda x: f"{x} días")
+            if st.button("🔄 Actualizar", key=f"upd_{sel}"):
+                users[sel]["expires_at"] = _expires_at(new_dur)
+                _save_users(users)
+                st.rerun()
 
     if st.sidebar.button("🔒 Cerrar sesión"):
         st.session_state.clear()
