@@ -1433,7 +1433,13 @@ def main():
                 from bankroll import get_pnl
                 pnl = get_pnl()
                 st.divider()
-                st.markdown("#### 💰 P&L Tracker")
+                st.markdown("#### 📅 Semana")
+                c1, c2 = st.columns(2)
+                c1.metric("Bankroll Semanal", f"${pnl['weekly_bankroll']:.0f}")
+                c2.metric("Profit Semanal", f"${pnl['weekly_profit']:+.0f}", delta=f"{pnl['weekly_profit']:+.0f}")
+                st.caption(f"Semana: {pnl['weekly_wins']}-{pnl['weekly_losses']}  \nDesde: {pnl['weekly_start']}")
+                st.divider()
+                st.markdown("#### 💰 Histórico")
                 c1, c2 = st.columns(2)
                 c1.metric("Bankroll", f"${pnl['bankroll']:.0f}")
                 c2.metric("Profit", f"${pnl['profit']:+.0f}", delta=f"{pnl['roi']:+.0f}%")
@@ -2132,8 +2138,8 @@ def main():
 
             if data["history"]:
                 mc1, mc2, mc3, mc4 = st.columns(4)
-                mc1.metric("Bankroll", f"${pnl['bankroll']:.0f}")
-                mc2.metric("Profit", f"${pnl['profit']:+.0f}", delta=f"{pnl['roi']:+.0f}%")
+                mc1.metric("📅 Semanal", f"${pnl['weekly_bankroll']:.0f}", delta=f"${pnl['weekly_profit']:+.0f}")
+                mc2.metric("💰 Histórico", f"${pnl['bankroll']:.0f}", delta=f"{pnl['roi']:+.0f}%")
                 mc3.metric("Record", f"{pnl['wins']}-{pnl['losses']}", delta=f"{pnl['pct']}%")
                 mc4.metric("Pendientes", pnl["open"])
 

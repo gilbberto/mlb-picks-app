@@ -99,16 +99,42 @@ def recommend_stake(model_prob, odds_american, bankroll=100, kelly_frac=0.25):
     return (stake, units, label)
 
 # ─── P&L Tracker ───
+def _current_week_start():
+    """Return Monday 00:00 of current week as datetime."""
+    today = datetime.now(TZ)
+    return today - timedelta(days=today.weekday())
+
+def check_weekly_reset():
+    """Reset weekly bankroll every Sunday at 10 PM (Mexico time)."""
+    now = datetime.now(TZ)
+    if now.weekday() != 6 or now.hour != 22:
+        return
+    data = load_picks()
+    last_reset = data.get("last_weekly_reset", "")
+    today_str = now.strftime("%Y-%m-%d")
+    if last_reset == today_str:
+        return
+    data["weekly_bankroll"] = 1000
+    data["weekly_start"] = _current_week_start().strftime("%Y-%m-%d")
+    data["last_weekly_reset"] = today_str
+    save_picks(data)
+    print(f"  Weekly bankroll reset to $1000 ({today_str})")
+
 def load_picks():
     if not os.path.exists(DB_PATH):
-        return {"bankroll": 1000, "history": []}
+        return {"bankroll": 1000, "history": [], "weekly_bankroll": 1000,
+                "weekly_start": _current_week_start().strftime("%Y-%m-%d")}
     try:
         with open(DB_PATH) as f:
             d = json.load(f)
         if "history" not in d: d["history"] = []
+        if "weekly_bankroll" not in d:
+            d["weekly_bankroll"] = 1000
+            d["weekly_start"] = _current_week_start().strftime("%Y-%m-%d")
         return d
     except:
-        return {"bankroll": 1000, "history": []}
+        return {"bankroll": 1000, "history": [], "weekly_bankroll": 1000,
+                "weekly_start": _current_week_start().strftime("%Y-%m-%d")}
 
 def save_picks(data):
     os.makedirs(os.path.dirname(DB_PATH) or ".", exist_ok=True)
@@ -174,15 +200,29 @@ def get_pnl():
     total_staked = sum(p.get("stake", 0) for p in settled)
     total_profit = sum(p.get("profit") or 0 for p in h if p.get("profit") is not None)
     open_stakes = sum(p.get("stake", 0) for p in h if not p.get("settled"))
+    ws = data.get("weekly_start", _current_week_start().strftime("%Y-%m-%d"))
+    try:
+        ws_dt = datetime.strptime(ws, "%Y-%m-%d").replace(tzinfo=TZ) if TZ else datetime.strptime(ws, "%Y-%m-%d")
+    except:
+        ws_dt = _current_week_start()
+    weekly_picks = [p for p in h if p.get("date", "") >= ws]
+    weekly_settled = [p for p in weekly_picks if p.get("settled")]
+    weekly_w = sum(1 for p in weekly_settled if p["result"] == "W")
+    weekly_l = sum(1 for p in weekly_settled if p["result"] == "L")
+    weekly_profit = sum(p.get("profit") or 0 for p in weekly_picks if p.get("profit") is not None)
+    weekly_bankroll_start = data.get("weekly_bankroll", 1000)
+    weekly_bankroll = round(weekly_bankroll_start + weekly_profit, 2)
     return {
         "bankroll": round(1000 + total_profit - open_stakes, 2),
-        "total": len(settled),
-        "wins": len(wins),
-        "losses": len(losses),
+        "total": len(settled), "wins": len(wins), "losses": len(losses),
         "pct": round(len(wins) / len(settled) * 100, 1) if settled else 0,
         "profit": round(total_profit, 2),
         "roi": round(total_profit / total_staked * 100, 1) if total_staked > 0 else 0,
         "open": len([p for p in h if not p.get("settled")]),
+        "weekly_bankroll": weekly_bankroll,
+        "weekly_profit": round(weekly_profit, 2),
+        "weekly_wins": weekly_w, "weekly_losses": weekly_l,
+        "weekly_start": ws,
     }
 
 def today_checks():

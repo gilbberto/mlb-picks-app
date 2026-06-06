@@ -114,6 +114,7 @@ if settled_today:
     cycle = 0
     while True:
         sync_from_github()
+        subprocess.run(["python3", "-c", "from bankroll import check_weekly_reset; check_weekly_reset()"], cwd=CWD, env=ENV)
         subprocess.run(["python3", "settle_and_notify.py"], cwd=CWD, env=ENV)
         sync_to_github()
         if cycle == 0 or cycle % 240 == 0:
