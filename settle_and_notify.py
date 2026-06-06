@@ -425,7 +425,7 @@ def main():
                     result = "GANADA" if p.get("result") == "W" else "PERDIDA"
                     lines.append(f"{icon} *{p['game']}* → {p.get('market','?')} {p.get('team','?')} {icon} *{result}* (${profit:+.2f})")
             lines.append("")
-            lines.append(f"💰 *Bankroll:* ${after['bankroll']:.2f}")
+            lines.append(f"💰 *Bankroll:* ${pnl['bankroll']:.2f}")
             lines.append(f"📊 *Record:* {pnl['wins']}-{pnl['losses']} ({pnl['pct']}%)")
             lines.append(f"📈 *Profit:* ${pnl['profit']:.2f} ({pnl['roi']}%)")
             msg = "\n".join(lines)

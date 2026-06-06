@@ -708,8 +708,8 @@ def generate_recommendations():
     games = fetch_todays_schedule()
     odds_raw = fetch_odds()
     ab_map = fetch_team_abbrevs()
-    bk_data = load_picks()
-    actual_bankroll = bk_data["bankroll"]
+    from bankroll import get_pnl
+    actual_bankroll = get_pnl()["bankroll"]
 
     all_recs = []
 

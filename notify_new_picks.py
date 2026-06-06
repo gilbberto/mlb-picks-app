@@ -67,9 +67,8 @@ def check():
         return
 
     print(f"  Nuevos picks 🔥: {len(new_picks)}")
-    from bankroll import recommend_stake
-    picks_data = ms.load_picks()
-    br = picks_data.get("bankroll", 1000)
+    from bankroll import recommend_stake, get_pnl
+    br = get_pnl()["bankroll"]
 
     lines = ["🆕 *NUEVOS PICKS RECOMENDADOS*\n"]
     for p in new_picks:

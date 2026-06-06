@@ -72,7 +72,7 @@ def main():
             lines.append("")
 
     lines.append("┅" * 10)
-    lines.append(f"💰 *Bankroll:* ${data['bankroll']:.2f}")
+    lines.append(f"💰 *Bankroll:* ${pnl['bankroll']:.2f}")
     lines.append(f"📊 *Record:* {pnl['wins']}-{pnl['losses']} ({pnl['pct']}%)")
     lines.append(f"📈 *Profit:* ${pnl['profit']:.2f} ({pnl['roi']}%)")
 
