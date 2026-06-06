@@ -98,6 +98,12 @@ def recommend_stake(model_prob, odds_american, bankroll=100, kelly_frac=0.25):
         label = "Low"
     return (stake, units, label)
 
+try:
+    from zoneinfo import ZoneInfo
+    TZ = ZoneInfo("America/Chihuahua")
+except:
+    TZ = timezone(timedelta(hours=-6))
+
 # ─── P&L Tracker ───
 def _current_week_start():
     """Return Monday 00:00 of current week as datetime."""
