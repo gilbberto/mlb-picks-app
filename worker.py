@@ -65,7 +65,7 @@ def _merge_picks(local_str, remote_str):
     for p in local.get("history", []):
         if p.get("id") not in remote_ids:
             remote["history"].append(p)
-    remote["bankroll"] = min(remote.get("bankroll", 1000), local.get("bankroll", 1000))
+    remote["bankroll"] = 1000 - sum(p.get("stake", 0) for p in remote["history"])
     remote["history"].sort(key=lambda x: x.get("id", 0))
     return json.dumps(remote, indent=2)
 
