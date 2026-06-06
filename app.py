@@ -2151,7 +2151,7 @@ def main():
                         if is_settled:
                             del_btn = "—"
                         else:
-                            del_btn = f"<form action='' method='GET' style='display:inline;margin:0;padding:0'><input type='hidden' name='del_pick' value='{pid}'><button type='submit' style='background:none;border:none;cursor:pointer;font-size:16px;padding:0;color:#ff4444' title='Eliminar'>✕</button></form>"
+                            del_btn = f"<form action='' method='GET' style='display:inline;margin:0;padding:0'><input type='hidden' name='del_pick' value='{pid}'><input type='hidden' name='u' value='{st.session_state.user}'><button type='submit' style='background:none;border:none;cursor:pointer;font-size:16px;padding:0;color:#ff4444' title='Eliminar'>✕</button></form>"
                         html += f"""<tr style="background:{bg}">
                             <td style="padding:4px 6px;border-bottom:1px solid #2d3748">{row['Fecha']}</td>
                             <td style="padding:4px 6px;border-bottom:1px solid #2d3748">{row['Juego']}</td>
