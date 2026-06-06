@@ -374,8 +374,45 @@ def fetch_advanced_stats():
 
 # ─── Odds APIs ───
 
+ODDS_CACHE_PATH = os.path.join(os.path.dirname(__file__), ".odds_cache.json")
+
+def _sync_odds_from_github():
+    """Download .odds_cache.json from GitHub to avoid API call when cache is fresh."""
+    try:
+        owner, repo_name, branch, headers = _gh_headers()
+        if not owner: return
+        url = f"https://api.github.com/repos/{owner}/{repo_name}/contents/.odds_cache.json?ref={branch}"
+        r = requests.get(url, headers=headers, timeout=10)
+        if r.status_code == 200:
+            import base64
+            with open(ODDS_CACHE_PATH, "w") as f:
+                f.write(base64.b64decode(r.json()["content"]).decode())
+    except:
+        pass
+
+def _check_odds_cache():
+    """Return cached odds if file exists and is fresh (<4h)."""
+    try:
+        age = time.time() - os.path.getmtime(ODDS_CACHE_PATH)
+        if age < 14400:
+            with open(ODDS_CACHE_PATH) as f:
+                return json.load(f)
+    except:
+        pass
+    return None
+
+def _save_odds_cache(odds):
+    try:
+        with open(ODDS_CACHE_PATH, "w") as f:
+            json.dump(odds, f)
+    except:
+        pass
+
 @st.cache_data(ttl=14400)
 def fetch_odds():
+    cached = _check_odds_cache()
+    if cached is not None:
+        return cached
     odds = []
     if ODDS_API_KEY:
         try:
@@ -393,6 +430,8 @@ def fetch_odds():
                 odds = r.json().get("data", [])
         except Exception:
             pass
+    if odds:
+        _save_odds_cache(odds)
     return odds
 
 
@@ -2386,5 +2425,8 @@ def main():
 if __name__ == "__main__":
     try:
         sync_picks_from_github()
+    except: pass
+    try:
+        _sync_odds_from_github()
     except: pass
     main()
