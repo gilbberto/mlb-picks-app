@@ -2210,16 +2210,40 @@ def main():
                         actual = round(wins / tot * 100)
                         predicted = round((lo + hi) / 2)
                         cal_rows.append({
-                            "Rango": f"{lo}-{hi}%",
-                            "Picks": tot,
-                            "Ganados": wins,
-                            "Real": f"{actual}%",
-                            "Esperado": f"{predicted}%",
-                            "Diff": f"{actual - predicted:+.0f}%",
+                            "Rango": f"{lo}-{hi}%", "Picks": tot, "Ganados": wins,
+                            "Real": f"{actual}%", "Esperado": f"{predicted}%", "Diff": f"{actual - predicted:+.0f}%",
                         })
-                if cal_rows and _get_perms(st.session_state.user).get("calibration", False):
-                    with st.expander("📐 Calibración del modelo", expanded=False):
-                        st.dataframe(pd.DataFrame(cal_rows), hide_index=True, use_container_width=True)
+                    if _get_perms(st.session_state.user).get("calibration", False):
+                        with st.expander("📐 Calibración del modelo", expanded=False):
+                            st.dataframe(pd.DataFrame(cal_rows), hide_index=True, use_container_width=True)
+                            if len(cal_rows) >= 2:
+                                import altair as alt
+                                cd = pd.DataFrame(cal_rows)
+                                cd["Real"] = cd["Real"].str.replace("%","").astype(int)
+                                cd["Esperado"] = cd["Esperado"].str.replace("%","").astype(int)
+                                cd["Rango"] = cd["Rango"].str.replace("%","")
+                                chart = alt.Chart(cd).mark_line(point=True).encode(
+                                    x=alt.X("Rango:N", title="Probabilidad estimada"),
+                                    y=alt.Y("Real:Q", title="Frecuencia real (%)", scale=alt.Scale(zero=False)),
+                                    color=alt.value("#00cc66"),
+                                ).properties(height=200)
+                                chart += alt.Chart(cd).mark_line(strokeDash=[4,4], color="#888").encode(
+                                    x="Rango:N", y="Esperado:Q")
+                                st.altair_chart(chart, use_container_width=True)
+
+                # ── Backtest simple (Kelly vs flat betting) ──
+                if settled and _get_perms(st.session_state.user).get("model_stats", True):
+                    with st.expander("📈 Backtest: Estrategias", expanded=False):
+                        total_staked = sum(p.get("stake", 0) for p in settled)
+                        flat_profit = sum(p.get("profit") or 0 for p in settled)
+                        kelly_roi = round(flat_profit / total_staked * 100, 1) if total_staked > 0 else 0
+                        st.markdown(f"""
+                        **Kelly Criterion (25% fraccional)**
+                        - Picks: {len(settled)}
+                        - Profit: ${flat_profit:+.2f}
+                        - ROI: {kelly_roi}%
+                        - Bankroll final: ${pnl['bankroll']:.2f}
+                        """)
 
             # ── Predicciones history ──
             if _get_perms(st.session_state.user).get("model_stats", True):
