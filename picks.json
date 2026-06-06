@@ -1,5 +1,5 @@
 {
-  "bankroll": -1893.64,
+  "bankroll": -2108.04,
   "history": [
     {
       "id": 1,
@@ -332,6 +332,23 @@
       "label": "\ud83d\udd25 High",
       "settled": true,
       "telegram_msg_id": 222
+    },
+    {
+      "id": 21,
+      "date": "2026-06-06",
+      "game": "MIL @ COL",
+      "market": "O/U",
+      "team": "Under",
+      "detail": "u10.5",
+      "model_prob": 0.808,
+      "odds": -110,
+      "stake": 214.4,
+      "bankroll_before": 1439.51,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false,
+      "telegram_msg_id": 276
     }
   ]
 }
