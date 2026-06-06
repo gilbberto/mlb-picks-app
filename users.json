@@ -12,7 +12,8 @@
       "calibration": false,
       "model_stats": false,
       "detailed_table": false
-    }
+    },
+    "expires_at": "2026-07-06"
   },
   "alex": {
     "password": "alex2024",
@@ -23,6 +24,7 @@
       "calibration": false,
       "model_stats": false,
       "detailed_table": false
-    }
+    },
+    "expires_at": "2026-06-13"
   }
 }
