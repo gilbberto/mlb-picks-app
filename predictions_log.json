@@ -972,8 +972,8 @@
       "odds": 131,
       "edge": 20.6,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "W",
+      "settled": true
     },
     {
       "id": "822810_spread_minus",
@@ -987,8 +987,8 @@
       "odds": 140,
       "edge": -26.2,
       "detail": "-1.5",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "822810_spread_plus",
@@ -1002,8 +1002,8 @@
       "odds": -170,
       "edge": 21.5,
       "detail": "+1.5",
-      "result": null,
-      "settled": false
+      "result": "W",
+      "settled": true
     },
     {
       "id": "822810_total",
@@ -1017,8 +1017,8 @@
       "odds": -122,
       "edge": 25.1,
       "detail": "u8.5",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "823860_moneyline",
