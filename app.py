@@ -762,6 +762,8 @@ def _merge_picks(local_str, remote_str):
     import json
     remote = json.loads(remote_str)
     local = json.loads(local_str)
+    local_ids = {p.get("id") for p in local.get("history", [])}
+    remote["history"] = [p for p in remote["history"] if p.get("id") in local_ids]
     local_by_id = {p.get("id"): p for p in local.get("history", [])}
     for p in remote["history"]:
         lp = local_by_id.get(p.get("id"))

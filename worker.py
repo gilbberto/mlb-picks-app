@@ -57,12 +57,11 @@ def sync_from_github():
                 f.write(content)
 
 def _merge_picks(local_str, remote_str):
-    """Merge picks: remote is source of truth for existence; local updates settlements on existing picks."""
+    """Merge picks: remote is source of truth; local updates settlements; no adds/removes."""
     import json
     remote = json.loads(remote_str)
     local = json.loads(local_str)
     local_by_id = {p.get("id"): p for p in local.get("history", [])}
-    remote_ids = {p.get("id") for p in remote.get("history", [])}
     for p in remote["history"]:
         lp = local_by_id.get(p.get("id"))
         if lp and lp.get("settled") and not p.get("settled"):
