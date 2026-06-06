@@ -2082,6 +2082,27 @@ def main():
                     except:
                         pass
 
+                # Handle delete via query param (antes de construir la tabla)
+                del_pid = st.query_params.get("del_pick")
+                proc_key = f"processed_del_{del_pid}"
+                if del_pid is not None and not st.session_state.get(proc_key, False):
+                    st.session_state[proc_key] = True
+                    pid = int(del_pid)
+                    from bankroll import save_picks, load_picks
+                    d = load_picks()
+                    pick_to_del = next((p for p in d["history"] if p.get("id") == pid), None)
+                    if pick_to_del and pick_to_del.get("telegram_msg_id"):
+                        try:
+                            tok = _secret("TELEGRAM_TOKEN")
+                            cid = _secret("TELEGRAM_CHAT_ID")
+                            if tok and cid:
+                                requests.post(f"https://api.telegram.org/bot{tok}/deleteMessage",
+                                              json={"chat_id": cid, "message_id": pick_to_del["telegram_msg_id"]}, timeout=5)
+                        except: pass
+                    d["history"] = [x for x in d["history"] if x.get("id") != pid]
+                    save_picks(d)
+                    data = load_picks()
+
                 total_profit = 0
                 rows = []
                 for p in reversed(data["history"]):
@@ -2163,27 +2184,6 @@ def main():
                         </tr>"""
                     html += "</tbody></table></div>"
                     st.markdown(html, unsafe_allow_html=True)
-
-                # Handle delete via query param
-                del_pid = st.query_params.get("del_pick")
-                proc_key = f"processed_del_{del_pid}"
-                if del_pid is not None and not st.session_state.get(proc_key, False):
-                    st.session_state[proc_key] = True
-                    pid = int(del_pid)
-                    from bankroll import save_picks, load_picks
-                    d = load_picks()
-                    pick_to_del = next((p for p in d["history"] if p.get("id") == pid), None)
-                    if pick_to_del and pick_to_del.get("telegram_msg_id"):
-                        try:
-                            tok = _secret("TELEGRAM_TOKEN")
-                            cid = _secret("TELEGRAM_CHAT_ID")
-                            if tok and cid:
-                                requests.post(f"https://api.telegram.org/bot{tok}/deleteMessage",
-                                              json={"chat_id": cid, "message_id": pick_to_del["telegram_msg_id"]}, timeout=5)
-                        except: pass
-                    d["history"] = [x for x in d["history"] if x.get("id") != pid]
-                    save_picks(d)
-                    st.rerun()
 
                 green = total_profit >= 0
                 st.markdown(f"Profit total: <span style='color:{'#00cc66' if green else '#ff4444'}'><b>${total_profit:+.2f}</b></span>", unsafe_allow_html=True)
