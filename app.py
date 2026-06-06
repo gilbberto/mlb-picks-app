@@ -1250,23 +1250,32 @@ def _login_form():
         st.image("https://www.mlbstatic.com/team-logos/league-on-dark/1.svg", use_container_width=True)
         st.markdown("<h2 style='text-align:center;margin:5px 0 0 0'>MLB Picks AI</h2>", unsafe_allow_html=True)
         st.markdown("<p style='text-align:center;color:#888;font-size:13px;margin-bottom:20px'>We don't promise to win every day.<br>We promise to be on the right side of the numbers. ⚾📈💰</p>", unsafe_allow_html=True)
+        # Rate limit check
+        attempts = st.session_state.get("login_attempts", [])
+        attempts = [t for t in attempts if time.time() - t < 30]
+        st.session_state.login_attempts = attempts
+        if len(attempts) >= 5:
+            wait = int(30 - (time.time() - attempts[0]))
+            st.error(f"⏳ Demasiados intentos. Espera {wait}s.")
         with st.form("login_form"):
             u = st.text_input("Usuario")
             p = st.text_input("Contraseña", type="password")
             if st.form_submit_button("🔑 Entrar", use_container_width=True):
+                if len(st.session_state.get("login_attempts", [])) >= 5:
+                    st.rerun()
                 user = u.strip().lower()
                 pwd = p
                 users = _load_users()
                 if user in users and users[user]["password"] == pwd:
                     if _is_expired(users[user]):
-                        days = _days_left(users[user])
-                        st.error(f"❌ Acceso expirado hace {abs(days)} días. Contacta al administrador.")
+                        st.error("❌ Acceso expirado.")
                     else:
                         st.session_state.user = user
                         st.session_state.role = users[user]["role"]
-                        st.query_params["u"] = user
+                        st.session_state.login_time = time.time()
                         st.rerun()
                 else:
+                    st.session_state.login_attempts = st.session_state.get("login_attempts", []) + [time.time()]
                     st.error("Usuario o contraseña incorrectos")
 
 def _admin_panel():
@@ -1340,13 +1349,9 @@ def main():
         st.session_state.user = None
         st.session_state.role = None
     _sync_users_from_github()
-    if not st.session_state.role:
-        _u = st.query_params.get("u")
-        if _u:
-            users = _load_users()
-            if _u in users and not _is_expired(users[_u]):
-                st.session_state.user = _u
-                st.session_state.role = users[_u]["role"]
+    if st.session_state.get("login_time") and time.time() - st.session_state.login_time > 28800:
+        st.session_state.clear()
+        st.rerun()
     if not st.session_state.role:
         _login_form()
         return
@@ -2037,7 +2042,7 @@ def main():
                 elif is_regd:
                     btn = "<span style='color:#58a6ff'>✅</span>"
                 else:
-                    btn = f"<form action='' method='GET' style='display:inline;margin:0;padding:0'><input type='hidden' name='reg_pick' value='{i}'><input type='hidden' name='u' value='{st.session_state.user}'><button type='submit' style='background:none;border:none;cursor:pointer;font-size:18px;padding:0;color:#58a6ff' title='Registrar'>📝</button></form>"
+                    btn = f"<form action='' method='GET' style='display:inline;margin:0;padding:0'><input type='hidden' name='reg_pick' value='{i}'><button type='submit' style='background:none;border:none;cursor:pointer;font-size:18px;padding:0;color:#58a6ff' title='Registrar'>📝</button></form>"
                 html_rows += f"""<tr style="background:{'#0d1b2a' if i%2==0 else '#1b2838'}">
                     <td style="padding:6px 8px;border-bottom:1px solid #2d3748">{r['game']}</td>
                     <td style="padding:6px 8px;border-bottom:1px solid #2d3748">{r['market']}</td>
@@ -2248,7 +2253,7 @@ def main():
                         if is_settled:
                             del_btn = "—"
                         else:
-                            del_btn = f"<form action='' method='GET' style='display:inline;margin:0;padding:0'><input type='hidden' name='del_pick' value='{pid}'><input type='hidden' name='u' value='{st.session_state.user}'><button type='submit' style='background:none;border:none;cursor:pointer;font-size:16px;padding:0;color:#ff4444' title='Eliminar'>✕</button></form>"
+                            del_btn = f"<form action='' method='GET' style='display:inline;margin:0;padding:0'><input type='hidden' name='del_pick' value='{pid}'><button type='submit' style='background:none;border:none;cursor:pointer;font-size:16px;padding:0;color:#ff4444' title='Eliminar'>✕</button></form>"
                         html += f"""<tr style="background:{bg}">
                             <td style="padding:4px 6px;border-bottom:1px solid #2d3748">{row['Fecha']}</td>
                             <td style="padding:4px 6px;border-bottom:1px solid #2d3748">{row['Juego']}</td>
