@@ -2183,10 +2183,6 @@ def main():
                         except: pass
                     d["history"] = [x for x in d["history"] if x.get("id") != pid]
                     save_picks(d)
-                    _u = st.query_params.get("u", "")
-                    st.query_params.clear()
-                    if _u:
-                        st.query_params["u"] = _u
                     st.rerun()
 
                 green = total_profit >= 0
