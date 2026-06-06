@@ -1,5 +1,5 @@
 {
-  "bankroll": -2265.1,
+  "bankroll": -2423.12,
   "history": [
     {
       "id": 1,
@@ -366,6 +366,23 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 277
+    },
+    {
+      "id": 23,
+      "date": "2026-06-06",
+      "game": "SEA @ DET",
+      "market": "O/U",
+      "team": "Under",
+      "detail": "u9.0",
+      "model_prob": 0.823,
+      "odds": -130,
+      "stake": 158.02,
+      "bankroll_before": 1068.05,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false,
+      "telegram_msg_id": 278
     }
   ]
 }
