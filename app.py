@@ -1302,6 +1302,7 @@ def main():
                                       json={"chat_id": _cid, "message_id": _pick["telegram_msg_id"]}, timeout=5)
                 _d["history"] = [x for x in _d["history"] if x.get("id") != _pid]
                 save_picks(_d)
+                sync_picks_to_github()
             except:
                 pass
 
