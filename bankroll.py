@@ -171,12 +171,11 @@ def get_pnl():
     settled = [p for p in h if p.get("settled")]
     wins = [p for p in settled if p["result"] == "W"]
     losses = [p for p in settled if p["result"] == "L"]
-    total_profit = sum(p.get("profit") or 0 for p in settled)
     total_staked = sum(p.get("stake", 0) for p in settled)
-    stakes = sum(p.get("stake", 0) for p in h)
-    profits = sum(p.get("profit") or 0 for p in h if p.get("profit") is not None)
+    total_profit = sum(p.get("profit") or 0 for p in h if p.get("profit") is not None)
+    open_stakes = sum(p.get("stake", 0) for p in h if not p.get("settled"))
     return {
-        "bankroll": round(1000 - stakes + profits, 2),
+        "bankroll": round(1000 + total_profit - open_stakes, 2),
         "total": len(settled),
         "wins": len(wins),
         "losses": len(losses),
