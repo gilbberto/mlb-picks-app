@@ -1972,16 +1972,16 @@ def main():
                     idx = int(reg_idx)
                     if 0 <= idx < len(recs[:4]):
                         r = recs[idx]
-                        from bankroll import add_pick, get_pnl, recommend_stake
+                        sk = r["stake"]
+                        sl = r["stake_label"]
                         bk = get_pnl()["bankroll"]
-                        gl = f"{r['pick_dict']['away_abbrev']} @ {r['pick_dict']['home_abbrev']}"
-                        os_ = r["odds"]
-                        oi = int(str(os_).replace("$","")) if os_ not in ("N/A","—","") else 0
-                        pv = r["prob"]/100.0
-                        sk,_,sl = recommend_stake(pv, oi, bankroll=bk)
                         if sk > 0:
                             pt = r["pick"]
                             dtl = r.get("entry", {}).get("detail", "")
+                            gl = f"{r['pick_dict']['away_abbrev']} @ {r['pick_dict']['home_abbrev']}"
+                            os_ = r["odds"]
+                            oi = int(str(os_).replace("$","")) if os_ not in ("N/A","—","") else 0
+                            pv = r["prob"]/100.0
                             ts = datetime.now(TZ).strftime("%Y-%m-%d")
                             pid = add_pick(ts, gl, r["market"], pv, oi, sk, bk, sl, pt, dtl)
                             notify_pick(gl, r["market"], pt, sk, oi, bk, pick_id=pid)
