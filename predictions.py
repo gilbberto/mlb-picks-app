@@ -648,7 +648,20 @@ def compute_ev(prob, odds):
     dec = 1 + odds/100 if odds > 0 else 1 + 100/abs(odds)
     return round((prob/100 * dec) - 1, 4)
 
+ODDS_CACHE_PATH = os.path.join(os.path.dirname(__file__), ".odds_cache.json")
+
 def fetch_odds():
+    cache_age = 0
+    try:
+        cache_age = time.time() - os.path.getmtime(ODDS_CACHE_PATH)
+    except:
+        pass
+    if cache_age > 0 and cache_age < 300:
+        try:
+            with open(ODDS_CACHE_PATH) as f:
+                return json.load(f)
+        except:
+            pass
     odds = []
     if ODDS_API_KEY:
         try:
