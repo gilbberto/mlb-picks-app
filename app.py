@@ -1164,8 +1164,30 @@ MODULES = [("daily_picks", "Picks del Día"), ("recommendations", "Recomendacion
 
 def _default_perms():
     return {k: v for k, v in [("daily_picks", True), ("recommendations", True),
-                               ("calibration", False), ("model_stats", False),
-                               ("detailed_table", False)]}
+                                ("calibration", False), ("model_stats", False),
+                                ("detailed_table", False)]}
+
+def _expires_at(days):
+    """Return ISO date string N days from now for expiration."""
+    return (datetime.now(TZ) + timedelta(days=days)).strftime("%Y-%m-%d")
+
+def _is_expired(user_data):
+    """Check if a user's access has expired."""
+    exp = user_data.get("expires_at")
+    if not exp or user_data.get("role") == "admin":
+        return False
+    return datetime.now(TZ).strftime("%Y-%m-%d") > exp
+
+def _days_left(user_data):
+    """Return days remaining for a user."""
+    exp = user_data.get("expires_at")
+    if not exp or user_data.get("role") == "admin":
+        return None
+    try:
+        exp_dt = datetime.strptime(exp, "%Y-%m-%d").replace(tzinfo=TZ)
+        return (exp_dt - datetime.now(TZ)).days
+    except:
+        return None
 
 def _load_users():
     try:
@@ -1190,6 +1212,9 @@ def _sync_users_from_github():
         pass
 
 def _save_users(u):
+    for name, data in u.items():
+        if data.get("role") != "admin" and "expires_at" not in data:
+            data["expires_at"] = _expires_at(30)
     with open(USERS_PATH, "w") as f:
         json.dump(u, f, indent=2)
     _sync_users_to_github()
@@ -1233,10 +1258,14 @@ def _login_form():
                 pwd = p
                 users = _load_users()
                 if user in users and users[user]["password"] == pwd:
-                    st.session_state.user = user
-                    st.session_state.role = users[user]["role"]
-                    st.query_params["u"] = user
-                    st.rerun()
+                    if _is_expired(users[user]):
+                        days = _days_left(users[user])
+                        st.error(f"❌ Acceso expirado hace {abs(days)} días. Contacta al administrador.")
+                    else:
+                        st.session_state.user = user
+                        st.session_state.role = users[user]["role"]
+                        st.query_params["u"] = user
+                        st.rerun()
                 else:
                     st.error("Usuario o contraseña incorrectos")
 
@@ -1250,8 +1279,10 @@ def _admin_panel():
         for uname, udata in users.items():
             if uname == "admin":
                 continue
-            cols = st.columns([3, 1])
-            cols[0].markdown(f"**{uname}** — {udata.get('role','?')}")
+            cols = st.columns([4, 1])
+            exp_days = _days_left(udata)
+            exp_str = f" — ⏳{exp_days}d" if exp_days and exp_days > 0 else (" — ❌Expirado" if exp_days is not None and exp_days <= 0 else " — ♾️")
+            cols[0].markdown(f"**{uname}**{exp_str}")
             if cols[1].button("🗑", key=f"del_{uname}"):
                 del users[uname]
                 _save_users(users)
@@ -1262,11 +1293,14 @@ def _admin_panel():
         nu = st.text_input("Usuario", key="nu_name").strip().lower()
         np = st.text_input("Contraseña", type="password", key="nu_pass")
         nr = st.selectbox("Rol", ["viewer"], key="nu_role")
+        nd = st.selectbox("Acceso por", [7, 15, 30, 60, 90], index=2, key="nu_dur", format_func=lambda x: f"{x} días")
         if st.button("➕ Crear") and nu and np:
             if nu in users:
                 st.error("Ya existe")
             else:
-                users[nu] = {"password": np, "role": nr, "permissions": _default_perms()}
+                user_data = {"password": np, "role": nr, "permissions": _default_perms()}
+                user_data["expires_at"] = _expires_at(nd)
+                users[nu] = user_data
                 _save_users(users)
                 st.rerun()
 
@@ -1300,7 +1334,7 @@ def main():
         _u = st.query_params.get("u")
         if _u:
             users = _load_users()
-            if _u in users:
+            if _u in users and not _is_expired(users[_u]):
                 st.session_state.user = _u
                 st.session_state.role = users[_u]["role"]
     if not st.session_state.role:
