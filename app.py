@@ -1280,7 +1280,8 @@ def main():
 
     # ── Procesar delete de pick antes de cualquier render ──
     _del_pid = st.query_params.get("del_pick")
-    if _del_pid is not None and role == "admin":
+    if _del_pid is not None:
+        st.warning(f"del_pick={_del_pid}, role={role}")
         _proc_key = f"processed_del_{_del_pid}"
         if not st.session_state.get(_proc_key, False):
             st.session_state[_proc_key] = True
@@ -1288,16 +1289,11 @@ def main():
                 _pid = int(_del_pid)
                 from bankroll import save_picks, load_picks
                 _d = load_picks()
-                _pick = next((p for p in _d["history"] if p.get("id") == _pid), None)
-                if _pick and _pick.get("telegram_msg_id"):
-                    _tok = _secret("TELEGRAM_TOKEN")
-                    _cid = _secret("TELEGRAM_CHAT_ID")
-                    if _tok and _cid:
-                        requests.post(f"https://api.telegram.org/bot{_tok}/deleteMessage",
-                                      json={"chat_id": _cid, "message_id": _pick["telegram_msg_id"]}, timeout=5)
+                st.info(f"History before: {len(_d['history'])} picks")
                 _d["history"] = [x for x in _d["history"] if x.get("id") != _pid]
                 save_picks(_d)
-                st.success(f"✅ Pick {_pid} eliminado")
+                _d2 = load_picks()
+                st.success(f"✅ Pick {_pid} eliminado. History after: {len(_d2['history'])} picks")
             except Exception as _ex:
                 st.error(f"❌ Error al eliminar pick {_del_pid}: {_ex}")
 
