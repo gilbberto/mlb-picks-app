@@ -89,6 +89,27 @@ def sync_to_github():
 def main():
     print("=== Worker iniciado en Railway ===")
     sync_from_github()
+    # Enviar resumen de P&L al arrancar (juegos de ayer)
+    subprocess.run(["python3", "-c", """
+import sys; sys.path.insert(0, '.')
+from bankroll import get_pnl, load_picks
+from settle_and_notify import send_telegram
+pnl = get_pnl()
+data = load_picks()
+settled_today = [p for p in data['history'] if p.get('settled')]
+if settled_today:
+    lines = ['⚾ *Liquidación Final*', '']
+    for p in settled_today:
+        profit = p.get('profit') or 0
+        icon = '✅' if p.get('result') == 'W' else '❌'
+        res = 'GANADA' if p.get('result') == 'W' else 'PERDIDA'
+        lines.append(f'{icon} {p[\"game\"]} → {p.get(\"market\",\"?\")} {p.get(\"team\",\"?\")}: *{res}* (${profit:+.2f})')
+    lines.append('')
+    lines.append(f'💰 *Bankroll:* ${pnl[\"bankroll\"]:.2f}')
+    lines.append(f'📊 *Record:* {pnl[\"wins\"]}-{pnl[\"losses\"]} ({pnl[\"pct\"]}%)')
+    lines.append(f'📈 *Profit:* ${pnl[\"profit\"]:.2f} ({pnl[\"roi\"]}%)')
+    send_telegram('\n'.join(lines))
+"""], cwd=CWD, env=ENV)
     cycle = 0
     while True:
         sync_from_github()
