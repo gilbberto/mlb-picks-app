@@ -1947,6 +1947,10 @@ def main():
             return False
         high_conf_mask = upcoming.apply(_high_conf, axis=1)
         hc_count = high_conf_mask.sum()
+        st.write(f"DEBUG FILTER: {hc_count} of {len(upcoming)} games pass high confidence filter")
+        if hc_count == len(upcoming):
+            for _, r in upcoming.iterrows():
+                st.write(f"  Game: {r.get('away_abbrev','?')} @ {r.get('home_abbrev','?')} ML_edge={r.get('moneyline',{}).get('edge','?') if isinstance(r.get('moneyline'),dict) else 'N/A'}")
         if hc_count < len(upcoming):
             st.caption(f"🔥 Mostrando solo juegos con alta confianza")
             upcoming = upcoming[high_conf_mask]
