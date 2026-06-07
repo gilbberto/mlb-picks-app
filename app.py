@@ -1931,6 +1931,13 @@ def main():
         if hc_count < len(upcoming):
             st.caption(f"🔥 Mostrando {hc_count} juegos de alta confianza ({len(upcoming)} totales)")
             upcoming = upcoming[high_conf_mask]
+        else:
+            # Debug: show all game edges
+            for _, r in upcoming.iterrows():
+                for mk in ("moneyline", "spread_minus", "spread_plus", "total"):
+                    e = r.get(mk)
+                    if isinstance(e, dict):
+                        st.write(f"DEBUG: {r.get('away_abbrev','?')} @ {r.get('home_abbrev','?')} [{mk}] edge={e.get('edge')} prob={e.get('prob')}")
         st.markdown(f"### 📋 Picks del Día ({len(upcoming)} juegos)")
         flat_rows = []
         now_tz = datetime.now(TZ)
