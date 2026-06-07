@@ -1403,6 +1403,7 @@ def _admin_panel():
 # ─── Main ───
 
 def main():
+    st.warning("⚠️ DEBUG: Código nuevo ejecutándose (v2)")
     if "user" not in st.session_state:
         st.session_state.user = None
         st.session_state.role = None
