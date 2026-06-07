@@ -658,10 +658,9 @@ def compute_ev(prob, odds):
     return round((prob/100 * dec) - 1, 4)
 
 ODDS_CACHE_PATH = os.path.join(os.path.dirname(__file__), ".odds_cache.json")
-_LAST_ODDS_ATTEMPT = 0
+ODDS_COOLDOWN_PATH = os.path.join(os.path.dirname(__file__), ".odds_cooldown")
 
 def fetch_odds():
-    global _LAST_ODDS_ATTEMPT
     cache_age = 0
     try:
         cache_age = time.time() - os.path.getmtime(ODDS_CACHE_PATH)
@@ -673,10 +672,18 @@ def fetch_odds():
                 return json.load(f)
         except:
             pass
-    # Si ya intentamos hace menos de 30 min, no volver a llamar
-    if time.time() - _LAST_ODDS_ATTEMPT < 1800:
-        return []
-    _LAST_ODDS_ATTEMPT = time.time()
+    # Cooldown por archivo (persiste entre subprocess)
+    try:
+        cd_age = time.time() - os.path.getmtime(ODDS_COOLDOWN_PATH)
+        if cd_age < 1800:
+            return []
+    except:
+        pass
+    try:
+        with open(ODDS_COOLDOWN_PATH, "w") as f:
+            f.write(str(time.time()))
+    except:
+        pass
     odds = []
     if ODDS_API_KEY:
         try:

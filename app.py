@@ -390,6 +390,8 @@ def _sync_odds_from_github():
     except:
         pass
 
+ODDS_COOLDOWN = os.path.join(os.path.dirname(__file__), ".odds_cooldown")
+
 def _check_odds_cache():
     """Return cached odds if file exists and is fresh (<4h)."""
     try:
@@ -397,6 +399,13 @@ def _check_odds_cache():
         if age < 14400:
             with open(ODDS_CACHE_PATH) as f:
                 return json.load(f)
+    except:
+        pass
+    # File cooldown (persiste en filesystem, no en memoria)
+    try:
+        cd_age = time.time() - os.path.getmtime(ODDS_COOLDOWN)
+        if cd_age < 1800:
+            return []  # ya intentamos hace poco
     except:
         pass
     return None
@@ -432,6 +441,11 @@ def fetch_odds():
             pass
     if odds:
         _save_odds_cache(odds)
+    try:
+        with open(ODDS_COOLDOWN, "w") as f:
+            f.write(str(time.time()))
+    except:
+        pass
     return odds
 
 
