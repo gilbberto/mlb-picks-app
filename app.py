@@ -1906,6 +1906,18 @@ def main():
     completed = df[df["status"] == "Final"]
 
     if _get_perms(st.session_state.user).get("daily_picks", True) and len(upcoming) > 0:
+        def _high_conf(game_row):
+            for mk in ("moneyline", "spread_minus", "spread_plus", "total"):
+                e = game_row.get(mk, {})
+                if not e: continue
+                if (e.get("edge") or 0) > 8 or (e.get("prob") or 0) >= 75:
+                    return True
+            return False
+        high_conf_mask = upcoming.apply(_high_conf, axis=1)
+        hc_count = high_conf_mask.sum()
+        if hc_count < len(upcoming):
+            st.caption(f"🔥 Mostrando {hc_count} juegos de alta confianza ({len(upcoming)} totales)")
+            upcoming = upcoming[high_conf_mask]
         st.markdown(f"### 📋 Picks del Día ({len(upcoming)} juegos)")
         flat_rows = []
         now_tz = datetime.now(TZ)
