@@ -1910,7 +1910,11 @@ def main():
             for mk in ("moneyline", "spread_minus", "spread_plus", "total"):
                 e = game_row.get(mk, {})
                 if not e: continue
-                if (e.get("edge") or 0) > 8 or (e.get("prob") or 0) >= 75:
+                edge_val = e.get("edge")
+                if edge_val is not None and edge_val > 8:
+                    return True
+                prob_val = e.get("prob")
+                if prob_val is not None and prob_val >= 75:
                     return True
             return False
         high_conf_mask = upcoming.apply(_high_conf, axis=1)
