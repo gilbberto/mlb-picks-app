@@ -1403,7 +1403,6 @@ def _admin_panel():
 # ─── Main ───
 
 def main():
-    st.warning("⚠️ DEBUG: Código nuevo ejecutándose (v2)")
     if "user" not in st.session_state:
         st.session_state.user = None
         st.session_state.role = None
@@ -1947,10 +1946,6 @@ def main():
             return False
         high_conf_mask = upcoming.apply(_high_conf, axis=1)
         hc_count = high_conf_mask.sum()
-        st.write(f"DEBUG FILTER: {hc_count} of {len(upcoming)} games pass high confidence filter")
-        if hc_count == len(upcoming):
-            for _, r in upcoming.iterrows():
-                st.write(f"  Game: {r.get('away_abbrev','?')} @ {r.get('home_abbrev','?')} ML_edge={r.get('moneyline',{}).get('edge','?') if isinstance(r.get('moneyline'),dict) else 'N/A'}")
         if hc_count < len(upcoming):
             st.caption(f"🔥 Mostrando solo juegos con alta confianza")
             upcoming = upcoming[high_conf_mask]
@@ -1986,11 +1981,14 @@ def main():
                     t = time_str
             else:
                 t = time_str
+            _best_row = None
+            _best_score = -1
             for mk, ml in [("moneyline","ML"),("spread_minus","RL-1.5"),("spread_plus","RL+1.5"),("total","O/U")]:
                 p = r.get(mk)
                 if not p: continue
-                odds_val = p.get("odds","N/A")
+                _ev = p.get("ev")
                 prob_val = p.get("prob")
+                odds_val = p.get("odds","N/A")
                 edge = None
                 if prob_val and odds_val not in ("N/A","—",""):
                     try:
@@ -1998,26 +1996,34 @@ def main():
                         ip = american_to_prob(oi)
                         if ip: edge = round(prob_val - ip * 100, 1)
                     except: pass
-                pick_name = p.get("pick","—")
-                display_name = fmt_ou(pick_name, p.get("detail","")) if mk == "total" else pick_name
-                flames = ""
+                score = 0
                 if edge is not None and edge > 2:
-                    if edge > 8: flames = "🔥🔥🔥"
-                    elif edge > 5: flames = "🔥🔥"
-                    else: flames = "🔥"
+                    score = 5 if edge > 8 else (4 if edge > 5 else 3)
                 elif edge is None and prob_val is not None and prob_val >= 65:
-                    if prob_val >= 85: flames = "🔥🔥🔥"
-                    elif prob_val >= 75: flames = "🔥🔥🔥"
-                    elif prob_val >= 65: flames = "🔥🔥"
-                    edge = round(prob_val - 50, 1)
-                display_pick = f"{flames} {display_name}" if flames else display_name
-                flat_rows.append({
-                    "Juego": gl, "Hora": t, "M": ml,
-                    "Pick": display_pick,
-                    "Prob": f"{prob_val:.0f}%" if prob_val else "",
-                    "Odds": odds_val,
-                    "EV": f"{p['ev']:.1%}" if p.get("ev") is not None else "",
-                })
+                    score = 5 if prob_val >= 75 else 4
+                if score > _best_score:
+                    _best_score = score
+                    pick_name = p.get("pick","—")
+                    display_name = fmt_ou(pick_name, p.get("detail","")) if mk == "total" else pick_name
+                    flames = ""
+                    if edge is not None and edge > 2:
+                        if edge > 8: flames = "🔥🔥🔥"
+                        elif edge > 5: flames = "🔥🔥"
+                        else: flames = "🔥"
+                    elif edge is None and prob_val is not None and prob_val >= 65:
+                        if prob_val >= 85: flames = "🔥🔥🔥"
+                        elif prob_val >= 75: flames = "🔥🔥🔥"
+                        elif prob_val >= 65: flames = "🔥🔥"
+                    display_pick = f"{flames} {display_name}" if flames else display_name
+                    _best_row = {
+                        "Juego": gl, "Hora": t, "M": ml,
+                        "Pick": display_pick,
+                        "Prob": f"{prob_val:.0f}%" if prob_val else "",
+                        "Odds": odds_val,
+                        "EV": f"{_ev:.1%}" if _ev is not None else "",
+                    }
+            if _best_row:
+                flat_rows.append(_best_row)
         if flat_rows:
             st.dataframe(pd.DataFrame(flat_rows), column_config={
                 "Juego": st.column_config.TextColumn("Juego", width="medium"),
