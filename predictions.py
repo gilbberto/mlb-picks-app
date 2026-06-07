@@ -672,8 +672,13 @@ def fetch_odds():
                 return json.load(f)
         except:
             pass
-    # No llamar a la API sin cache — usar datos del modelo
-    return []
+    # Cooldown por archivo (persiste entre subprocess calls)
+    try:
+        cd_age = time.time() - os.path.getmtime(ODDS_COOLDOWN_PATH)
+        if cd_age < 1800:
+            return []
+    except:
+        pass
     odds = []
     if ODDS_API_KEY:
         try:
@@ -683,6 +688,17 @@ def fetch_odds():
                 odds = r.json()
         except:
             pass
+    if odds:
+        try:
+            with open(ODDS_CACHE_PATH, "w") as f:
+                json.dump(odds, f)
+        except:
+            pass
+    try:
+        with open(ODDS_COOLDOWN_PATH, "w") as f:
+            f.write(str(time.time()))
+    except:
+        pass
     return odds
 
 def match_game(odds_list, home_name, away_name):
