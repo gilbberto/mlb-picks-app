@@ -1917,8 +1917,8 @@ def main():
     if _get_perms(st.session_state.user).get("daily_picks", True) and len(upcoming) > 0:
         def _high_conf(game_row):
             for mk in ("moneyline", "spread_minus", "spread_plus", "total"):
-                e = game_row.get(mk, {})
-                if not e: continue
+                e = game_row.get(mk)
+                if not isinstance(e, dict): continue
                 edge_val = e.get("edge")
                 if edge_val is not None and edge_val > 8:
                     return True
