@@ -1012,6 +1012,24 @@ def render_card(pick, key_suffix="", game_idx=0):
         mkt_list = [("moneyline", "ML", "💰")]
         mkt_list += [("spread_minus", "RL -1.5", "📏"), ("spread_plus", "RL +1.5", "📏")]
         mkt_list += [("total", "O/U", "📈")]
+        # Solo mostrar el mercado con mayor confianza
+        _best_mkt = None
+        _best_score = -1
+        for mkt_key, mkt_label, mkt_icon in mkt_list:
+            p = pick.get(mkt_key, {})
+            if not p: continue
+            edge_val = p.get("edge")
+            prob_val = p.get("prob")
+            if edge_val is not None and edge_val > 2:
+                score = 5 if edge_val > 8 else (4 if edge_val > 5 else 3)
+            elif edge_val is None and prob_val is not None and prob_val >= 65:
+                score = 5 if prob_val >= 75 else 4
+            else:
+                score = 0
+            if score > _best_score:
+                _best_score = score
+                _best_mkt = (mkt_key, mkt_label, mkt_icon)
+        mkt_list = [_best_mkt] if _best_mkt else []
         for mkt_key, mkt_label, mkt_icon in mkt_list:
             p = pick.get(mkt_key, {})
             if not p:
@@ -1929,15 +1947,8 @@ def main():
         high_conf_mask = upcoming.apply(_high_conf, axis=1)
         hc_count = high_conf_mask.sum()
         if hc_count < len(upcoming):
-            st.caption(f"🔥 Mostrando {hc_count} juegos de alta confianza ({len(upcoming)} totales)")
+            st.caption(f"🔥 Mostrando solo juegos con alta confianza")
             upcoming = upcoming[high_conf_mask]
-        else:
-            # Debug: show all game edges
-            for _, r in upcoming.iterrows():
-                for mk in ("moneyline", "spread_minus", "spread_plus", "total"):
-                    e = r.get(mk)
-                    if isinstance(e, dict):
-                        st.write(f"DEBUG: {r.get('away_abbrev','?')} @ {r.get('home_abbrev','?')} [{mk}] edge={e.get('edge')} prob={e.get('prob')}")
         st.markdown(f"### 📋 Picks del Día ({len(upcoming)} juegos)")
         flat_rows = []
         now_tz = datetime.now(TZ)
