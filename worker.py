@@ -90,6 +90,14 @@ def sync_to_github():
 def main():
     print("=== Worker iniciado en Railway ===")
     sync_from_github()
+    # Crear cache de odds si no existe (para que web app lo descargue de GitHub)
+    subprocess.run(["python3", "-c", """
+import sys; sys.path.insert(0, '.')
+from predictions import fetch_odds
+odds = fetch_odds()
+print(f'  Odds cache: {len(odds) if odds else 0} games')
+"""], cwd=CWD, env=ENV)
+    sync_to_github()
     # Enviar resumen de P&L al arrancar (juegos de ayer)
     subprocess.run(["python3", "-c", """
 import sys; sys.path.insert(0, '.')
