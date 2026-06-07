@@ -128,6 +128,11 @@ def log_all_todays_predictions():
 
     today_str = datetime.now(TZ).strftime("%Y-%m-%d")
 
+    # No intentar antes de las 5 AM (Chihuahua) — el schedule no está disponible
+    hour = datetime.now(TZ).hour
+    if hour < 5:
+        return 0
+
     # Si ya hay predicciones guardadas hoy, salir sin llamar odds API
     try:
         with open(PRED_LOG_PATH) as f:
