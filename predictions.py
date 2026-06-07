@@ -127,17 +127,21 @@ def log_all_todays_predictions():
     from bankroll import calibrate_ml, calibrate_rl
 
     today_str = datetime.now(TZ).strftime("%Y-%m-%d")
-    games = fetch_todays_schedule()
-    odds_raw = fetch_odds()
-    ab_map = fetch_team_abbrevs()
 
+    # Si ya hay predicciones guardadas hoy, salir sin llamar odds API
     try:
         with open(PRED_LOG_PATH) as f:
             log_data = json.load(f)
     except:
         log_data = {"predictions": []}
-
     existing_ids = {p["id"] for p in log_data["predictions"] if p.get("date") == today_str}
+    if existing_ids:
+        return 0
+
+    games = fetch_todays_schedule()
+    odds_raw = fetch_odds()
+    ab_map = fetch_team_abbrevs()
+
     new_count = 0
 
     for g in games:
