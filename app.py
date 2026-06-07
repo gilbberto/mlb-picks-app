@@ -1312,6 +1312,7 @@ def _login_form():
                         st.session_state.user = user
                         st.session_state.role = users[user]["role"]
                         st.session_state.login_time = time.time()
+                        st.query_params["u"] = user
                         st.rerun()
                 else:
                     st.session_state.login_attempts = st.session_state.get("login_attempts", []) + [time.time()]
@@ -1391,6 +1392,14 @@ def main():
     if st.session_state.get("login_time") and time.time() - st.session_state.login_time > 28800:
         st.session_state.clear()
         st.rerun()
+    if not st.session_state.role:
+        _u = st.query_params.get("u")
+        if _u:
+            users = _load_users()
+            if _u in users and not _is_expired(users[_u]):
+                st.session_state.user = _u
+                st.session_state.role = users[_u]["role"]
+                st.session_state.login_time = time.time()
     if not st.session_state.role:
         _login_form()
         return
@@ -2114,7 +2123,7 @@ def main():
                 elif is_regd:
                     btn = "<span style='color:#58a6ff'>✅</span>"
                 else:
-                    btn = f"<form action='' method='GET' style='display:inline;margin:0;padding:0'><input type='hidden' name='reg_pick' value='{i}'><button type='submit' style='background:none;border:none;cursor:pointer;font-size:18px;padding:0;color:#58a6ff' title='Registrar'>📝</button></form>"
+                    btn = f"<form action='' method='GET' style='display:inline;margin:0;padding:0'><input type='hidden' name='reg_pick' value='{i}'><input type='hidden' name='u' value='{st.session_state.user}'><button type='submit' style='background:none;border:none;cursor:pointer;font-size:18px;padding:0;color:#58a6ff' title='Registrar'>📝</button></form>"
                 html_rows += f"""<tr style="background:{'#0d1b2a' if i%2==0 else '#1b2838'}">
                     <td style="padding:6px 8px;border-bottom:1px solid #2d3748">{r['game']}</td>
                     <td style="padding:6px 8px;border-bottom:1px solid #2d3748">{r['market']}</td>
@@ -2325,7 +2334,7 @@ def main():
                         if is_settled:
                             del_btn = "—"
                         else:
-                            del_btn = f"<form action='' method='GET' style='display:inline;margin:0;padding:0'><input type='hidden' name='del_pick' value='{pid}'><button type='submit' style='background:none;border:none;cursor:pointer;font-size:16px;padding:0;color:#ff4444' title='Eliminar'>✕</button></form>"
+                            del_btn = f"<form action='' method='GET' style='display:inline;margin:0;padding:0'><input type='hidden' name='del_pick' value='{pid}'><input type='hidden' name='u' value='{st.session_state.user}'><button type='submit' style='background:none;border:none;cursor:pointer;font-size:16px;padding:0;color:#ff4444' title='Eliminar'>✕</button></form>"
                         html += f"""<tr style="background:{bg}">
                             <td style="padding:4px 6px;border-bottom:1px solid #2d3748">{row['Fecha']}</td>
                             <td style="padding:4px 6px;border-bottom:1px solid #2d3748">{row['Juego']}</td>
