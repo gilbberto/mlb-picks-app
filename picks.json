@@ -1,5 +1,5 @@
 {
-  "bankroll": -2311.34,
+  "bankroll": -2475.41,
   "history": [
     {
       "id": 1,
@@ -417,6 +417,23 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 305
+    },
+    {
+      "id": 26,
+      "date": "2026-06-07",
+      "game": "SF @ CHC",
+      "market": "O/U",
+      "team": "Over",
+      "detail": "o8.0",
+      "model_prob": 0.727,
+      "odds": -121,
+      "stake": 164.07,
+      "bankroll_before": 1656.46,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false,
+      "telegram_msg_id": 306
     }
   ],
   "weekly_bankroll": 1000,
