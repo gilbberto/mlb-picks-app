@@ -111,16 +111,15 @@ def _current_week_start():
     return today - timedelta(days=today.weekday())
 
 def check_weekly_reset():
-    """Reset weekly bankroll every Sunday at 10 PM (Mexico time)."""
-    now = datetime.now(TZ)
-    if now.weekday() != 6 or now.hour != 22:
-        return
+    """Reset weekly bankroll when a new week starts (Monday)."""
     data = load_picks()
-    last_reset = data.get("last_weekly_reset", "")
-    today_str = now.strftime("%Y-%m-%d")
-    if last_reset == today_str:
+    now = datetime.now(TZ)
+    current_start = _current_week_start().strftime("%Y-%m-%d")
+    saved_start = data.get("weekly_start", "")
+    last_reset_date = data.get("last_weekly_reset", "")
+    if saved_start == current_start or last_reset_date == current_start:
         return
-    ws = data.get("weekly_start", _current_week_start().strftime("%Y-%m-%d"))
+    ws = saved_start or current_start
     h = data["history"]
     weekly_picks = [p for p in h if p.get("date", "") >= ws]
     weekly_settled = [p for p in weekly_picks if p.get("settled")]
@@ -138,10 +137,10 @@ def check_weekly_reset():
     })
     data["weekly_history"] = weekly_history
     data["weekly_bankroll"] = 1000
-    data["weekly_start"] = _current_week_start().strftime("%Y-%m-%d")
-    data["last_weekly_reset"] = today_str
+    data["weekly_start"] = current_start
+    data["last_weekly_reset"] = current_start
     save_picks(data)
-    print(f"  Weekly bankroll reset to $1000 ({today_str})")
+    print(f"  Weekly bankroll reset to $1000 ({current_start})")
 
 def load_picks():
     if not os.path.exists(DB_PATH):
