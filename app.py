@@ -401,11 +401,11 @@ def _check_odds_cache():
                 return json.load(f)
     except:
         pass
-    # File cooldown (persiste en filesystem, no en memoria)
+    # File cooldown
     try:
         cd_age = time.time() - os.path.getmtime(ODDS_COOLDOWN)
         if cd_age < 1800:
-            return []  # ya intentamos hace poco
+            return None  # None = intentar de nuevo después
     except:
         pass
     return None
@@ -417,10 +417,9 @@ def _save_odds_cache(odds):
     except:
         pass
 
-@st.cache_data(ttl=14400)
 def fetch_odds():
     cached = _check_odds_cache()
-    if cached is not None:
+    if cached:
         return cached
     odds = []
     if ODDS_API_KEY:
