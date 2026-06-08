@@ -1,5 +1,5 @@
 {
-  "bankroll": -3343.33,
+  "bankroll": -3424.17,
   "history": [
     {
       "id": 1,
@@ -519,6 +519,23 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 343
+    },
+    {
+      "id": 32,
+      "date": "2026-06-08",
+      "game": "SEA @ BAL",
+      "market": "ML",
+      "team": "Seattle Mariners",
+      "detail": "",
+      "model_prob": 0.715,
+      "odds": -137,
+      "stake": 80.84,
+      "bankroll_before": 1000,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false,
+      "telegram_msg_id": 344
     }
   ],
   "weekly_bankroll": 1000,
