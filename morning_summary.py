@@ -72,9 +72,9 @@ def main():
             lines.append("")
 
     lines.append("┅" * 10)
-    lines.append(f"💰 *Bankroll:* ${pnl['bankroll']:.2f}")
-    lines.append(f"📊 *Record:* {pnl['wins']}-{pnl['losses']} ({pnl['pct']}%)")
-    lines.append(f"📈 *Profit:* ${pnl['profit']:.2f} ({pnl['roi']}%)")
+    lines.append(f"💰 *Bankroll:* ${pnl['weekly_bankroll']:.2f}")
+    lines.append(f"📊 *Record Semanal:* {pnl['weekly_wins']}-{pnl['weekly_losses']}")
+    lines.append(f"📈 *Profit Semanal:* ${pnl['weekly_profit']:.2f}")
 
     msg = "\n".join(lines)
     print(f"\nMensaje:\n{msg}")
