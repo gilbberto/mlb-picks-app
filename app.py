@@ -2255,11 +2255,13 @@ def main():
                     pass
 
             if data["history"]:
+                wk_start = data.get("weekly_start", "2026-01-01")
+                weekly_picks = [p for p in data["history"] if p.get("date", "") >= wk_start]
                 mc1, mc2, mc3, mc4 = st.columns(4)
                 mc1.metric("📅 Semanal", f"${pnl['weekly_bankroll']:.0f}", delta=f"${pnl['weekly_profit']:+.0f}")
                 mc2.metric("💰 Histórico", f"${pnl['profit']:+.0f}", delta=f"{pnl['roi']:+.0f}%")
-                mc3.metric("Record", f"{pnl['wins']}-{pnl['losses']}", delta=f"{pnl['pct']}%")
-                mc4.metric("Pendientes", pnl["open"])
+                mc3.metric("Record Semanal", f"{pnl['weekly_wins']}-{pnl['weekly_losses']}")
+                mc4.metric("Pendientes", sum(1 for p in weekly_picks if not p.get("settled")))
 
                 # ── Win rate by market ──
                 settled = [p for p in data["history"] if p.get("result") in ("W", "L")]
@@ -2310,7 +2312,7 @@ def main():
 
                 total_profit = 0
                 rows = []
-                for p in reversed(data["history"]):
+                for p in reversed(weekly_picks):
                     result = p.get("result")
                     if result == "W":
                         r_icon = "✅ Ganado"
