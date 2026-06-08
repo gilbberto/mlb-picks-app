@@ -2258,7 +2258,7 @@ def main():
             if data["history"]:
                 mc1, mc2, mc3, mc4 = st.columns(4)
                 mc1.metric("📅 Semanal", f"${pnl['weekly_bankroll']:.0f}", delta=f"${pnl['weekly_profit']:+.0f}")
-                mc2.metric("💰 Histórico", f"${pnl['bankroll']:.0f}", delta=f"{pnl['roi']:+.0f}%")
+                mc2.metric("💰 Histórico", f"${pnl['profit']:+.0f}", delta=f"{pnl['roi']:+.0f}%")
                 mc3.metric("Record", f"{pnl['wins']}-{pnl['losses']}", delta=f"{pnl['pct']}%")
                 mc4.metric("Pendientes", pnl["open"])
 
