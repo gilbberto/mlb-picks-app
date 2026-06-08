@@ -2103,6 +2103,15 @@ def main():
                 else:
                     stake, units, stake_label = 0, 0, "—"
 
+                ip_str = ""
+                if has_real_odds:
+                    ip = american_to_prob(odds_int)
+                    ip_str = f"{ip*100:.0f}%" if ip else "?"
+                if label == "O/U":
+                    detail = entry.get("detail", "")
+                    reason = f"Modelo proyecta ~{p.get('exp_total', 0):.1f} carreras. Línea en {detail}. Ventaja +{edge}%."
+                else:
+                    reason = f"Modelo da {prob:.0f}% a {pick_team}. Las odds implícitas son {ip_str}. Ventaja +{edge}%."
                 recs.append({
                     "game": gl,
                     "market": label,
@@ -2116,6 +2125,7 @@ def main():
                     "pick_dict": p,
                     "mkt_key": mkt_key,
                     "entry": entry,
+                    "reason": reason,
                 })
 
         if recs and _get_perms(st.session_state.user).get("recommendations", True):
@@ -2167,10 +2177,11 @@ def main():
                     btn = "<span style='color:#58a6ff'>✅</span>"
                 else:
                     btn = f"<form action='' method='GET' style='display:inline;margin:0;padding:0'><input type='hidden' name='reg_pick' value='{i}'><input type='hidden' name='u' value='{st.session_state.user}'><button type='submit' style='background:none;border:none;cursor:pointer;font-size:18px;padding:0;color:#58a6ff' title='Registrar'>📝</button></form>"
+                _reason = r.get("reason", "")
                 html_rows += f"""<tr style="background:{'#0d1b2a' if i%2==0 else '#1b2838'}">
                     <td style="padding:6px 8px;border-bottom:1px solid #2d3748">{r['game']}</td>
                     <td style="padding:6px 8px;border-bottom:1px solid #2d3748">{r['market']}</td>
-                    <td style="padding:6px 8px;border-bottom:1px solid #2d3748">{warn}{pick_str}</td>
+                    <td style="padding:6px 8px;border-bottom:1px solid #2d3748" title="{_reason}">{warn}{pick_str}</td>
                     <td style="padding:6px 8px;border-bottom:1px solid #2d3748">{icon} {r['edge']:+.1f}%</td>
                     <td style="padding:6px 8px;border-bottom:1px solid #2d3748">{stake_str}</td>
                     <td style="padding:6px 8px;border-bottom:1px solid #2d3748;text-align:center">{btn}</td>
