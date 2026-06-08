@@ -417,10 +417,8 @@ def _save_odds_cache(odds):
     except:
         pass
 
+@st.cache_data(ttl=14400)
 def fetch_odds():
-    cached = _check_odds_cache()
-    if cached:
-        return cached
     odds = []
     if ODDS_API_KEY:
         try:
