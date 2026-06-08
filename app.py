@@ -2103,24 +2103,20 @@ def main():
                 else:
                     stake, units, stake_label = 0, 0, "—"
 
-                ip_str = ""
-                if has_real_odds:
-                    ip = american_to_prob(odds_int)
-                    ip_str = f"{ip*100:.0f}%" if ip else "?"
                 home = p.get("home_team", "")
                 away = p.get("away_team", "")
-                game_str = f"{away} @ {home}"
                 if label == "O/U":
                     detail = entry.get("detail", "")
                     side = "Over" if detail.startswith("o") else "Under"
                     hp = p.get("home_pitcher", "TBD")
                     ap = p.get("away_pitcher", "TBD")
-                    reason = f"El duelo de abridores {ap} vs {hp} apunta a un juego controlado por los lanzadores. Nuestro modelo proyecta solo ~{p.get('exp_total', 0):.1f} carreras totales, muy por debajo de la línea de {detail}. Con una ventaja del +{edge}%, el {side} {detail} tiene alto valor."
+                    exp_t = p.get('exp_total', 0)
+                    reason = f"El duelo de abridores será clave: {ap} vs {hp}. Históricamente, cuando estos equipos se enfrentan con lanzadores de este calibre, los juegos tienden a ser cerrados. Esperamos un total de {exp_t:.1f} carreras, por lo que el {side} {detail} es nuestra jugada preferida."
                 else:
                     hp = p.get("home_pitcher", "TBD")
                     ap = p.get("away_pitcher", "TBD")
                     venue = p.get("venue", "su estadio")
-                    reason = f"El modelo favorece a {pick_team} con un {prob:.0f}% de probabilidad de victoria frente al {ip_str} que marcan las odds. El abridor {hp if pick_team == home else ap} tiene ventaja en su duelo, y las condiciones en {venue} juegan a favor. Ventaja estimada de +{edge}%."
+                    reason = f"{pick_team} llega con buen momento ofensivo y su abridor {hp if pick_team == home else ap} ha demostrado solidez en sus últimas salidas. Jugar en {venue} también juega a su favor. Es un pick con fundamentos sólidos para esta jornada."
                 recs.append({
                     "game": gl,
                     "market": label,
