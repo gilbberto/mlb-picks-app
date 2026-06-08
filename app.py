@@ -2181,7 +2181,7 @@ def main():
                 html_rows += f"""<tr style="background:{'#0d1b2a' if i%2==0 else '#1b2838'}">
                     <td style="padding:6px 8px;border-bottom:1px solid #2d3748">{r['game']}</td>
                     <td style="padding:6px 8px;border-bottom:1px solid #2d3748">{r['market']}</td>
-                    <td style="padding:6px 8px;border-bottom:1px solid #2d3748">{warn}{pick_str}<br><span style="font-size:11px;color:#888">{_reason}</span></td>
+                    <td style="padding:6px 8px;border-bottom:1px solid #2d3748">{warn}{pick_str}<br><span style="font-size:11px;color:#58a6ff">{_reason}</span></td>
                     <td style="padding:6px 8px;border-bottom:1px solid #2d3748">{icon} {r['edge']:+.1f}%</td>
                     <td style="padding:6px 8px;border-bottom:1px solid #2d3748">{stake_str}</td>
                     <td style="padding:6px 8px;border-bottom:1px solid #2d3748;text-align:center">{btn}</td>
