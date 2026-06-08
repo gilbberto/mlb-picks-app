@@ -1129,7 +1129,7 @@ def generate_parlays(picks, top_n=3):
         if p.get("status") == "Final":
             continue
         gid = p.get("game_id", "")
-        for mkt_key, mkt_label in [("moneyline","ML"), ("spread_minus","RL -1.5"), ("spread_plus","RL +1.5"), ("total","O/U")]:
+        for mkt_key, mkt_label in [("moneyline","ML"), ("total","O/U")]:
             m = p.get(mkt_key, {})
             ev = m.get("ev")
             odds = m.get("odds")
@@ -1142,7 +1142,7 @@ def generate_parlays(picks, top_n=3):
 
             has_odds = odds is not None and odds != "N/A"
             has_ev = ev is not None and ev > 0
-            threshold = 45 if mkt_label in ("RL -1.5","RL +1.5") else 50
+            threshold = 50
             has_confidence = prob >= threshold
 
             if not has_ev and not has_confidence:
@@ -1998,7 +1998,7 @@ def main():
                 t = time_str
             _best_row = None
             _best_score = -1
-            for mk, ml in [("moneyline","ML"),("spread_minus","RL-1.5"),("spread_plus","RL+1.5"),("total","O/U")]:
+            for mk, ml in [("moneyline","ML"),("total","O/U")]:
                 p = r.get(mk)
                 if not p: continue
                 _ev = p.get("ev")
@@ -2077,8 +2077,7 @@ def main():
                 continue
             gl = f"{p['away_abbrev']} @ {p['home_abbrev']}"
 
-            for mkt_key, label in [("moneyline", "ML"), ("spread_minus", "RL -1.5"),
-                                   ("spread_plus", "RL +1.5"), ("total", "O/U")]:
+            for mkt_key, label in [("moneyline", "ML"), ("total", "O/U")]:
                 entry = p.get(mkt_key)
                 if not entry: continue
                 edge = entry.get("edge") if mkt_key == "moneyline" else get_edge(entry)
