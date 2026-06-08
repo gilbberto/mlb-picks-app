@@ -2157,6 +2157,7 @@ def main():
                 if epg and epm and ept:
                     existing.add((epg, epm, ept))
             html_rows = ""
+            _reasons_list = []
             for i, r in enumerate(recs[:4]):
                 is_regd = (r["game"].strip(), r["market"].strip(), r["pick"].strip()) in existing
                 icon = "🔥🔥🔥" if r["edge"] > 8 else "🔥🔥" if r["edge"] > 5 else "🔥"
@@ -2181,12 +2182,13 @@ def main():
                 html_rows += f"""<tr style="background:{'#0d1b2a' if i%2==0 else '#1b2838'}">
                     <td style="padding:6px 8px;border-bottom:1px solid #2d3748">{r['game']}</td>
                     <td style="padding:6px 8px;border-bottom:1px solid #2d3748">{r['market']}</td>
-                    <td style="padding:6px 8px;border-bottom:1px solid #2d3748">{warn}{pick_str}<br><span style="font-size:11px!important;color:#58a6ff!important">{_reason}</span></td>
+                    <td style="padding:6px 8px;border-bottom:1px solid #2d3748">{warn}{pick_str}</td>
                     <td style="padding:6px 8px;border-bottom:1px solid #2d3748">{icon} {r['edge']:+.1f}%</td>
                     <td style="padding:6px 8px;border-bottom:1px solid #2d3748">{stake_str}</td>
                     <td style="padding:6px 8px;border-bottom:1px solid #2d3748;text-align:center">{btn}</td>
                 </tr>"""
-            st.markdown(f"""<div style="overflow-x:auto">
+            _reasons_list.append(f"**{r['game']}** ({r['market']}): {_reason}")
+        st.markdown(f"""<div style="overflow-x:auto">
             <table style="width:100%;border-collapse:collapse;color:#c9d1d9;font-size:14px">
                 <thead><tr style="background:#161b22">
                     <th style="padding:8px;text-align:left;border-bottom:2px solid #30363d">Juego</th>
@@ -2198,6 +2200,10 @@ def main():
                 </tr></thead>
                 <tbody>{html_rows}</tbody>
             </table></div>""", unsafe_allow_html=True)
+        if _reasons_list:
+            st.markdown("**📖 Explicación:**")
+            for line in _reasons_list:
+                st.markdown(f"- {line}")
 
             # Handle form submission via query param
             reg_idx = st.query_params.get("reg_pick") if role == "admin" else None
