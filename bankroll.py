@@ -89,6 +89,7 @@ def recommend_stake(model_prob, odds_american, bankroll=100, kelly_frac=0.25):
     if f <= 0:
         return (0, 0, "No bet")
     stake = round(bankroll * f * kelly_frac, 2)
+    stake = min(stake, 100)
     units = round(stake / 10, 1) if stake > 0 else 0
     if f * kelly_frac >= 0.03:
         label = "🔥 High"
