@@ -1520,11 +1520,11 @@ def main():
                 c2.metric("Profit Semanal", f"${pnl['weekly_profit']:+.0f}", delta=f"{pnl['weekly_profit']:+.0f}")
                 st.caption(f"Semana: {pnl['weekly_wins']}-{pnl['weekly_losses']}  \nDesde: {pnl['weekly_start']}")
                 st.divider()
-                st.markdown("#### 💰 Histórico")
+                st.markdown("#### 💰 Histórico (acumulado)")
                 c1, c2 = st.columns(2)
-                c1.metric("Bankroll", f"${pnl['bankroll']:.0f}")
-                c2.metric("Profit", f"${pnl['profit']:+.0f}", delta=f"{pnl['roi']:+.0f}%")
-                st.caption(f"{pnl['wins']}-{pnl['losses']} ({pnl['pct']}%) · {pnl['open']} pendientes")
+                c1.metric("Profit Total", f"${pnl['profit']:+.0f}", delta=f"{pnl['roi']:+.0f}%")
+                c2.metric("Record", f"{pnl['wins']}-{pnl['losses']}", delta=f"{pnl['pct']}%")
+                st.caption(f"{pnl['open']} pendientes")
                 try:
                     from bankroll import load_picks
                     _wh_data = load_picks()
