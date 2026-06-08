@@ -842,7 +842,7 @@ def generate_recommendations():
     odds_raw = fetch_odds()
     ab_map = fetch_team_abbrevs()
     from bankroll import get_pnl
-    actual_bankroll = get_pnl()["bankroll"]
+    actual_bankroll = get_pnl()["weekly_bankroll"]
 
     all_recs = []
 

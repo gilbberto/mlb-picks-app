@@ -1090,7 +1090,7 @@ def render_card(pick, key_suffix="", game_idx=0):
                     if st.button("📝", key=log_key):
                         try:
                             from bankroll import add_pick, get_pnl, recommend_stake
-                            bk = get_pnl()["bankroll"]
+                            bk = get_pnl()["weekly_bankroll"]
                             gl = f"{pick['away_abbrev']} @ {pick['home_abbrev']}"
                             os_ = str(odds) if odds and odds != "N/A" else ""
                             oi = int(str(os_).replace("$","")) if os_ not in ("N/A","—","") else 0
@@ -2057,7 +2057,7 @@ def main():
     recs = []
     try:
         from bankroll import recommend_stake, get_pnl
-        actual_bankroll = get_pnl()["bankroll"]
+        actual_bankroll = get_pnl()["weekly_bankroll"]
         # Helper: compute edge from entry if it has odds + prob
         def get_edge(entry):
             if not entry or not entry.get("odds") or entry["odds"] in ("N/A", "—", ""):
@@ -2200,7 +2200,7 @@ def main():
                         r = recs[idx]
                         sk = r["stake"]
                         sl = r["stake_label"]
-                        bk = get_pnl()["bankroll"]
+                        bk = get_pnl()["weekly_bankroll"]
                         if sk > 0:
                             from bankroll import add_pick
                             pt = r["pick"]
