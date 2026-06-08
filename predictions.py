@@ -256,53 +256,7 @@ def log_all_todays_predictions():
             })
             new_count += 1
 
-        # RL -1.5
-        mkt = "RL -1.5"
-        pid = f"{gid}_spread_minus"
-        if pid not in existing_ids:
-            rl_prob = spr_fav_prob
-            rl_odds = "N/A"
-            rl_edge = None
-            if og:
-                spr_price, _, _ = extract_market_odds(og, "spreads", spr_fav_team, expect_point=-1.5)
-                if spr_price:
-                    rl_odds = spr_price
-                    ip = american_to_prob(spr_price)
-                    if ip:
-                        rl_edge = round(rl_prob * 100 - ip * 100, 1) if rl_prob > 0 else None
-            log_data["predictions"].append({
-                "id": pid, "date": today_str, "game": gl,
-                "away_abbrev": aa, "home_abbrev": ha,
-                "market": mkt, "pick": spr_fav_team,
-                "prob": round(rl_prob * 100, 1) if rl_prob > 0 else 0,
-                "odds": rl_odds, "edge": rl_edge, "detail": "-1.5",
-                "result": None, "settled": False,
-            })
-            new_count += 1
-
-        # RL +1.5
-        mkt = "RL +1.5"
-        pid = f"{gid}_spread_plus"
-        if pid not in existing_ids:
-            rl_dog_prob = spr_dog_prob
-            rl_dog_odds = "N/A"
-            rl_dog_edge = None
-            if og:
-                spr_dog_price, _, _ = extract_market_odds(og, "spreads", spr_dog_team, expect_point=1.5)
-                if spr_dog_price:
-                    rl_dog_odds = spr_dog_price
-                    ip = american_to_prob(spr_dog_price)
-                    if ip:
-                        rl_dog_edge = round(rl_dog_prob * 100 - ip * 100, 1) if rl_dog_prob > 0 else None
-            log_data["predictions"].append({
-                "id": pid, "date": today_str, "game": gl,
-                "away_abbrev": aa, "home_abbrev": ha,
-                "market": mkt, "pick": spr_dog_team,
-                "prob": round(rl_dog_prob * 100, 1) if rl_dog_prob > 0 else 0,
-                "odds": rl_dog_odds, "edge": rl_dog_edge, "detail": "+1.5",
-                "result": None, "settled": False,
-            })
-            new_count += 1
+        # RL omitido — bajo rendimiento
 
         # O/U (solo si hay odds — sin línea no se puede liquidar)
         mkt = "O/U"
@@ -375,7 +329,7 @@ def compute_model_stats():
 
     lines.append(f"*Total:* {total_w}-{total_l} ({total_w/total*100:.1f}%)\n" if total > 0 else "*Total:* 0\n")
 
-    for m in ["ML", "RL -1.5", "RL +1.5", "O/U"]:
+    for m in ["ML", "O/U"]:
         if m not in markets:
             continue
         s = markets[m]
@@ -797,7 +751,7 @@ def run_backtest():
     lines.append(f"🎯 Total predicciones liquidadas: {results['total']}")
     lines.append(f"📊 Record: {results['wins']}-{results['total']-results['wins']} ({pct}%)\n")
 
-    for mkt in ["ML", "RL -1.5", "RL +1.5", "O/U"]:
+    for mkt in ["ML", "O/U"]:
         if mkt in results["by_market"]:
             d = results["by_market"][mkt]
             n = d["w"] + d["l"]
@@ -947,27 +901,7 @@ def generate_recommendations():
                 ml_entry["edge"] = round(cal_prob*100 - (mp*100 if mp else 0), 1)
             all_recs.append(ml_entry)
 
-        # RL -1.5
-        spr_price, spr_book, _ = extract_market_odds(og, "spreads", spr_fav_team, expect_point=-1.5)
-        if spr_price and spr_fav_prob > 0:
-            rl_entry = {
-                "game": gl, "market": "RL -1.5", "team": spr_fav_team, "detail": "-1.5",
-                "prob": spr_fav_prob*100, "odds": spr_price, "edge": None,
-            }
-            ed = get_edge_for_entry(rl_entry)
-            if ed: rl_entry["edge"] = ed
-            all_recs.append(rl_entry)
-
-        # RL +1.5
-        spr_dog_price, spr_dog_book, _ = extract_market_odds(og, "spreads", spr_dog_team, expect_point=1.5)
-        if spr_dog_price and spr_dog_prob > 0:
-            rl_dog_entry = {
-                "game": gl, "market": "RL +1.5", "team": spr_dog_team, "detail": "+1.5",
-                "prob": spr_dog_prob*100, "odds": spr_dog_price, "edge": None,
-            }
-            ed = get_edge_for_entry(rl_dog_entry)
-            if ed: rl_dog_entry["edge"] = ed
-            all_recs.append(rl_dog_entry)
+        # RL omitido — bajo rendimiento (15-39 histórico)
 
         # O/U
         ov_price, ov_book, ov_point = extract_market_odds(og, "totals")
