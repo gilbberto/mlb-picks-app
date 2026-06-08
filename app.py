@@ -2107,11 +2107,20 @@ def main():
                 if has_real_odds:
                     ip = american_to_prob(odds_int)
                     ip_str = f"{ip*100:.0f}%" if ip else "?"
+                home = p.get("home_team", "")
+                away = p.get("away_team", "")
+                game_str = f"{away} @ {home}"
                 if label == "O/U":
                     detail = entry.get("detail", "")
-                    reason = f"Modelo proyecta ~{p.get('exp_total', 0):.1f} carreras. Línea en {detail}. Ventaja +{edge}%."
+                    side = "Over" if detail.startswith("o") else "Under"
+                    hp = p.get("home_pitcher", "TBD")
+                    ap = p.get("away_pitcher", "TBD")
+                    reason = f"El duelo de abridores {ap} vs {hp} apunta a un juego controlado por los lanzadores. Nuestro modelo proyecta solo ~{p.get('exp_total', 0):.1f} carreras totales, muy por debajo de la línea de {detail}. Con una ventaja del +{edge}%, el {side} {detail} tiene alto valor."
                 else:
-                    reason = f"Modelo da {prob:.0f}% a {pick_team}. Las odds implícitas son {ip_str}. Ventaja +{edge}%."
+                    hp = p.get("home_pitcher", "TBD")
+                    ap = p.get("away_pitcher", "TBD")
+                    venue = p.get("venue", "su estadio")
+                    reason = f"El modelo favorece a {pick_team} con un {prob:.0f}% de probabilidad de victoria frente al {ip_str} que marcan las odds. El abridor {hp if pick_team == home else ap} tiene ventaja en su duelo, y las condiciones en {venue} juegan a favor. Ventaja estimada de +{edge}%."
                 recs.append({
                     "game": gl,
                     "market": label,
