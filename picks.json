@@ -1,5 +1,5 @@
 {
-  "bankroll": -3175.61,
+  "bankroll": -3250.55,
   "history": [
     {
       "id": 1,
@@ -485,6 +485,23 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 341
+    },
+    {
+      "id": 30,
+      "date": "2026-06-08",
+      "game": "NYY @ CLE",
+      "market": "ML",
+      "team": "New York Yankees",
+      "detail": "",
+      "model_prob": 0.625,
+      "odds": 115,
+      "stake": 74.94,
+      "bankroll_before": 1000,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false,
+      "telegram_msg_id": 342
     }
   ],
   "weekly_bankroll": 1000,
