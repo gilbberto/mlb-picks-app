@@ -74,6 +74,10 @@ st.markdown("""
     }
     div[data-testid="stDataFrame"] td { background: #FFF !important; color: var(--text) !important; }
     div[data-testid="stDataFrame"] tr:nth-child(even) td { background: #FAFAFA !important; }
+    /* Tambien forzar en el thead */
+    div[data-testid="stDataFrame"] thead th, div[data-testid="stDataFrame"] thead tr {
+        background: var(--accent) !important; color: #FFF !important;
+    }
     /* Buttons */
     .stButton button {
         background: var(--btn) !important; color: #FFF !important;
