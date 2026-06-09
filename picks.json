@@ -1,5 +1,5 @@
 {
-  "bankroll": -3758.13,
+  "bankroll": -3658.13,
   "history": [
     {
       "id": 1,
@@ -587,23 +587,6 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 371
-    },
-    {
-      "id": 36,
-      "date": "2026-06-09",
-      "game": "BOS @ TB",
-      "market": "O/U",
-      "team": "Under",
-      "detail": "u7.5",
-      "model_prob": 0.77,
-      "odds": -125,
-      "stake": 100,
-      "bankroll_before": 1066.04,
-      "result": null,
-      "profit": null,
-      "label": "\ud83d\udd25 High",
-      "settled": false,
-      "telegram_msg_id": 372
     }
   ],
   "weekly_bankroll": 1000,
