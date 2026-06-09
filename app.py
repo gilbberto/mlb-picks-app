@@ -740,7 +740,7 @@ def monte_carlo_predict(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f,
         "spr_away_plus": round(float(mc_away_plus), 4),
         "spr_exp_margin": round(float(exp_rdiff), 2),
         "exp_total": round(float(exp_total), 2),
-        "total_std": 3.2,
+        "total_std": total_std,
         "hw_prob_raw": round(float(hw_prob), 4),
         "exp_rdiff_raw": round(float(exp_rdiff), 2),
     }
