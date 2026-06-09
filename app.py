@@ -2280,9 +2280,10 @@ def main():
                 wk_start = data.get("weekly_start", "2026-01-01")
                 weekly_picks = [p for p in data["history"] if p.get("date", "") >= wk_start]
                 mc1, mc2, mc3, mc4 = st.columns(4)
+                _cash = data.get("cash_adjust", 0) or 0
                 mc1.metric("📅 Semanal", f"${pnl['weekly_bankroll']:.0f}", delta=f"${pnl['weekly_profit']:+.0f}")
                 mc2.metric("💰 Histórico", f"${pnl['profit']:+.0f}", delta=f"{pnl['roi']:+.0f}%")
-                mc3.metric("Record Semanal", f"{pnl['weekly_wins']}-{pnl['weekly_losses']}")
+                mc3.metric("🎰 Casino Real", f"${_cash:+.0f}")
                 mc4.metric("Pendientes", sum(1 for p in weekly_picks if not p.get("settled")))
 
                 # ── Win rate by market ──
