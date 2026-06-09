@@ -2023,15 +2023,30 @@ def main():
             if _best_row:
                 flat_rows.append(_best_row)
         if flat_rows:
-            st.dataframe(pd.DataFrame(flat_rows), column_config={
-                "Juego": st.column_config.TextColumn("Juego", width="medium"),
-                "Hora": st.column_config.TextColumn("Hora", width="small"),
-                "M": st.column_config.TextColumn("M", width="small"),
-                "Pick": st.column_config.TextColumn("Pick", width="medium"),
-                "Prob": st.column_config.TextColumn("Prob", width="small"),
-                "Odds": st.column_config.TextColumn("Odds", width="small"),
-                "EV": st.column_config.TextColumn("EV", width="small"),
-            }, hide_index=True, use_container_width=True)
+            html = """<div style="overflow-x:auto">
+            <table style="width:100%;border-collapse:collapse;color:#212121;font-size:14px">
+                <thead><tr style="background:#E53935;color:#FFF">
+                    <th style="padding:8px;text-align:left;border-bottom:2px solid #E0E0E0">Juego</th>
+                    <th style="padding:8px;text-align:left;border-bottom:2px solid #E0E0E0">Hora</th>
+                    <th style="padding:8px;text-align:left;border-bottom:2px solid #E0E0E0">M</th>
+                    <th style="padding:8px;text-align:left;border-bottom:2px solid #E0E0E0">Pick</th>
+                    <th style="padding:8px;text-align:left;border-bottom:2px solid #E0E0E0">Prob</th>
+                    <th style="padding:8px;text-align:left;border-bottom:2px solid #E0E0E0">Odds</th>
+                    <th style="padding:8px;text-align:left;border-bottom:2px solid #E0E0E0">EV</th>
+                </tr></thead><tbody>"""
+            for i, row in enumerate(flat_rows):
+                bg = "#F8F9FA" if i % 2 == 0 else "#FFF"
+                html += f"""<tr style="background:{bg}">
+                    <td style="padding:6px 8px;border-bottom:1px solid #E0E0E0">{row['Juego']}</td>
+                    <td style="padding:6px 8px;border-bottom:1px solid #E0E0E0">{row['Hora']}</td>
+                    <td style="padding:6px 8px;border-bottom:1px solid #E0E0E0">{row['M']}</td>
+                    <td style="padding:6px 8px;border-bottom:1px solid #E0E0E0">{row['Pick']}</td>
+                    <td style="padding:6px 8px;border-bottom:1px solid #E0E0E0">{row['Prob']}</td>
+                    <td style="padding:6px 8px;border-bottom:1px solid #E0E0E0">{row['Odds']}</td>
+                    <td style="padding:6px 8px;border-bottom:1px solid #E0E0E0">{row['EV']}</td>
+                </tr>"""
+            html += "</tbody></table></div>"
+            st.markdown(html, unsafe_allow_html=True)
             st.caption("Usa la sección 🏆 Recomendaciones para registrar tus picks.")
         else:
             st.info("No hay picks disponibles para mostrar.")
