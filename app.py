@@ -2425,6 +2425,7 @@ def main():
                         try:
                             save_picks(data)
                             data = load_picks()
+                            sync_picks_to_github()
                         except Exception as _e:
                             st.error(f"❌ Error al guardar: {_e}")
 
