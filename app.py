@@ -740,7 +740,7 @@ def monte_carlo_predict(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f,
         "spr_away_plus": round(float(mc_away_plus), 4),
         "spr_exp_margin": round(float(exp_rdiff), 2),
         "exp_total": round(float(exp_total), 2),
-        "total_std": 3.2,
+        "total_std": 2.8,
         "hw_prob_raw": round(float(hw_prob), 4),
         "exp_rdiff_raw": round(float(exp_rdiff), 2),
     }
@@ -1865,7 +1865,7 @@ def main():
                     ov_price, ov_book, ov_point = extract_market_odds(og, "totals")
                     if ov_price and ov_point:
                         over_prob = norm_cdf(exp_total - ov_point, 0, total_std)
-                        if over_prob > 0.5:
+                        if over_prob > 0.55:
                             ov_p = american_to_prob(ov_price)
                             ov_edge = round(over_prob*100 - (ov_p*100 if ov_p else 0), 1) if ov_p else None
                             pick_entry["total"] = {
@@ -2353,10 +2353,6 @@ def main():
                                     r_icon = "⏳ Por Iniciar"
                                 elif mins_to_start < 0:
                                     r_icon = "🔴 En Vivo"
-                                else:
-                                    r_icon = "⏳ Pendiente"
-                            else:
-                                r_icon = "⏳ Pendiente"
                         else:
                             r_icon = "⏳ Pendiente"
 
