@@ -140,6 +140,7 @@ def check_weekly_reset():
     data["weekly_bankroll"] = 1000
     data["weekly_start"] = current_start
     data["last_weekly_reset"] = current_start
+    data.pop("cash_adjust", None)
     save_picks(data)
     print(f"  Weekly bankroll reset to $1000 ({current_start})")
 
