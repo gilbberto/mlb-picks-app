@@ -26,13 +26,14 @@ st.set_page_config(page_title="MLB Picks AI", page_icon="⚾", layout="wide", in
 st.markdown("""
 <style>
     :root {
-        --bg: #0D0221;
-        --card: #160830;
-        --accent: #A4FF00;
-        --accent2: #7ACC00;
-        --text: #E8E0F0;
-        --sub: #9988BB;
-        --border: #2A1050;
+        --bg: #FFFFFF;
+        --card: #F8F9FA;
+        --accent: #E53935;
+        --btn: #2E7D32;
+        --btn-hover: #388E3C;
+        --text: #212121;
+        --sub: #666666;
+        --border: #E0E0E0;
     }
     .stApp, .main, .block-container, .stApp > header {
         background-color: var(--bg) !important;
@@ -49,9 +50,10 @@ st.markdown("""
         padding: 14px !important;
         margin: 6px 0 !important;
         border: 1px solid var(--border) !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06) !important;
     }
     /* Sidebar */
-    section[data-testid="stSidebar"] { background: #080115 !important; }
+    section[data-testid="stSidebar"] { background: #FAFAFA !important; border-right: 1px solid var(--border) !important; }
     section[data-testid="stSidebar"] * { color: var(--text) !important; }
     section[data-testid="stSidebar"] span, section[data-testid="stSidebar"] .stCaption { color: var(--sub) !important; }
     /* Metrics */
@@ -65,22 +67,22 @@ st.markdown("""
     div[data-testid="stMetric"] div { color: var(--text) !important; }
     div[data-testid="stMetric"] [data-testid="stMetricDelta"] { color: var(--accent) !important; }
     /* Tables */
-    div[data-testid="stDataFrame"] { background: var(--card) !important; border-radius: 8px; overflow: hidden; }
+    div[data-testid="stDataFrame"] { background: #FFF !important; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
     div[data-testid="stDataFrame"] th {
-        background: #120528 !important; color: var(--sub) !important;
-        font-weight: 600; text-transform: uppercase; font-size: 12px;
+        background: #FAFAFA !important; color: var(--sub) !important;
+        font-weight: 600; text-transform: uppercase; font-size: 12px; border-bottom: 2px solid var(--accent) !important;
     }
-    div[data-testid="stDataFrame"] td { background: var(--card) !important; color: var(--text) !important; }
+    div[data-testid="stDataFrame"] td { background: #FFF !important; color: var(--text) !important; }
     /* Buttons */
     .stButton button {
-        background: var(--accent) !important; color: #0D0221 !important;
+        background: var(--btn) !important; color: #FFF !important;
         border: none !important; border-radius: 6px !important;
-        font-weight: 700 !important; transition: 0.2s;
+        font-weight: 600 !important; transition: 0.2s;
     }
-    .stButton button:hover { background: #B8FF33 !important; }
+    .stButton button:hover { background: var(--btn-hover) !important; }
     /* Inputs */
     input, textarea, .stTextInput > div > div {
-        background: var(--card) !important; color: var(--text) !important;
+        background: #FFF !important; color: var(--text) !important;
         border: 1px solid var(--border) !important; border-radius: 6px !important;
     }
     /* Expanders */
@@ -91,12 +93,6 @@ st.markdown("""
     }
     /* Dividers */
     hr { border-color: var(--border) !important; }
-    /* Select boxes */
-    div[data-testid="stSelectbox"] > div > div { background: var(--card) !important; color: var(--text) !important; }
-    /* Checkboxes */
-    div[data-testid="stCheckbox"] label span { color: var(--text) !important; }
-    /* Spinner */
-    div[data-testid="stSpinner"] { color: var(--accent) !important; }
     /* Form */
     div[data-testid="stForm"] { border: 1px solid var(--border) !important; border-radius: 8px; padding: 16px; }
     @media (max-width: 768px) {
@@ -171,7 +167,7 @@ CURRENT_SEASON = 2026
 LG_AVG_RUNS = 4.5
 
 C = {
-    "value_high": "#A4FF00", "value_med": "#88cc00", "value_low": "#cccc00",
+    "value_high": "#E53935", "value_med": "#88cc00", "value_low": "#cccc00",
     "no_value": "#FF6B6B", "card_bg": "#1a1d2e", "accent": "#4da6ff",
 }
 
@@ -1845,7 +1841,7 @@ def main():
                             "ev": ev_spr, "odds": spr_price, "book": spr_book, "edge": spr_edge,
                         }
                         l_spr, _ = ev_label(ev_spr)
-                        if l_spr in ("🔥 HIGH VALUE", "✅ VALUE"): border = spr_book and "#A4FF00" or border
+                        if l_spr in ("🔥 HIGH VALUE", "✅ VALUE"): border = spr_book and "#E53935" or border
                     else:
                         pick_entry["spread_minus"] = {"pick": spr_fav_team, "prob": spr_fav_prob*100, "detail": "-1.5", "ev": None, "odds": "N/A", "book": "", "edge": None}
 
@@ -2181,28 +2177,28 @@ def main():
                 if role != "admin":
                     btn = "<span style='color:#666'>🔒</span>"
                 elif is_regd:
-                    btn = "<span style='color:#A4FF00'>✅</span>"
+                    btn = "<span style='color:#E53935'>✅</span>"
                 else:
-                    btn = f"<form action='' method='GET' style='display:inline;margin:0;padding:0'><input type='hidden' name='reg_pick' value='{i}'><input type='hidden' name='u' value='{st.session_state.user}'><button type='submit' style='background:none;border:none;cursor:pointer;font-size:18px;padding:0;color:#A4FF00' title='Registrar'>📝</button></form>"
+                    btn = f"<form action='' method='GET' style='display:inline;margin:0;padding:0'><input type='hidden' name='reg_pick' value='{i}'><input type='hidden' name='u' value='{st.session_state.user}'><button type='submit' style='background:none;border:none;cursor:pointer;font-size:18px;padding:0;color:#E53935' title='Registrar'>📝</button></form>"
                 _reason = r.get("reason", "")
-                html_rows += f"""<tr style="background:{'#160830' if i%2==0 else '#200A40'}">
-                    <td style="padding:6px 8px;border-bottom:1px solid #2A1050">{r['game']}</td>
-                    <td style="padding:6px 8px;border-bottom:1px solid #2A1050">{r['market']}</td>
-                    <td style="padding:6px 8px;border-bottom:1px solid #2A1050">{warn}{pick_str}</td>
-                    <td style="padding:6px 8px;border-bottom:1px solid #2A1050">{icon} {r['edge']:+.1f}%</td>
-                    <td style="padding:6px 8px;border-bottom:1px solid #2A1050">{stake_str}</td>
-                    <td style="padding:6px 8px;border-bottom:1px solid #2A1050;text-align:center">{btn}</td>
+                html_rows += f"""<tr style="background:{'#F8F9FA' if i%2==0 else '#EEEEEE'}">
+                    <td style="padding:6px 8px;border-bottom:1px solid #E0E0E0">{r['game']}</td>
+                    <td style="padding:6px 8px;border-bottom:1px solid #E0E0E0">{r['market']}</td>
+                    <td style="padding:6px 8px;border-bottom:1px solid #E0E0E0">{warn}{pick_str}</td>
+                    <td style="padding:6px 8px;border-bottom:1px solid #E0E0E0">{icon} {r['edge']:+.1f}%</td>
+                    <td style="padding:6px 8px;border-bottom:1px solid #E0E0E0">{stake_str}</td>
+                    <td style="padding:6px 8px;border-bottom:1px solid #E0E0E0;text-align:center">{btn}</td>
                 </tr>"""
             _reasons_list.append(f"**{r['game']}** ({r['market']}): {_reason}")
         st.markdown(f"""<div style="overflow-x:auto">
-            <table style="width:100%;border-collapse:collapse;color:#E8E0F0;font-size:14px">
-                <thead><tr style="background:#120528">
-                    <th style="padding:8px;text-align:left;border-bottom:2px solid #2A1050">Juego</th>
-                    <th style="padding:8px;text-align:left;border-bottom:2px solid #2A1050">Mercado</th>
-                    <th style="padding:8px;text-align:left;border-bottom:2px solid #2A1050">Pick</th>
-                    <th style="padding:8px;text-align:left;border-bottom:2px solid #2A1050">Edge</th>
-                    <th style="padding:8px;text-align:left;border-bottom:2px solid #2A1050">Stake</th>
-                    <th style="padding:8px;text-align:center;border-bottom:2px solid #2A1050">Reg</th>
+            <table style="width:100%;border-collapse:collapse;color:#212121;font-size:14px">
+                <thead><tr style="background:#FAFAFA">
+                    <th style="padding:8px;text-align:left;border-bottom:2px solid #E0E0E0">Juego</th>
+                    <th style="padding:8px;text-align:left;border-bottom:2px solid #E0E0E0">Mercado</th>
+                    <th style="padding:8px;text-align:left;border-bottom:2px solid #E0E0E0">Pick</th>
+                    <th style="padding:8px;text-align:left;border-bottom:2px solid #E0E0E0">Edge</th>
+                    <th style="padding:8px;text-align:left;border-bottom:2px solid #E0E0E0">Stake</th>
+                    <th style="padding:8px;text-align:center;border-bottom:2px solid #E0E0E0">Reg</th>
                 </tr></thead>
                 <tbody>{html_rows}</tbody>
             </table></div>""", unsafe_allow_html=True)
@@ -2324,7 +2320,7 @@ def main():
                                 br += p["profit"]
                             chart_data.append({"#": len(chart_data), "Bankroll": br, "Fecha": p.get("date","")})
                         cdf = pd.DataFrame(chart_data)
-                        chart = alt.Chart(cdf).mark_line(point=True, color="#A4FF00").encode(
+                        chart = alt.Chart(cdf).mark_line(point=True, color="#E53935").encode(
                             x=alt.X("#:Q", title="Pick #", axis=alt.Axis(tickMinStep=1)),
                             y=alt.Y("Bankroll:Q", title="Bankroll ($)", scale=alt.Scale(zero=False)),
                             tooltip=["Fecha:N", "Bankroll:Q"],
@@ -2381,20 +2377,20 @@ def main():
 
                 # Tabla de picks con botón eliminar inline
                 if rows:
-                    html = """<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;color:#E8E0F0;font-size:13px">
-                    <thead><tr style="background:#120528">
-                        <th style="padding:6px 8px;text-align:left;border-bottom:2px solid #2A1050">Fecha</th>
-                        <th style="padding:6px 8px;text-align:left;border-bottom:2px solid #2A1050">Juego</th>
-                        <th style="padding:6px 8px;text-align:left;border-bottom:2px solid #2A1050">Mercado</th>
-                        <th style="padding:6px 8px;text-align:left;border-bottom:2px solid #2A1050">Pick</th>
-                        <th style="padding:6px 8px;text-align:center;border-bottom:2px solid #2A1050">Estado</th>
-                        <th style="padding:6px 8px;text-align:right;border-bottom:2px solid #2A1050">Profit</th>
-                        <th style="padding:6px 8px;text-align:center;border-bottom:2px solid #2A1050">Del</th>
+                    html = """<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;color:#212121;font-size:13px">
+                    <thead><tr style="background:#FAFAFA">
+                        <th style="padding:6px 8px;text-align:left;border-bottom:2px solid #E0E0E0">Fecha</th>
+                        <th style="padding:6px 8px;text-align:left;border-bottom:2px solid #E0E0E0">Juego</th>
+                        <th style="padding:6px 8px;text-align:left;border-bottom:2px solid #E0E0E0">Mercado</th>
+                        <th style="padding:6px 8px;text-align:left;border-bottom:2px solid #E0E0E0">Pick</th>
+                        <th style="padding:6px 8px;text-align:center;border-bottom:2px solid #E0E0E0">Estado</th>
+                        <th style="padding:6px 8px;text-align:right;border-bottom:2px solid #E0E0E0">Profit</th>
+                        <th style="padding:6px 8px;text-align:center;border-bottom:2px solid #E0E0E0">Del</th>
                     </tr></thead><tbody>"""
                     for i, (row, p) in enumerate(zip(rows, list(reversed(data["history"])))):
                         pid = p.get("id", i + 1)
                         is_settled = p.get("result") in ("W", "L")
-                        bg = "#160830" if i % 2 == 0 else "#200A40"
+                        bg = "#F8F9FA" if i % 2 == 0 else "#EEEEEE"
                         profit_str = row["Profit"]
                         estado = row["Estado"]
                         if is_settled:
@@ -2402,19 +2398,19 @@ def main():
                         else:
                             del_btn = f"<form action='' method='GET' style='display:inline;margin:0;padding:0'><input type='hidden' name='del_pick' value='{pid}'><input type='hidden' name='u' value='{st.session_state.user}'><button type='submit' style='background:none;border:none;cursor:pointer;font-size:16px;padding:0;color:#FF6B6B' title='Eliminar'>✕</button></form>"
                         html += f"""<tr style="background:{bg}">
-                            <td style="padding:4px 6px;border-bottom:1px solid #2A1050">{row['Fecha']}</td>
-                            <td style="padding:4px 6px;border-bottom:1px solid #2A1050">{row['Juego']}</td>
-                            <td style="padding:4px 6px;border-bottom:1px solid #2A1050">{row['Mercado']}</td>
-                            <td style="padding:4px 6px;border-bottom:1px solid #2A1050">{row['Pick']}</td>
-                            <td style="padding:4px 6px;border-bottom:1px solid #2A1050;text-align:center">{estado}</td>
-                            <td style="padding:4px 6px;border-bottom:1px solid #2A1050;text-align:right">{profit_str}</td>
-                            <td style="padding:4px 6px;border-bottom:1px solid #2A1050;text-align:center">{del_btn}</td>
+                            <td style="padding:4px 6px;border-bottom:1px solid #E0E0E0">{row['Fecha']}</td>
+                            <td style="padding:4px 6px;border-bottom:1px solid #E0E0E0">{row['Juego']}</td>
+                            <td style="padding:4px 6px;border-bottom:1px solid #E0E0E0">{row['Mercado']}</td>
+                            <td style="padding:4px 6px;border-bottom:1px solid #E0E0E0">{row['Pick']}</td>
+                            <td style="padding:4px 6px;border-bottom:1px solid #E0E0E0;text-align:center">{estado}</td>
+                            <td style="padding:4px 6px;border-bottom:1px solid #E0E0E0;text-align:right">{profit_str}</td>
+                            <td style="padding:4px 6px;border-bottom:1px solid #E0E0E0;text-align:center">{del_btn}</td>
                         </tr>"""
                     html += "</tbody></table></div>"
                     st.markdown(html, unsafe_allow_html=True)
 
                 green = total_profit >= 0
-                st.markdown(f"Profit total: <span style='color:{'#A4FF00' if green else '#FF6B6B'}'><b>${total_profit:+.2f}</b></span>", unsafe_allow_html=True)
+                st.markdown(f"Profit total: <span style='color:{'#E53935' if green else '#FF6B6B'}'><b>${total_profit:+.2f}</b></span>", unsafe_allow_html=True)
 
                 # ── Ajuste de profit real (casino) ──
                 # ── Model calibration ──
@@ -2445,7 +2441,7 @@ def main():
                                 chart = alt.Chart(cd).mark_line(point=True).encode(
                                     x=alt.X("Rango:N", title="Probabilidad estimada"),
                                     y=alt.Y("Real:Q", title="Frecuencia real (%)", scale=alt.Scale(zero=False)),
-                                    color=alt.value("#A4FF00"),
+                                    color=alt.value("#E53935"),
                                 ).properties(height=200)
                                 chart += alt.Chart(cd).mark_line(strokeDash=[4,4], color="#888").encode(
                                     x="Rango:N", y="Esperado:Q")
