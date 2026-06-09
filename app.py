@@ -2436,7 +2436,20 @@ def main():
                         })
                     if _get_perms(st.session_state.user).get("calibration", False):
                         with st.expander("📐 Calibración del modelo", expanded=False):
-                            st.dataframe(pd.DataFrame(cal_rows), hide_index=True, use_container_width=True)
+                            _html = """<table style="width:100%;border-collapse:collapse;color:#212121;font-size:14px">
+                                <thead><tr style="background:#E53935;color:#FFF">
+                                    <th style="padding:8px;text-align:left;border-bottom:2px solid #E0E0E0">Rango</th>
+                                    <th style="padding:8px;text-align:left;border-bottom:2px solid #E0E0E0">Picks</th>
+                                    <th style="padding:8px;text-align:left;border-bottom:2px solid #E0E0E0">Ganados</th>
+                                    <th style="padding:8px;text-align:left;border-bottom:2px solid #E0E0E0">Real</th>
+                                    <th style="padding:8px;text-align:left;border-bottom:2px solid #E0E0E0">Esperado</th>
+                                    <th style="padding:8px;text-align:left;border-bottom:2px solid #E0E0E0">Diff</th>
+                                </tr></thead><tbody>"""
+                            for i, cr in enumerate(cal_rows):
+                                bg = "#F8F9FA" if i%2==0 else "#FFF"
+                                _html += f"<tr style='background:{bg}'><td style='padding:6px 8px;border-bottom:1px solid #E0E0E0'>{cr['Rango']}</td><td style='padding:6px 8px;border-bottom:1px solid #E0E0E0'>{cr['Picks']}</td><td style='padding:6px 8px;border-bottom:1px solid #E0E0E0'>{cr['Ganados']}</td><td style='padding:6px 8px;border-bottom:1px solid #E0E0E0'>{cr['Real']}</td><td style='padding:6px 8px;border-bottom:1px solid #E0E0E0'>{cr['Esperado']}</td><td style='padding:6px 8px;border-bottom:1px solid #E0E0E0'>{cr['Diff']}</td></tr>"
+                            _html += "</tbody></table>"
+                            st.markdown(_html, unsafe_allow_html=True)
                             if len(cal_rows) >= 2:
                                 import altair as alt
                                 cd = pd.DataFrame(cal_rows)
@@ -2500,7 +2513,18 @@ def main():
                             mkt_rows.append({"Mercado": mkt, "G-P": f"{mw}-{mt-mw}", "Picks": mt, "%": f"{mp}%"})
                         if mkt_rows:
                             with st.expander("📊 Por mercado", expanded=False):
-                                st.dataframe(pd.DataFrame(mkt_rows), hide_index=True, use_container_width=True)
+                                _html = """<table style="width:100%;border-collapse:collapse;color:#212121;font-size:14px">
+                                    <thead><tr style="background:#E53935;color:#FFF">
+                                        <th style="padding:8px;text-align:left;border-bottom:2px solid #E0E0E0">Mercado</th>
+                                        <th style="padding:8px;text-align:left;border-bottom:2px solid #E0E0E0">G-P</th>
+                                        <th style="padding:8px;text-align:left;border-bottom:2px solid #E0E0E0">Picks</th>
+                                        <th style="padding:8px;text-align:left;border-bottom:2px solid #E0E0E0">%</th>
+                                    </tr></thead><tbody>"""
+                                for i, mr in enumerate(mkt_rows):
+                                    bg = "#F8F9FA" if i%2==0 else "#FFF"
+                                    _html += f"<tr style='background:{bg}'><td style='padding:6px 8px;border-bottom:1px solid #E0E0E0'>{mr['Mercado']}</td><td style='padding:6px 8px;border-bottom:1px solid #E0E0E0'>{mr['G-P']}</td><td style='padding:6px 8px;border-bottom:1px solid #E0E0E0'>{mr['Picks']}</td><td style='padding:6px 8px;border-bottom:1px solid #E0E0E0'>{mr['%']}</td></tr>"
+                                _html += "</tbody></table>"
+                                st.markdown(_html, unsafe_allow_html=True)
                 except: pass
             else:
                 st.info("💡 Aún no has registrado picks. Usa el botón **📝** en las tarjetas o recomendaciones para empezar.")
@@ -2513,7 +2537,22 @@ def main():
             cols_avail = [c for c in ["away_team","home_team","ml_home_prob","ml_away_prob","exp_total","spr_team","spr_prob"] if c in df.columns]
             if cols_avail:
                 sd2 = df[cols_avail].copy()
-                st.dataframe(sd2, use_container_width=True, hide_index=True)
+                _html = """<table style="width:100%;border-collapse:collapse;color:#212121;font-size:13px">
+                    <thead><tr style="background:#E53935;color:#FFF">"""
+                for col in cols_avail:
+                    _html += f"<th style='padding:6px 8px;text-align:left;border-bottom:2px solid #E0E0E0'>{col}</th>"
+                _html += "</tr></thead><tbody>"
+                for i, (_, row) in enumerate(sd2.iterrows()):
+                    bg = "#F8F9FA" if i%2==0 else "#FFF"
+                    _html += f"<tr style='background:{bg}'>"
+                    for col in cols_avail:
+                        val = row[col]
+                        if isinstance(val, float):
+                            val = f"{val:.1f}"
+                        _html += f"<td style='padding:4px 6px;border-bottom:1px solid #E0E0E0'>{val}</td>"
+                    _html += "</tr>"
+                _html += "</tbody></table>"
+                st.markdown(_html, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     try:
