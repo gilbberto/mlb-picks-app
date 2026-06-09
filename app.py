@@ -2125,19 +2125,19 @@ def main():
                     exp_t = p.get('exp_total', 0)
                     vars_ou = [
                         f"El duelo {ap} vs {hp} pinta cerrado. Proyectamos ~{exp_t:.1f} carreras, muy por debajo de {detail}. {side} es el lado con valor.",
-                        f"{ap} y {hp} son abridores que limitan el daño. En juegos con este perfil, el {side} {detail} suele cumplirse. Modelo proyecta {exp_t:.1f} carreras.",
-                        f"Ofensivas frías + pitcheo sólido = juego de pocas carreras. Nuestro modelo ve solo {exp_t:.1f} anotaciones. {side} {detail}.",
-                        f"En {venue}, juegos como este promedian menos de {detail}. Con {ap} vs {hp}, esperamos un duelo de lanzadores. {side} {detail}.",
+                        f"{ap} y {hp} son abridores que limitan el daño. En juegos con este perfil, el {side} {detail} suele cumplirse. Proyectamos {exp_t:.1f} carreras.",
+                        f"Ofensivas frías + pitcheo sólido = juego de pocas carreras. Esperamos solo {exp_t:.1f} anotaciones. {side} {detail}.",
+                        f"En {venue}, juegos como este promedian menos de {detail}. Con {ap} vs {hp}, duelo de lanzadores. {side} {detail}.",
                     ]
-                    reason = vars_ou[i % len(vars_ou)]
+                    reason = vars_ou[len(recs) % len(vars_ou)]
                 else:
                     vars_ml = [
                         f"{pick_team} con {ap if pick_team == away else hp} en la loma tiene ventaja. Su ofensiva ha estado encendida. Pick con fundamentos.",
                         f"El lineup de {pick_team} ha castigado a lanzadores como {hp if pick_team == away else ap}. Buen spot para confiar en ellos.",
                         f"{pick_team} llega enrachado y su abridor {ap if pick_team == away else hp} domina a este rival. Valor claro.",
-                        f"Las métricas dan a {pick_team} como favorito. Su bullpen cierra juegos y el lineup responde en momentos clave.",
+                        f"Los números dan a {pick_team} como favorito. Su bullpen cierra juegos y el lineup responde en momentos clave.",
                     ]
-                    reason = vars_ml[i % len(vars_ml)]
+                    reason = vars_ml[len(recs) % len(vars_ml)]
                 recs.append({
                     "game": gl,
                     "market": label,
