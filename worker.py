@@ -70,7 +70,7 @@ def _merge_picks(local_str, remote_str):
     profits = sum(p.get("profit") or 0 for p in remote["history"] if p.get("profit") is not None)
     remote["bankroll"] = round(1000 - stakes + profits, 2)
     remote["history"].sort(key=lambda x: x.get("id", 0))
-    for k in ("weekly_bankroll", "weekly_start", "weekly_history", "last_weekly_reset"):
+    for k in ("weekly_bankroll", "weekly_start", "weekly_history", "last_weekly_reset", "cash_adjust"):
         if k in local:
             remote[k] = local[k]
     return json.dumps(remote, indent=2)
