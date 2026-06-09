@@ -116,6 +116,9 @@ st.markdown("""
     div[data-testid="stExpander"] details summary svg { fill: #FFF !important; }
     /* Dividers */
     hr { border-color: var(--border) !important; }
+    /* Spinner */
+    div[data-testid="stSpinner"] { color: var(--accent) !important; }
+    div.stSpinner > div { background: rgba(255,255,255,0.9) !important; }
     /* Form */
     div[data-testid="stForm"] { border: 1px solid var(--border) !important; border-radius: 8px; padding: 16px; }
     @media (max-width: 768px) {
