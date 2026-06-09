@@ -2356,7 +2356,7 @@ def main():
                         else:
                             r_icon = "⏳ Pendiente"
 
-                    profit = p.get("real_profit", p.get("profit"))
+                    profit = p.get("profit")
                     if profit is not None:
                         total_profit += profit
                         profit_str = f"${profit:+.0f}" if profit is not None else "—"
@@ -2413,26 +2413,15 @@ def main():
                 green = total_profit >= 0
                 st.markdown(f"Profit total: <span style='color:{'#00cc66' if green else '#ff4444'}'><b>${total_profit:+.2f}</b></span>", unsafe_allow_html=True)
 
-                # ── Editar profit real ──
-                _settled = [p for p in weekly_picks if p.get("settled")]
-                if _settled:
-                    with st.expander("✏️ Ajustar profit real (casino)"):
-                        for p in _settled:
-                            cols = st.columns([3, 1, 1])
-                            cols[0].markdown(f"**{p.get('game','?')}** — {p.get('market','?')} {p.get('team','?')}")
-                            cols[1].markdown(f"Calculado: ${p.get('profit',0):+.0f}")
-                            key = f"real_profit_{p['id']}"
-                            real_val = st.session_state.get(key, p.get("real_profit", p.get("profit", 0)))
-                            new_val = cols[2].number_input("Real $", value=real_val, step=1, key=key, label_visibility="collapsed")
-                            if new_val != p.get("real_profit", p.get("profit", 0)):
-                                from bankroll import save_picks, load_picks
-                                _d = load_picks()
-                                for _pp in _d["history"]:
-                                    if _pp["id"] == p["id"]:
-                                        _pp["real_profit"] = new_val
-                                        break
-                                save_picks(_d)
-                                st.rerun()
+                # ── Ajuste de profit real (casino) ──
+                cash_adj = data.get("cash_adjust", 0) or 0
+                with st.expander("💰 Ajuste de bankroll real"):
+                    st.caption("Si tu casa de apuestas tiene un profit diferente al del modelo, ajústalo aquí.")
+                    new_adj = st.number_input("Profit real total ($)", value=cash_adj, step=1, key="cash_adj_input")
+                    if new_adj != cash_adj:
+                        data["cash_adjust"] = new_adj
+                        save_picks(data)
+                        st.rerun()
 
                 # ── Model calibration ──
                 if settled:

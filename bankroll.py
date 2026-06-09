@@ -213,10 +213,13 @@ def settle_pick(pick_id, won):
             return p["profit"]
     return None
 
+CASH_ADJUST = None  # Se carga desde data["cash_adjust"]
+
 def get_pnl():
     """Return summary stats."""
     data = load_picks()
     h = data["history"]
+    cash_adj = data.get("cash_adjust", 0) or 0
     settled = [p for p in h if p.get("settled")]
     wins = [p for p in settled if p["result"] == "W"]
     losses = [p for p in settled if p["result"] == "L"]
@@ -236,12 +239,15 @@ def get_pnl():
     weekly_bankroll_start = data.get("weekly_bankroll", 1000)
     weekly_bankroll = round(weekly_bankroll_start + weekly_profit, 2)
     hist_profit = sum(w.get("profit", 0) for w in data.get("weekly_history", [])) + weekly_profit
+    cash_adj = data.get("cash_adjust", 0) or 0
+    adj_bankroll = round(1000 + hist_profit - open_stakes + cash_adj, 2)
+    adj_profit = round(total_profit + cash_adj, 2)
     return {
-        "bankroll": round(1000 + hist_profit - open_stakes, 2),
+        "bankroll": adj_bankroll,
         "total": len(settled), "wins": len(wins), "losses": len(losses),
         "pct": round(len(wins) / len(settled) * 100, 1) if settled else 0,
-        "profit": round(total_profit, 2),
-        "roi": round(total_profit / total_staked * 100, 1) if total_staked > 0 else 0,
+        "profit": adj_profit,
+        "roi": round(adj_profit / total_staked * 100, 1) if total_staked > 0 else 0,
         "open": len([p for p in h if not p.get("settled")]),
         "weekly_bankroll": weekly_bankroll,
         "weekly_profit": round(weekly_profit, 2),
