@@ -666,10 +666,13 @@ def match_game(odds_list, home_name, away_name):
             return og
     return None
 
+PREFERRED_BOOK = "BetMGM"
+
 def extract_market_odds(game_odds, market_key, outcome_name=None, expect_point=None):
     if not game_odds: return None, None, None
     best_price, best_book, best_point = None, None, None
     for book in game_odds.get("bookmakers", []):
+        if book.get("title", "") != PREFERRED_BOOK: continue
         for mkt in book.get("markets", []):
             if mkt.get("key") != market_key: continue
             for oc in mkt.get("outcomes", []):

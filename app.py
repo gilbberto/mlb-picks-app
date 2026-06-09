@@ -112,6 +112,7 @@ st.markdown("""
 
 ODDS_API_KEY = "b09f7e5fb08081c87e7e34272fda4ea0"
 SHARPAPI_KEY = os.getenv("SHARPAPI_KEY", "")
+PREFERRED_BOOK = "BetMGM"
 
 # ─── ML Models (Ensemble XGBoost, fallback single XGBoost, fallback RF) ───
 _MODELS_LOADED = False
@@ -463,6 +464,8 @@ def extract_market_odds(game_odds, market_key, outcome_name=None, expect_point=N
         return None, None
     best_price, best_book, best_point = None, None, None
     for book in game_odds.get("bookmakers", []):
+        if book.get("title", "") != PREFERRED_BOOK:
+            continue
         for mkt in book.get("markets", []):
             if mkt.get("key") != market_key:
                 continue
