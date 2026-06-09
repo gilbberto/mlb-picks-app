@@ -2203,7 +2203,7 @@ def main():
                     <td style="padding:6px 8px;border-bottom:1px solid #E0E0E0">{stake_str}</td>
                     <td style="padding:6px 8px;border-bottom:1px solid #E0E0E0;text-align:center">{btn}</td>
                 </tr>"""
-            _reasons_list.append(f"**{r['game']}** ({r['market']}): {_reason}")
+                _reasons_list.append(f"**{r['game']}** ({r['market']}): {_reason}")
         st.markdown(f"""<div style="overflow-x:auto">
             <table style="width:100%;border-collapse:collapse;color:#212121;font-size:14px">
                 <thead><tr style="background:#E53935;color:#FFF">
