@@ -1,5 +1,5 @@
 {
-  "bankroll": -3358.13,
+  "bankroll": -3458.13,
   "history": [
     {
       "id": 1,
@@ -536,6 +536,23 @@
       "label": "\ud83d\udd25 High",
       "settled": true,
       "telegram_msg_id": 344
+    },
+    {
+      "id": 33,
+      "date": "2026-06-09",
+      "game": "MIL @ ATH",
+      "market": "O/U",
+      "team": "Under",
+      "detail": "u13.0",
+      "model_prob": 0.93,
+      "odds": -102,
+      "stake": 100,
+      "bankroll_before": 1066.04,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false,
+      "telegram_msg_id": 379
     }
   ],
   "weekly_bankroll": 1000,
