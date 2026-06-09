@@ -2419,10 +2419,13 @@ def main():
                     st.caption("Si tu casa de apuestas tiene un profit diferente al del modelo, ajústalo aquí.")
                     new_adj = st.number_input("Profit real total ($)", value=cash_adj, step=1, key="cash_adj_input")
                     if new_adj != cash_adj:
-                        from bankroll import save_picks
+                        from bankroll import save_picks, load_picks
                         data["cash_adjust"] = new_adj
-                        save_picks(data)
-                        st.rerun()
+                        try:
+                            save_picks(data)
+                            data = load_picks()
+                        except:
+                            pass
 
                 # ── Model calibration ──
                 if settled:
