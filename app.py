@@ -2116,18 +2116,28 @@ def main():
 
                 home = p.get("home_team", "")
                 away = p.get("away_team", "")
+                venue = p.get("venue", "su estadio")
+                hp = p.get("home_pitcher", "TBD")
+                ap = p.get("away_pitcher", "TBD")
                 if label == "O/U":
                     detail = entry.get("detail", "")
                     side = "Over" if detail.startswith("o") else "Under"
-                    hp = p.get("home_pitcher", "TBD")
-                    ap = p.get("away_pitcher", "TBD")
                     exp_t = p.get('exp_total', 0)
-                    reason = f"El duelo de abridores será clave: {ap} vs {hp}. Históricamente, cuando estos equipos se enfrentan con lanzadores de este calibre, los juegos tienden a ser cerrados. Esperamos un total de {exp_t:.1f} carreras, por lo que el {side} {detail} es nuestra jugada preferida."
+                    vars_ou = [
+                        f"El duelo {ap} vs {hp} pinta cerrado. Proyectamos ~{exp_t:.1f} carreras, muy por debajo de {detail}. {side} es el lado con valor.",
+                        f"{ap} y {hp} son abridores que limitan el daño. En juegos con este perfil, el {side} {detail} suele cumplirse. Modelo proyecta {exp_t:.1f} carreras.",
+                        f"Ofensivas frías + pitcheo sólido = juego de pocas carreras. Nuestro modelo ve solo {exp_t:.1f} anotaciones. {side} {detail}.",
+                        f"En {venue}, juegos como este promedian menos de {detail}. Con {ap} vs {hp}, esperamos un duelo de lanzadores. {side} {detail}.",
+                    ]
+                    reason = vars_ou[i % len(vars_ou)]
                 else:
-                    hp = p.get("home_pitcher", "TBD")
-                    ap = p.get("away_pitcher", "TBD")
-                    venue = p.get("venue", "su estadio")
-                    reason = f"{pick_team} llega con buen momento ofensivo y su abridor {hp if pick_team == home else ap} ha demostrado solidez en sus últimas salidas. Jugar en {venue} también juega a su favor. Es un pick con fundamentos sólidos para esta jornada."
+                    vars_ml = [
+                        f"{pick_team} con {ap if pick_team == away else hp} en la loma tiene ventaja. Su ofensiva ha estado encendida. Pick con fundamentos.",
+                        f"El lineup de {pick_team} ha castigado a lanzadores como {hp if pick_team == away else ap}. Buen spot para confiar en ellos.",
+                        f"{pick_team} llega enrachado y su abridor {ap if pick_team == away else hp} domina a este rival. Valor claro.",
+                        f"Las métricas dan a {pick_team} como favorito. Su bullpen cierra juegos y el lineup responde en momentos clave.",
+                    ]
+                    reason = vars_ml[i % len(vars_ml)]
                 recs.append({
                     "game": gl,
                     "market": label,
