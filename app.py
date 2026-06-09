@@ -69,10 +69,11 @@ st.markdown("""
     /* Tables */
     div[data-testid="stDataFrame"] { background: #FFF !important; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
     div[data-testid="stDataFrame"] th {
-        background: #FAFAFA !important; color: var(--sub) !important;
-        font-weight: 600; text-transform: uppercase; font-size: 12px; border-bottom: 2px solid var(--accent) !important;
+        background: var(--accent) !important; color: #FFF !important;
+        font-weight: 600; text-transform: uppercase; font-size: 12px; border-bottom: 2px solid #C62828 !important;
     }
     div[data-testid="stDataFrame"] td { background: #FFF !important; color: var(--text) !important; }
+    div[data-testid="stDataFrame"] tr:nth-child(even) td { background: #FAFAFA !important; }
     /* Buttons */
     .stButton button {
         background: var(--btn) !important; color: #FFF !important;
@@ -2192,7 +2193,7 @@ def main():
             _reasons_list.append(f"**{r['game']}** ({r['market']}): {_reason}")
         st.markdown(f"""<div style="overflow-x:auto">
             <table style="width:100%;border-collapse:collapse;color:#212121;font-size:14px">
-                <thead><tr style="background:#FAFAFA">
+                <thead><tr style="background:#E53935;color:#FFF">
                     <th style="padding:8px;text-align:left;border-bottom:2px solid #E0E0E0">Juego</th>
                     <th style="padding:8px;text-align:left;border-bottom:2px solid #E0E0E0">Mercado</th>
                     <th style="padding:8px;text-align:left;border-bottom:2px solid #E0E0E0">Pick</th>
@@ -2378,7 +2379,7 @@ def main():
                 # Tabla de picks con botón eliminar inline
                 if rows:
                     html = """<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;color:#212121;font-size:13px">
-                    <thead><tr style="background:#FAFAFA">
+                    <thead><tr style="background:#E53935;color:#FFF">
                         <th style="padding:6px 8px;text-align:left;border-bottom:2px solid #E0E0E0">Fecha</th>
                         <th style="padding:6px 8px;text-align:left;border-bottom:2px solid #E0E0E0">Juego</th>
                         <th style="padding:6px 8px;text-align:left;border-bottom:2px solid #E0E0E0">Mercado</th>
