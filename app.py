@@ -1486,82 +1486,55 @@ def main():
         st.caption(f"⚠️ Auto-settle: {type(_ae).__name__}")
 
     with st.sidebar:
-        st.image("https://www.mlbstatic.com/team-logos/league-on-dark/1.svg", width=55)
-        st.markdown("### MLB Picks AI")
-        if role == "admin":
-            st.markdown(f"**Modelo:** {_model_type} + Monte Carlo (27 vars)" if _model_type else "**Modelo:** No cargado")
-            st.markdown("**3 mercados:** Moneyline · Run Line · Over/Under")
-            st.divider()
-            min_conf = st.selectbox("Filtrar por confianza", ["Todas","🔥 HIGH VALUE","✅ VALUE","⚠️ LOW VALUE"], index=0)
-            require_odds = st.checkbox("Requiere odds del mercado", value=True)
-            use_adv = st.checkbox("Usar sabermetrics (pybaseball)", value=True)
-            st.divider()
-            st.markdown("#### ⚙️ APIs")
-            for n, ok, d in [
-                ("MLB Stats API", True, "Siempre disponible"),
-                ("ESPN API", True, "Siempre disponible"),
-                ("PyBaseball", _check_pybaseball(), "Opcional"),
-                ("The Odds API", bool(ODDS_API_KEY), f"{'✅' if ODDS_API_KEY else '❌'}"),
-                ("SharpAPI", bool(SHARPAPI_KEY), f"{'✅' if SHARPAPI_KEY else '❌'}"),
-            ]:
-                st.markdown(f"{'✅' if ok else '⬜'} **{n}** — {d}")
-            if not ODDS_API_KEY and not SHARPAPI_KEY:
-                st.divider()
-                st.markdown("🔌 APIs de odds gratis: the-odds-api.com · sharpapi.io")
-            st.divider()
-            st.markdown("#### 📊 Metodología")
-            with st.expander("Ver"):
-                st.markdown(f"""
-                **{_model_type} + Monte Carlo**: 27 features (Elo, forma, OPS/WHIP/ERA, park factor, pitcher real).
-                **Entrenado**: 2023–2026 (8,174 juegos, 1,385 pitcher-season stats).
-                **Calibración ML**: Ajuste lineal por tramos según validación.
-                **Kelly Criterion**: 25% fraccional para sizing de apuestas.
+        c1, c2 = st.columns([1, 4])
+        with c1:
+            st.image("https://www.mlbstatic.com/team-logos/league-on-dark/1.svg", width=45)
+        with c2:
+            st.markdown("### MLB Picks AI")
+        st.caption(f"👤 **{st.session_state.user}** ({role})")
 
-                **Value**: Cuando la prob del modelo supera la prob implícita de la cuota.
-                """)
+        try:
+            from bankroll import get_pnl
+            pnl = get_pnl()
+            st.divider()
+            st.markdown("#### 📊 Mi Rendimiento")
+            c1, c2 = st.columns(2)
+            c1.metric("Semanal", f"${pnl['weekly_bankroll']:.0f}", delta=f"${pnl['weekly_profit']:+.0f}")
+            c2.metric("Histórico", f"${pnl['profit']:+.0f}", delta=f"{pnl['roi']:+.0f}%")
+            st.caption(f"Semana: {pnl['weekly_wins']}-{pnl['weekly_losses']} | Total: {pnl['wins']}-{pnl['losses']} ({pnl['pct']}%) | {pnl['open']} pendientes")
             try:
-                from bankroll import get_pnl
-                pnl = get_pnl()
+                from bankroll import load_picks
+                _wh = load_picks().get("weekly_history", [])
+                if _wh:
+                    with st.expander("📆 Semanas anteriores"):
+                        _wh_rows = [{"Semana": w["week_start"], "Profit": f"${w['profit']:+.0f}", "Record": f"{w['wins']}-{w['losses']}", "Picks": w["picks"]} for w in reversed(_wh[-10:])]
+                        st.dataframe(pd.DataFrame(_wh_rows), hide_index=True, use_container_width=True)
+            except: pass
+        except ImportError: pass
+
+        if role == "admin":
+            st.divider()
+            with st.expander("⚙️ Herramientas", expanded=False):
+                min_conf = st.selectbox("Filtrar por confianza", ["Todas","🔥 HIGH VALUE","✅ VALUE","⚠️ LOW VALUE"], index=0)
+                require_odds = st.checkbox("Requiere odds del mercado", value=True)
+                use_adv = st.checkbox("Usar sabermetrics (pybaseball)", value=True)
                 st.divider()
-                st.markdown("#### 📅 Semana")
-                c1, c2 = st.columns(2)
-                c1.metric("Bankroll Semanal", f"${pnl['weekly_bankroll']:.0f}")
-                c2.metric("Profit Semanal", f"${pnl['weekly_profit']:+.0f}", delta=f"{pnl['weekly_profit']:+.0f}")
-                st.caption(f"Semana: {pnl['weekly_wins']}-{pnl['weekly_losses']}  \nDesde: {pnl['weekly_start']}")
-                st.divider()
-                st.markdown("#### 💰 Histórico (acumulado)")
-                c1, c2 = st.columns(2)
-                c1.metric("Profit Total", f"${pnl['profit']:+.0f}", delta=f"{pnl['roi']:+.0f}%")
-                c2.metric("Record", f"{pnl['wins']}-{pnl['losses']}", delta=f"{pnl['pct']}%")
-                st.caption(f"{pnl['open']} pendientes")
-                try:
-                    from bankroll import load_picks
-                    _wh_data = load_picks()
-                    _wh = _wh_data.get("weekly_history", [])
-                    if _wh:
-                        with st.expander("📆 Semanas anteriores"):
-                            _wh_rows = [{"Semana": w["week_start"], "Profit": f"${w['profit']:+.0f}",
-                                        "Record": f"{w['wins']}-{w['losses']}", "Picks": w["picks"]} for w in reversed(_wh[-10:])]
-                            st.dataframe(pd.DataFrame(_wh_rows), hide_index=True, use_container_width=True)
-                except:
-                    pass
-            except ImportError:
-                pass
+                st.markdown(f"**Modelo:** {_model_type}" if _model_type else "**Modelo:** No cargado")
+                st.caption("MLB Stats ✅ | ESPN ✅ | PyBaseball " + ("✅" if _check_pybaseball() else "⬜"))
+                st.caption(f"Odds API: {'✅' if ODDS_API_KEY else '❌'} | SharpAPI: {'✅' if SHARPAPI_KEY else '❌'}")
+            _admin_panel()
         else:
             min_conf = "Todas"
             require_odds = True
             use_adv = False
+            if role == "viewer":
+                if st.sidebar.button("🔒 Cerrar sesión"):
+                    st.session_state.clear()
+                    st.query_params.clear()
+                    st.rerun()
+
         st.divider()
         st.caption(f"🕐 {datetime.now(TZ).strftime('%H:%M')} Chihuahua")
-        st.sidebar.markdown(f"👤 **{st.session_state.user}** ({role})")
-        if role == "viewer":
-            st.sidebar.markdown("👁️ Solo lectura")
-            if st.sidebar.button("🔒 Cerrar sesión"):
-                st.session_state.clear()
-                st.query_params.clear()
-                st.rerun()
-        else:
-            _admin_panel()
         st.caption("MLB Picks AI v3.0 · Solo informativo · No garantiza ganancias")
 
     st.markdown("""
