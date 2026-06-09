@@ -2356,10 +2356,10 @@ def main():
                         else:
                             r_icon = "⏳ Pendiente"
 
-                    profit = p.get("profit")
+                    profit = p.get("real_profit", p.get("profit"))
                     if profit is not None:
                         total_profit += profit
-                    profit_str = f"${profit:+.0f}" if profit is not None else "—"
+                        profit_str = f"${profit:+.0f}" if profit is not None else "—"
                     prob_str = f"{p.get('model_prob', 0):.0%}"
                     odds_str = f"${p.get('odds', 0):+d}"
                     stake_str = f"${p.get('stake', 0):.0f}"
@@ -2412,6 +2412,27 @@ def main():
 
                 green = total_profit >= 0
                 st.markdown(f"Profit total: <span style='color:{'#00cc66' if green else '#ff4444'}'><b>${total_profit:+.2f}</b></span>", unsafe_allow_html=True)
+
+                # ── Editar profit real ──
+                _settled = [p for p in weekly_picks if p.get("settled")]
+                if _settled:
+                    with st.expander("✏️ Ajustar profit real (casino)"):
+                        for p in _settled:
+                            cols = st.columns([3, 1, 1])
+                            cols[0].markdown(f"**{p.get('game','?')}** — {p.get('market','?')} {p.get('team','?')}")
+                            cols[1].markdown(f"Calculado: ${p.get('profit',0):+.0f}")
+                            key = f"real_profit_{p['id']}"
+                            real_val = st.session_state.get(key, p.get("real_profit", p.get("profit", 0)))
+                            new_val = cols[2].number_input("Real $", value=real_val, step=1, key=key, label_visibility="collapsed")
+                            if new_val != p.get("real_profit", p.get("profit", 0)):
+                                from bankroll import save_picks, load_picks
+                                _d = load_picks()
+                                for _pp in _d["history"]:
+                                    if _pp["id"] == p["id"]:
+                                        _pp["real_profit"] = new_val
+                                        break
+                                save_picks(_d)
+                                st.rerun()
 
                 # ── Model calibration ──
                 if settled:
