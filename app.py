@@ -92,9 +92,16 @@ st.markdown("""
     }
     /* Expanders */
     div[data-testid="stExpander"] {
-        background: var(--card) !important;
+        background: #FFF !important;
         border: 1px solid var(--border) !important;
         border-radius: 8px !important;
+    }
+    div[data-testid="stExpander"] details summary {
+        background: var(--accent) !important; color: #FFF !important;
+        border-radius: 8px 8px 0 0 !important; padding: 8px 12px !important; font-weight: 600 !important;
+    }
+    div[data-testid="stExpander"] details[open] summary {
+        border-radius: 8px 8px 0 0 !important;
     }
     /* Dividers */
     hr { border-color: var(--border) !important; }
