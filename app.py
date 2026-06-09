@@ -104,6 +104,10 @@ st.markdown("""
     div[data-testid="stExpander"] details[open] summary {
         border-radius: 8px 8px 0 0 !important;
     }
+    div[data-testid="stExpander"] details summary p, div[data-testid="stExpander"] details summary span {
+        color: #FFF !important;
+    }
+    div[data-testid="stExpander"] details summary svg { fill: #FFF !important; }
     /* Dividers */
     hr { border-color: var(--border) !important; }
     /* Form */
