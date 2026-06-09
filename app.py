@@ -66,17 +66,19 @@ st.markdown("""
     div[data-testid="stMetric"] label { color: var(--sub) !important; }
     div[data-testid="stMetric"] div { color: var(--text) !important; }
     div[data-testid="stMetric"] [data-testid="stMetricDelta"] { color: var(--accent) !important; }
-    /* Tables */
+    /* Tables - AGRESIVO */
     div[data-testid="stDataFrame"] { background: #FFF !important; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
-    div[data-testid="stDataFrame"] th {
+    div[data-testid="stDataFrame"] * { background: #FFF !important; }
+    div[data-testid="stDataFrame"] th, div[data-testid="stDataFrame"] thead th, div[data-testid="stDataFrame"] thead td {
         background: var(--accent) !important; color: #FFF !important;
-        font-weight: 600; text-transform: uppercase; font-size: 12px; border-bottom: 2px solid #C62828 !important;
+        font-weight: 600 !important; text-transform: uppercase; font-size: 12px !important;
+        border-bottom: 2px solid #C62828 !important;
     }
-    div[data-testid="stDataFrame"] td { background: #FFF !important; color: var(--text) !important; }
-    div[data-testid="stDataFrame"] tr:nth-child(even) td { background: #FAFAFA !important; }
-    /* Tambien forzar en el thead */
-    div[data-testid="stDataFrame"] thead th, div[data-testid="stDataFrame"] thead tr {
-        background: var(--accent) !important; color: #FFF !important;
+    div[data-testid="stDataFrame"] td, div[data-testid="stDataFrame"] tbody td {
+        color: var(--text) !important; background: #FFF !important;
+    }
+    div[data-testid="stDataFrame"] tr:nth-child(even) td, div[data-testid="stDataFrame"] tbody tr:nth-child(even) td {
+        background: #FAFAFA !important;
     }
     /* Buttons */
     .stButton button {
