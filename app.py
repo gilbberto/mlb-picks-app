@@ -2362,9 +2362,10 @@ def main():
                             r_icon = "⏳ Pendiente"
 
                     profit = p.get("profit")
+                    profit_str = "—"
                     if profit is not None:
                         total_profit += profit
-                        profit_str = f"${profit:+.0f}" if profit is not None else "—"
+                        profit_str = f"${profit:+.0f}"
                     prob_str = f"{p.get('model_prob', 0):.0%}"
                     odds_str = f"${p.get('odds', 0):+d}"
                     stake_str = f"${p.get('stake', 0):.0f}"
