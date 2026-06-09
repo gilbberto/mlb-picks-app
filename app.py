@@ -2417,17 +2417,19 @@ def main():
                 # ── Ajuste de profit real (casino) ──
                 cash_adj = int(data.get("cash_adjust", 0) or 0)
                 with st.expander("💰 Ajuste de bankroll real"):
-                    st.caption("Si tu casa de apuestas tiene un profit diferente al del modelo, ajústalo aquí.")
-                    new_adj = st.number_input("Profit real total ($)", value=cash_adj, step=1, key="cash_adj_input")
-                    if new_adj != cash_adj:
+                    st.caption("Profit real de tu casa de apuestas (se resetea cada lunes)")
+                    col1, col2 = st.columns([3, 1])
+                    new_adj = col1.number_input("Profit real ($)", value=cash_adj, step=1, key="cash_adj_input", label_visibility="collapsed")
+                    if col2.button("💾 Guardar", key="save_cash"):
                         from bankroll import save_picks, load_picks
                         data["cash_adjust"] = new_adj
                         try:
                             save_picks(data)
                             data = load_picks()
                             sync_picks_to_github()
+                            st.success(f"✅ Ajustado a ${new_adj}")
                         except Exception as _e:
-                            st.error(f"❌ Error al guardar: {_e}")
+                            st.error(f"❌ Error: {_e}")
 
                 # ── Model calibration ──
                 if settled:
