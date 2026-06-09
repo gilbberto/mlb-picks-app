@@ -2340,6 +2340,7 @@ def main():
                 rows = []
                 for p in reversed(weekly_picks):
                     result = p.get("result")
+                    r_icon = "⏳ Pendiente"
                     if result == "W":
                         r_icon = "✅ Ganado"
                     elif result == "L":
