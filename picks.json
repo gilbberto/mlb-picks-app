@@ -1,5 +1,5 @@
 {
-  "bankroll": -3658.13,
+  "bankroll": -3558.13,
   "history": [
     {
       "id": 1,
@@ -570,23 +570,6 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 370
-    },
-    {
-      "id": 35,
-      "date": "2026-06-09",
-      "game": "CHC @ COL",
-      "market": "O/U",
-      "team": "Under",
-      "detail": "u12.5",
-      "model_prob": 0.798,
-      "odds": -118,
-      "stake": 100,
-      "bankroll_before": 1066.04,
-      "result": null,
-      "profit": null,
-      "label": "\ud83d\udd25 High",
-      "settled": false,
-      "telegram_msg_id": 371
     }
   ],
   "weekly_bankroll": 1000,
