@@ -38,6 +38,12 @@ st.markdown("""
     .stApp, .main, .block-container, .stApp > header {
         background-color: var(--bg) !important;
     }
+    #MainMenu, header[data-testid="stHeader"], .stApp > header, .stApp header {
+        background: var(--bg) !important;
+    }
+    section[data-testid="stSidebar"] + div, .main > div:first-child {
+        background: var(--bg) !important;
+    }
     .stApp, .stMarkdown, .stText, p, h1, h2, h3, h4, h5, h6, label, div {
         color: var(--text) !important;
     }
