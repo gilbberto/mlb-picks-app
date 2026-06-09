@@ -695,13 +695,13 @@ def build_rf_feature_row(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f,
 
 @st.cache_data(ttl=86400)
 def monte_carlo_predict(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f,
-                         hp_rec=None, ap_rec=None, n_sims=5000, weather=None):
+                         hp_rec=None, ap_rec=None, n_sims=5000, weather=None, total_std=3.2):
     """Run Monte Carlo simulation using trained models. Returns dict."""
     if not _MODELS_LOADED:
         return {"ml_hp": None, "ml_ap": None,
                 "spr_home_minus": None, "spr_home_plus": None,
                 "spr_away_minus": None, "spr_away_plus": None, "spr_exp_margin": None,
-                "exp_total": None, "total_std": 3.2}
+                "exp_total": None, "total_std": total_std}
 
     row = build_rf_feature_row(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f,
                                 hp_rec=hp_rec, ap_rec=ap_rec, weather=weather)
