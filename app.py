@@ -2414,7 +2414,7 @@ def main():
                 st.markdown(f"Profit total: <span style='color:{'#00cc66' if green else '#ff4444'}'><b>${total_profit:+.2f}</b></span>", unsafe_allow_html=True)
 
                 # ── Ajuste de profit real (casino) ──
-                cash_adj = data.get("cash_adjust", 0) or 0
+                cash_adj = int(data.get("cash_adjust", 0) or 0)
                 with st.expander("💰 Ajuste de bankroll real"):
                     st.caption("Si tu casa de apuestas tiene un profit diferente al del modelo, ajústalo aquí.")
                     new_adj = st.number_input("Profit real total ($)", value=cash_adj, step=1, key="cash_adj_input")
