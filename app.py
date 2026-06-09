@@ -2283,10 +2283,9 @@ def main():
                 wk_start = data.get("weekly_start", "2026-01-01")
                 weekly_picks = [p for p in data["history"] if p.get("date", "") >= wk_start]
                 mc1, mc2, mc3, mc4 = st.columns(4)
-                _cash = data.get("cash_adjust", 0) or 0
                 mc1.metric("📅 Semanal", f"${pnl['weekly_bankroll']:.0f}", delta=f"${pnl['weekly_profit']:+.0f}")
                 mc2.metric("💰 Histórico", f"${pnl['profit']:+.0f}", delta=f"{pnl['roi']:+.0f}%")
-                mc3.metric("🎰 Casino Real", f"${_cash:+.0f}")
+                mc3.metric("Record Semanal", f"{pnl['weekly_wins']}-{pnl['weekly_losses']}")
                 mc4.metric("Pendientes", sum(1 for p in weekly_picks if not p.get("settled")))
 
                 # ── Win rate by market ──
@@ -2420,22 +2419,6 @@ def main():
                 st.markdown(f"Profit total: <span style='color:{'#00cc66' if green else '#ff4444'}'><b>${total_profit:+.2f}</b></span>", unsafe_allow_html=True)
 
                 # ── Ajuste de profit real (casino) ──
-                cash_adj = int(data.get("cash_adjust", 0) or 0)
-                with st.expander("💰 Ajuste de bankroll real"):
-                    st.caption("Profit real de tu casa de apuestas (se resetea cada lunes)")
-                    col1, col2 = st.columns([3, 1])
-                    new_adj = col1.number_input("Profit real ($)", value=cash_adj, step=1, key="cash_adj_input", label_visibility="collapsed")
-                    if col2.button("💾 Guardar", key="save_cash"):
-                        from bankroll import save_picks, load_picks
-                        data["cash_adjust"] = new_adj
-                        try:
-                            save_picks(data)
-                            data = load_picks()
-                            sync_picks_to_github()
-                            st.success(f"✅ Ajustado a ${new_adj}")
-                        except Exception as _e:
-                            st.error(f"❌ Error: {_e}")
-
                 # ── Model calibration ──
                 if settled:
                     bins = [(50, 55), (55, 60), (60, 65), (65, 70), (70, 100)]

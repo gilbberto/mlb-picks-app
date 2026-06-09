@@ -238,8 +238,7 @@ def get_pnl():
     weekly_l = sum(1 for p in weekly_settled if p["result"] == "L")
     weekly_profit = sum(p.get("profit") or 0 for p in weekly_picks if p.get("profit") is not None)
     weekly_bankroll_start = data.get("weekly_bankroll", 1000)
-    cash_adj = data.get("cash_adjust", 0) or 0
-    weekly_bankroll = round(weekly_bankroll_start + (cash_adj if cash_adj else weekly_profit), 2)
+    weekly_bankroll = round(weekly_bankroll_start + weekly_profit, 2)
     hist_profit = sum(w.get("profit", 0) for w in data.get("weekly_history", [])) + weekly_profit
     cash_adj = data.get("cash_adjust", 0) or 0
     adj_bankroll = round(1000 + hist_profit - open_stakes + cash_adj, 2)
