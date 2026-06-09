@@ -481,7 +481,7 @@
       "stake": 147.88,
       "bankroll_before": 1000,
       "result": "L",
-      "profit": -147.88,
+      "profit": -91.92,
       "label": "\ud83d\udd25 High",
       "settled": true,
       "telegram_msg_id": 341
@@ -619,6 +619,5 @@
       "picks": 28
     }
   ],
-  "last_weekly_reset": "2026-06-08",
-  "cash_adjust": 122
+  "last_weekly_reset": "2026-06-08"
 }
