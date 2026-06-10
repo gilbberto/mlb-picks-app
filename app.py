@@ -1977,7 +1977,12 @@ def main():
             cgs = r.get("coded_game_state", "")
             game_dt = r.get("game_dt")
             score = r.get("final", "")
+            if isinstance(score, float) and math.isnan(score):
+                score = ""
             time_str = r.get("game_time", "")
+            import math
+            if isinstance(time_str, float) and math.isnan(time_str):
+                time_str = ""
             if cgs == "I" and score:
                 t = f"🔴 {score}"
             elif cgs == "I":
