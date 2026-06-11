@@ -1,5 +1,5 @@
 {
-  "bankroll": -3943.74,
+  "bankroll": -4043.74,
   "history": [
     {
       "id": 1,
@@ -672,6 +672,23 @@
       "label": "\ud83d\udd25 High",
       "settled": true,
       "telegram_msg_id": 427
+    },
+    {
+      "id": 41,
+      "date": "2026-06-11",
+      "game": "TEX @ KC",
+      "market": "O/U",
+      "team": "Under",
+      "detail": "u10.5",
+      "model_prob": 0.847,
+      "odds": -115,
+      "stake": 100,
+      "bankroll_before": 1280.43,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false,
+      "telegram_msg_id": 460
     }
   ],
   "weekly_bankroll": 1000,
