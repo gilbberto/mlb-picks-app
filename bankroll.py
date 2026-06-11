@@ -194,18 +194,23 @@ def add_pick(date, game, market, model_prob, odds, stake, bankroll, label="", te
     return pick["id"]
 
 def settle_pick(pick_id, won):
-    """Mark a pick as won/lost and update bankroll."""
+    """Mark a pick as won/lost/push and update bankroll. won=True/False/None (push)."""
     data = load_picks()
     bankroll = data["bankroll"]
     for p in data["history"]:
         if p["id"] == pick_id and not p.get("settled"):
-            p["result"] = "W" if won else "L"
-            if won:
+            if won is None:
+                p["result"] = "P"
+                profit = 0  # No gain/loss
+                data["bankroll"] = round(bankroll + p["stake"], 2)  # Return stake
+            elif won:
+                p["result"] = "W"
                 if p["odds"] > 0:
                     profit = p["stake"] * (p["odds"] / 100.0)
                 else:
                     profit = p["stake"] * (100.0 / abs(p["odds"]))
             else:
+                p["result"] = "L"
                 profit = -p["stake"]
             p["profit"] = round(profit, 2)
             p["settled"] = True
@@ -351,7 +356,6 @@ def auto_settle():
                     detail = p.get("detail", "")
                     total = match["away_runs"] + match["home_runs"]
                     pick_side = team  # "Over" or "Under"
-                    # Parse line from detail (e.g., "o8.5", "u8.5", "o7", "u7")
                     line = None
                     if detail:
                         try:
@@ -359,7 +363,9 @@ def auto_settle():
                         except:
                             pass
                     if line is not None and pick_side:
-                        if pick_side.lower() == "over":
+                        if total == line:
+                            won = None  # Push
+                        elif pick_side.lower() == "over":
                             won = total > line
                         elif pick_side.lower() == "under":
                             won = total < line
