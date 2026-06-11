@@ -1,5 +1,5 @@
 {
-  "bankroll": -4043.74,
+  "bankroll": -4143.74,
   "history": [
     {
       "id": 1,
@@ -689,6 +689,23 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 464
+    },
+    {
+      "id": 42,
+      "date": "2026-06-11",
+      "game": "STL @ NYM",
+      "market": "O/U",
+      "team": "Under",
+      "detail": "u9.0",
+      "model_prob": 0.815,
+      "odds": -115,
+      "stake": 100,
+      "bankroll_before": 1280.43,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false,
+      "telegram_msg_id": 465
     }
   ],
   "weekly_bankroll": 1000,
