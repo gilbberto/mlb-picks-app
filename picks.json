@@ -633,8 +633,8 @@
       "odds": -110,
       "stake": 100,
       "bankroll_before": 1294.28,
-      "result": "L",
-      "profit": -100,
+      "result": "P",
+      "profit": 0,
       "label": "\ud83d\udd25 High",
       "settled": true,
       "telegram_msg_id": 425
@@ -684,10 +684,10 @@
       "odds": -115,
       "stake": 100,
       "bankroll_before": 1280.43,
-      "result": "P",
-      "profit": 0,
+      "result": null,
+      "profit": null,
       "label": "\ud83d\udd25 High",
-      "settled": true,
+      "settled": false,
       "telegram_msg_id": 464
     },
     {
