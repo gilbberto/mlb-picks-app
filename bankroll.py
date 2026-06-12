@@ -164,6 +164,21 @@ def save_picks(data):
     os.makedirs(os.path.dirname(DB_PATH) or ".", exist_ok=True)
     with open(DB_PATH, "w") as f:
         json.dump(data, f, indent=2)
+    # Sincronizar a GitHub inmediatamente
+    try:
+        tok = os.environ.get("GITHUB_TOKEN", "")
+        if tok:
+            import base64
+            with open(DB_PATH) as f:
+                content = f.read()
+            url = "https://api.github.com/repos/gilbberto/mlb-picks-app/contents/picks.json"
+            headers = {"Authorization": f"Bearer {tok}", "Accept": "application/vnd.github+json"}
+            r = requests.get(url + "?ref=main", headers=headers, timeout=10)
+            sha = r.json().get("sha", "") if r.ok else ""
+            body = {"message": "sync picks", "content": base64.b64encode(content.encode()).decode(), "branch": "main"}
+            if sha: body["sha"] = sha
+            requests.put(url, json=body, headers=headers, timeout=10)
+    except: pass
 
 def add_pick(date, game, market, model_prob, odds, stake, bankroll, label="", team="", detail=""):
     data = load_picks()
