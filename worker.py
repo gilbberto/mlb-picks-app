@@ -97,7 +97,7 @@ def main():
     subprocess.run(["python3", "-c", """
 import sys; sys.path.insert(0, '.')
 from predictions import fetch_odds
-odds = fetch_odds()
+odds = fetch_odds(force_refresh=True)
 print(f'  Odds cache: {len(odds) if odds else 0} games')
 """], cwd=CWD, env=ENV)
     sync_to_github()
