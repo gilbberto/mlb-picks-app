@@ -899,6 +899,7 @@ def sync_picks_to_github():
             r2 = requests.put(url, json=data, headers=headers, timeout=10)
             if r2.status_code == 409:
                 time.sleep(0.5); continue
+            st.session_state["sync_status"] = f"Sync intento {attempt+1}: {r2.status_code}"
             break
     except: pass
 
@@ -2270,6 +2271,9 @@ def main():
 
     # ── Mis Picks Registrados ──
     st.write("DEBUG: Entrando a Mis Picks")
+    _sync_status = st.session_state.get("sync_status","")
+    if _sync_status:
+        st.write(f"Sync status: {_sync_status}")
     try:
         from bankroll import get_pnl, load_picks
         pnl = get_pnl()
