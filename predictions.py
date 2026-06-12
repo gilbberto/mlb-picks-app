@@ -626,13 +626,6 @@ def fetch_odds():
                 return json.load(f)
         except:
             pass
-    # Cooldown por archivo (persiste entre subprocess calls)
-    try:
-        cd_age = time.time() - os.path.getmtime(ODDS_COOLDOWN_PATH)
-        if cd_age < 1800:
-            return []
-    except:
-        pass
     odds = []
     if ODDS_API_KEY:
         try:
