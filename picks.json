@@ -775,23 +775,6 @@
       "settled": false
     },
     {
-      "id": 47,
-      "date": "2026-06-12",
-      "game": "AZ @ CIN",
-      "market": "ML",
-      "team": "Arizona Diamondbacks",
-      "detail": "",
-      "model_prob": 0.725,
-      "odds": -105,
-      "stake": 100,
-      "bankroll_before": 1367.39,
-      "result": null,
-      "profit": null,
-      "label": "\ud83d\udd25 High",
-      "settled": false,
-      "telegram_msg_id": 518
-    },
-    {
       "id": 48,
       "date": "2026-06-12",
       "game": "HOU @ KC",
