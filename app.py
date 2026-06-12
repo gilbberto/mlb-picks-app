@@ -1446,7 +1446,6 @@ def main():
         st.session_state.role = None
     _sync_users_from_github()
     _sync_odds_from_github()
-    sync_picks_from_github()
     if st.session_state.get("login_time") and time.time() - st.session_state.login_time > 28800:
         st.session_state.clear()
         st.rerun()
