@@ -2557,9 +2557,9 @@ def main():
                 except: pass
             else:
                 st.info("💡 Aún no has registrado picks. Usa el botón **📝** en las tarjetas o recomendaciones para empezar.")
-    except ImportError:
-        pass
-
+    except Exception as _me:
+        st.error(f"Error en Mis Picks: {_me}")
+    
     if _get_perms(st.session_state.user).get("detailed_table", False):
         st.divider()
         with st.expander("🔬 Tabla detallada"):
