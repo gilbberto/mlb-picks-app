@@ -2312,7 +2312,7 @@ def main():
                 mc4.metric("Pendientes", sum(1 for p in weekly_picks if not p.get("settled")))
 
                 # ── Win rate by market ──
-                settled = [p for p in data["history"] if p.get("result") in ("W", "L", "P")]
+                settled = [p for p in data["history"] if p.get("result") in ("W", "L", "P", "C")]
                 if settled:
                     markets = {}
                     for p in settled:
@@ -2369,6 +2369,8 @@ def main():
                         r_icon = "❌ Perdido"
                     elif result == "P":
                         r_icon = "🤝 Push"
+                    elif result == "C":
+                        r_icon = "❌ Cancelado"
                     else:
                         gk = p.get("game", "")
                         if gk in game_status:

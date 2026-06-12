@@ -199,7 +199,11 @@ def settle_pick(pick_id, won):
     bankroll = data["bankroll"]
     for p in data["history"]:
         if p["id"] == pick_id and not p.get("settled"):
-            if won is None:
+            if won == "cancel":
+                p["result"] = "C"
+                profit = 0
+                data["bankroll"] = round(bankroll + p["stake"], 2)  # Return stake
+            elif won is None:
                 p["result"] = "P"
                 profit = 0  # No gain/loss
                 data["bankroll"] = round(bankroll + p["stake"], 2)  # Return stake
@@ -281,6 +285,19 @@ def _fetch_mlb_games(date_str):
         games = []
         for d in r.json().get("dates", []):
             for g in d.get("games", []):
+                # Check if game was cancelled/postponed
+                if g.get("status", {}).get("detailedState") in ("Postponed", "Cancelled", "Suspended"):
+                    games.append({
+                        "away_abbr": away_abbr,
+                        "home_abbr": home_abbr,
+                        "away_name": away_name,
+                        "home_name": home_name,
+                        "away_runs": 0,
+                        "home_runs": 0,
+                        "label": f"{away_abbr} @ {home_abbr}",
+                        "cancelled": True,
+                    })
+                    continue
                 if g.get("status", {}).get("codedGameState") not in ("F", "O"):
                     continue
                 away = g["teams"]["away"]
@@ -334,6 +351,8 @@ def auto_settle():
 
             try:
                 won = None
+                if match.get("cancelled"):
+                    profit = settle_pick(p["id"], "cancel")
                 if market == "ML":
                     if not team: continue
                     if _same_team(team, match["away_abbr"], match["away_name"]):
