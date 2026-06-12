@@ -2305,6 +2305,7 @@ def main():
             if data["history"]:
                 wk_start = data.get("weekly_start", "2026-01-01")
                 weekly_picks = [p for p in data["history"] if p.get("date", "") >= wk_start]
+                st.write(f"DEBUG: {len(data['history'])} total picks, {len(weekly_picks)} this week")
                 mc1, mc2, mc3, mc4 = st.columns(4)
                 mc1.metric("📅 Semanal", f"${pnl['weekly_bankroll']:.0f}", delta=f"${pnl['weekly_profit']:+.0f}")
                 mc2.metric("💰 Histórico", f"${pnl['profit']:+.0f}", delta=f"{pnl['roi']:+.0f}%")
