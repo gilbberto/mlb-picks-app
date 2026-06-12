@@ -2269,6 +2269,7 @@ def main():
         pass
 
     # ── Mis Picks Registrados ──
+    st.write("DEBUG: Entrando a Mis Picks")
     try:
         from bankroll import get_pnl, load_picks
         pnl = get_pnl()
