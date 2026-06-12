@@ -2270,10 +2270,9 @@ def main():
         pass
 
     # ── Mis Picks Registrados ──
-    st.write("DEBUG: Entrando a Mis Picks")
-    _sync_status = st.session_state.get("sync_status","")
-    if _sync_status:
-        st.write(f"Sync status: {_sync_status}")
+    import os as _os
+    _dbg_path = _os.path.join(_os.path.dirname(__file__), "picks.json")
+    st.write(f"DEBUG: file={_dbg_path} exists={_os.path.exists(_dbg_path)}")
     try:
         from bankroll import get_pnl, load_picks
         pnl = get_pnl()
