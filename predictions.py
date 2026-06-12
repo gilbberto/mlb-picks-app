@@ -925,8 +925,14 @@ def generate_recommendations():
             if ed: ou_entry["edge"] = ed
             all_recs.append(ou_entry)
 
-    # Filter + rank identical to app.py
-    recs = [r for r in all_recs if r["edge"] is not None and r["edge"] > 2]
+    # Filter + rank (matching app.py)
+    recs = []
+    for r in all_recs:
+        if r["edge"] is not None and r["edge"] > 2:
+            recs.append(r)
+        elif r["prob"] >= 55:
+            r["edge"] = round((r["prob"] - 50) * 0.5, 1)
+            recs.append(r)
     best_per_game = {}
     for r in recs:
         g = r["game"]
