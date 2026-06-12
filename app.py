@@ -2272,7 +2272,15 @@ def main():
     # ── Mis Picks Registrados ──
     import os as _os
     _dbg_path = _os.path.join(_os.path.dirname(__file__), "picks.json")
-    st.write(f"DEBUG: file={_dbg_path} exists={_os.path.exists(_dbg_path)}")
+    try:
+        with open(_dbg_path) as _f:
+            _raw = _f.read()
+            st.write(f"DEBUG: file={_dbg_path} exists=True, size={len(_raw)} chars")
+            import json as _json
+            _d = _json.loads(_raw)
+            st.write(f"DEBUG: parsed OK, history={len(_d.get('history',[]))} picks")
+    except Exception as _ex:
+        st.write(f"DEBUG: file read ERROR: {_ex}")
     try:
         from bankroll import get_pnl, load_picks
         pnl = get_pnl()
