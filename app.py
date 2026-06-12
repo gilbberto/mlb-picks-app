@@ -1113,6 +1113,7 @@ def render_card(pick, key_suffix="", game_idx=0):
                     if st.button("📝", key=log_key):
                         try:
                             from bankroll import add_pick, get_pnl, recommend_stake
+                            sync_picks_from_github()
                             bk = get_pnl()["weekly_bankroll"]
                             gl = f"{pick['away_abbrev']} @ {pick['home_abbrev']}"
                             os_ = str(odds) if odds and odds != "N/A" else ""
@@ -1445,6 +1446,7 @@ def main():
         st.session_state.role = None
     _sync_users_from_github()
     _sync_odds_from_github()
+    sync_picks_from_github()
     if st.session_state.get("login_time") and time.time() - st.session_state.login_time > 28800:
         st.session_state.clear()
         st.rerun()
@@ -2250,6 +2252,7 @@ def main():
                         bk = get_pnl()["weekly_bankroll"]
                         if sk > 0:
                             from bankroll import add_pick
+                            sync_picks_from_github()
                             pt = r["pick"]
                             dtl = r.get("entry", {}).get("detail", "")
                             gl = f"{r['pick_dict']['away_abbrev']} @ {r['pick_dict']['home_abbrev']}"
