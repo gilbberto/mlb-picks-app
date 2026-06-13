@@ -4962,8 +4962,8 @@
       "odds": "N/A",
       "edge": null,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "823695_moneyline",
