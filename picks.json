@@ -823,6 +823,22 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 543
+    },
+    {
+      "id": 50,
+      "date": "2026-06-13",
+      "game": "CHC @ SF",
+      "market": "O/U",
+      "team": "Under",
+      "detail": "u8.0",
+      "model_prob": 0.792,
+      "odds": -115,
+      "stake": 100,
+      "bankroll_before": 1154.35,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
