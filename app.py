@@ -2039,7 +2039,7 @@ def main():
                         "Odds": odds_val,
                         "EV": f"{_ev:.1%}" if _ev is not None else "",
                     }
-            if _best_row and _best_score >= 5:  # Solo 🔥🔥🔥 (score 5)
+            if _best_row:
                 flat_rows.append(_best_row)
         if flat_rows:
             html = """<div style="overflow-x:auto">
