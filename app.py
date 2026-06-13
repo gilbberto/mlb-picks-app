@@ -1568,7 +1568,7 @@ def main():
     st.markdown(f'<div style="text-align:center;margin-bottom:16px;"><span style="color:#888;font-size:13px;">{today_str}</span></div>', unsafe_allow_html=True)
 
     with st.spinner("🔄 Cargando juegos..."):
-        games = fetch_todays_schedule()
+        games = fetch_todays_schedule(datetime.now(TZ).strftime("%m/%d/%Y"))
     if games is None or games == []:
         st.warning("No hay juegos hoy.")
         return
