@@ -790,6 +790,22 @@
       "label": "\ud83d\udd25 High",
       "settled": true,
       "telegram_msg_id": 519
+    },
+    {
+      "id": 48,
+      "date": "2026-06-13",
+      "game": "COL @ ATH",
+      "market": "O/U",
+      "team": "Under",
+      "detail": "u14.0",
+      "model_prob": 0.916,
+      "odds": -105,
+      "stake": 100,
+      "bankroll_before": 1254.35,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
