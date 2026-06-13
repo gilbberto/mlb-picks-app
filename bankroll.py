@@ -300,8 +300,17 @@ def _fetch_mlb_games(date_str):
         games = []
         for d in r.json().get("dates", []):
             for g in d.get("games", []):
-                # Check if game was cancelled/postponed
-                if g.get("status", {}).get("detailedState") in ("Postponed", "Cancelled", "Suspended"):
+                away = g["teams"]["away"]
+                home = g["teams"]["home"]
+                away_name = away["team"]["name"]
+                home_name = home["team"]["name"]
+                away_abbr = REV_TEAM.get(away_name.lower(), away_name)
+                home_abbr = REV_TEAM.get(home_name.lower(), home_name)
+                label = f"{away_abbr} @ {home_abbr}"
+                status = g.get("status", {})
+                detailed = status.get("detailedState", "")
+                cgs = status.get("codedGameState", "")
+                if detailed in ("Postponed", "Cancelled", "Suspended"):
                     games.append({
                         "away_abbr": away_abbr,
                         "home_abbr": home_abbr,
@@ -309,26 +318,26 @@ def _fetch_mlb_games(date_str):
                         "home_name": home_name,
                         "away_runs": 0,
                         "home_runs": 0,
-                        "label": f"{away_abbr} @ {home_abbr}",
+                        "label": label,
                         "cancelled": True,
+                        "status": detailed,
                     })
                     continue
-                if g.get("status", {}).get("codedGameState") not in ("F",):
+                if cgs not in ("F",):
                     continue
-                away = g["teams"]["away"]
-                home = g["teams"]["home"]
-                away_name = away["team"]["name"]
-                home_name = home["team"]["name"]
-                away_abbr = REV_TEAM.get(away_name.lower(), away_name)
-                home_abbr = REV_TEAM.get(home_name.lower(), home_name)
+                ar = away.get("score", 0) or 0
+                hr = home.get("score", 0) or 0
+                if ar == 0 and hr == 0 and detailed != "Final":
+                    continue
                 games.append({
                     "away_abbr": away_abbr,
                     "home_abbr": home_abbr,
                     "away_name": away_name,
                     "home_name": home_name,
-                    "away_runs": away.get("score", 0),
-                    "home_runs": home.get("score", 0),
-                    "label": f"{away_abbr} @ {home_abbr}",
+                    "away_runs": ar,
+                    "home_runs": hr,
+                    "label": label,
+                    "status": detailed,
                 })
         return games
     except:
@@ -368,6 +377,13 @@ def auto_settle():
                 won = None
                 if match.get("cancelled"):
                     profit = settle_pick(p["id"], "cancel")
+                    if profit is not None:
+                        settled_count += 1
+                    continue
+                if match.get("status") and match["status"] != "Final":
+                    continue
+                if match["away_runs"] == 0 and match["home_runs"] == 0:
+                    continue
                 if market == "ML":
                     if not team: continue
                     if _same_team(team, match["away_abbr"], match["away_name"]):
