@@ -5172,8 +5172,8 @@
       "odds": 118,
       "edge": 21.0,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "823369_total",
@@ -5187,8 +5187,8 @@
       "odds": -118,
       "edge": 1.0,
       "detail": "o8.5",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "824508_moneyline",
@@ -5322,8 +5322,8 @@
       "odds": -155,
       "edge": 0.3,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "W",
+      "settled": true
     },
     {
       "id": "824587_total",
@@ -5337,8 +5337,8 @@
       "odds": -120,
       "edge": -0.1,
       "detail": "u9.0",
-      "result": null,
-      "settled": false
+      "result": "W",
+      "settled": true
     },
     {
       "id": "824100_moneyline",
