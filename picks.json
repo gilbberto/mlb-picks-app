@@ -806,6 +806,22 @@
       "profit": -100,
       "label": "\ud83d\udd25 High",
       "settled": true
+    },
+    {
+      "id": 49,
+      "date": "2026-06-13",
+      "game": "ATL @ NYM",
+      "market": "ML",
+      "team": "Atlanta Braves",
+      "detail": "",
+      "model_prob": 0.771,
+      "odds": 100,
+      "stake": 100,
+      "bankroll_before": 1154.35,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
