@@ -313,7 +313,7 @@ def _fetch_mlb_games(date_str):
                         "cancelled": True,
                     })
                     continue
-                if g.get("status", {}).get("codedGameState") not in ("F", "O"):
+                if g.get("status", {}).get("codedGameState") not in ("F",):
                     continue
                 away = g["teams"]["away"]
                 home = g["teams"]["home"]
