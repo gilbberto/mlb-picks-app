@@ -189,7 +189,7 @@ def add_pick(date, game, market, model_prob, odds, stake, bankroll, label="", te
             # Default to first team (away) if not specified
             team = parts[0]
     pick = {
-        "id": len(data["history"]) + 1,
+        "id": max([p.get("id", 0) for p in data["history"]] + [0]) + 1,
         "date": date,
         "game": game,
         "market": market,
