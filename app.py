@@ -1550,7 +1550,7 @@ def main():
 
         st.divider()
         st.caption(f"🕐 {datetime.now(TZ).strftime('%H:%M')} Chihuahua")
-        st.caption("MLB Picks AI v3.0 · Solo informativo · No garantiza ganancias")
+        st.caption("MLB Picks AI v3.4 · Solo informativo · No garantiza ganancias")
 
     st.markdown("""
     <div style="text-align:center;padding:16px 0 6px;">
