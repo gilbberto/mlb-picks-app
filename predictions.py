@@ -615,7 +615,12 @@ ODDS_CACHE_PATH = os.path.join(os.path.dirname(__file__), ".odds_cache.json")
 ODDS_COOLDOWN_PATH = os.path.join(os.path.dirname(__file__), ".odds_cooldown")
 
 def fetch_odds(force_refresh=False):
-    if not force_refresh:
+    cache_age = 3600  # default: stale
+    try:
+        cache_age = time.time() - os.path.getmtime(ODDS_CACHE_PATH)
+    except:
+        pass
+    if not force_refresh and cache_age < 14400:
         try:
             with open(ODDS_CACHE_PATH) as f:
                 cached = json.load(f)
