@@ -55,16 +55,21 @@ LG_AVG_RUNS = 4.5
 _xgb_hw = _xgb_rd = _xgb_tot = None
 _rf_hw = _rf_rd = _rf_tot = None
 _cols = None
+_ou_cols = None
 _MODELS_LOADED = False
 
 def load_models():
-    global _xgb_hw, _xgb_rd, _xgb_tot, _rf_hw, _rf_rd, _rf_tot, _cols, _MODELS_LOADED
+    global _xgb_hw, _xgb_rd, _xgb_tot, _rf_hw, _rf_rd, _rf_tot, _cols, _ou_cols, _MODELS_LOADED
     try:
         import xgboost as xgb
         with open(BASE + "xgb_hw.pkl", "rb") as f: _xgb_hw = pickle.load(f)
         with open(BASE + "xgb_rd.pkl", "rb") as f: _xgb_rd = pickle.load(f)
         with open(BASE + "xgb_tot.pkl", "rb") as f: _xgb_tot = pickle.load(f)
         with open(BASE + "xgb_cols.pkl", "rb") as f: _cols = pickle.load(f)
+        try:
+            with open(BASE + "xgb_ou_cols.pkl", "rb") as f: _ou_cols = pickle.load(f)
+        except:
+            _ou_cols = _cols
         _MODELS_LOADED = True
     except:
         pass
@@ -75,6 +80,7 @@ def load_models():
             with open(BASE + "rf_rd.pkl", "rb") as f: _rf_rd = pickle.load(f)
             with open(BASE + "rf_tot.pkl", "rb") as f: _rf_tot = pickle.load(f)
             with open(BASE + "rf_cols.pkl", "rb") as f: _cols = pickle.load(f)
+            _ou_cols = _cols
             _MODELS_LOADED = True
         except:
             pass
@@ -116,7 +122,20 @@ def fetch_team_stats_mlb(tid, season=CURRENT_SEASON):
             if g == "hitting":
                 result["hitting"] = {k: safe_float(s.get(k)) for k in ["avg","runs","hr","obp","slg","ops","hits","strikeOuts","baseOnBalls"]}
             elif g == "pitching":
-                result["pitching"] = {k: safe_float(s.get(k)) for k in ["era","whip","runs","strikeouts","baseOnBalls","homeRuns"]}
+                ip = s.get("inningsPitched", "0")
+                ipv = 0
+                if isinstance(ip, str) and "." in ip:
+                    parts = ip.split(".")
+                    ipv = int(parts[0]) + int(parts[1]) / 3.0 if len(parts) > 1 else float(parts[0])
+                else:
+                    ipv = float(ip or 0)
+                result["pitching"] = {k: safe_float(s.get(k)) for k in ["era","whip","runs","strikeouts","baseOnBalls","homeRuns",
+                                              "hits","earnedRuns"]}
+                result["pitching"]["ip"] = ipv
+                result["pitching"]["er"] = safe_float(s.get("earnedRuns"))
+                result["pitching"]["bb"] = safe_float(s.get("baseOnBalls"))
+                result["pitching"]["so"] = safe_float(s.get("strikeOuts"))
+                result["pitching"]["h"] = safe_float(s.get("hits"))
     return result
 
 PRED_LOG_PATH = os.path.join(os.path.dirname(__file__), "predictions_log.json")
@@ -387,6 +406,7 @@ def fetch_pitcher_stats(pid):
             "k9": safe_float(s.get("strikeoutsPer9Inn")), "bb9": safe_float(s.get("walksPer9Inn")),
             "hr9": safe_float(s.get("homeRunsPer9")), "fip": fip, "babip": babip, "kbb": kbb,
             "gb_rate": gb_rate,
+            "er": safe_float(s.get("earnedRuns")), "bb": bb, "so": so, "h": h,
             "name": s.get("player", {}).get("fullName") if isinstance(s.get("player"), dict) else s.get("player", ""),
         }
     except:
@@ -526,6 +546,27 @@ def compute_form(games, tid):
 
 def build_rf_feature_row(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f, hp_rec=None, ap_rec=None, weather=None):
     weather = weather or {}
+    # Compute bullpen stats: team totals minus starter contribution
+    h_bp_ip = max(hs.get("pitching",{}).get("ip", 0) - (hpitch.get("ip", 0) if hpitch else 0), 1.0)
+    h_bp_er = max(hs.get("pitching",{}).get("er", 0) - (hpitch.get("er", 0) if hpitch else 0), 0)
+    h_bp_era = 9 * h_bp_er / h_bp_ip
+    h_bp_bb = max(hs.get("pitching",{}).get("bb", 0) - (hpitch.get("bb", 0) if hpitch else 0), 0)
+    h_bp_so = max(hs.get("pitching",{}).get("so", 0) - (hpitch.get("so", 0) if hpitch else 0), 0)
+    h_bp_h = max(hs.get("pitching",{}).get("h", 0) - (hpitch.get("h", 0) if hpitch else 0), 0)
+    h_bp_whip = (h_bp_bb + h_bp_h) / h_bp_ip if h_bp_ip > 0 else 1.35
+    h_bp_k9 = 9 * h_bp_so / h_bp_ip if h_bp_ip > 0 else 8.0
+    h_bp_bb9 = 9 * h_bp_bb / h_bp_ip if h_bp_ip > 0 else 3.0
+
+    a_bp_ip = max(aws.get("pitching",{}).get("ip", 0) - (apitch.get("ip", 0) if apitch else 0), 1.0)
+    a_bp_er = max(aws.get("pitching",{}).get("er", 0) - (apitch.get("er", 0) if apitch else 0), 0)
+    a_bp_era = 9 * a_bp_er / a_bp_ip
+    a_bp_bb = max(aws.get("pitching",{}).get("bb", 0) - (apitch.get("bb", 0) if apitch else 0), 0)
+    a_bp_so = max(aws.get("pitching",{}).get("so", 0) - (apitch.get("so", 0) if apitch else 0), 0)
+    a_bp_h = max(aws.get("pitching",{}).get("h", 0) - (apitch.get("h", 0) if apitch else 0), 0)
+    a_bp_whip = (a_bp_bb + a_bp_h) / a_bp_ip if a_bp_ip > 0 else 1.35
+    a_bp_k9 = 9 * a_bp_so / a_bp_ip if a_bp_ip > 0 else 8.0
+    a_bp_bb9 = 9 * a_bp_bb / a_bp_ip if a_bp_ip > 0 else 3.0
+
     f = {
         "h_elo": h_elo, "a_elo": a_elo,
         "h_wp": hf.get("wp", 0.5), "a_wp": af.get("wp", 0.5),
@@ -565,6 +606,8 @@ def build_rf_feature_row(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f, 
         "ap_rec_k9": ap_rec.get("rec_k9", apitch.get("k9", 8.0)) if ap_rec else 8.0,
         "ap_rec_bb9": ap_rec.get("rec_bb9", apitch.get("bb9", 3.0)) if ap_rec else 3.0,
         "ap_rec_hr9": ap_rec.get("rec_hr9", apitch.get("hr9", 1.2)) if ap_rec else 1.2,
+        "h_bp_era": h_bp_era, "h_bp_whip": h_bp_whip, "h_bp_k9": h_bp_k9, "h_bp_bb9": h_bp_bb9,
+        "a_bp_era": a_bp_era, "a_bp_whip": a_bp_whip, "a_bp_k9": a_bp_k9, "a_bp_bb9": a_bp_bb9,
         "temp_f": weather.get("temp_f", 72.0), "wind_mph": weather.get("wind_mph", 0.0),
         "humidity": weather.get("humidity", 50), "is_dome": 1 if weather.get("conditions") == "dome" else 0,
     }
@@ -575,10 +618,11 @@ def monte_carlo_predict(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f, h
         return {"ml_hp": None, "ml_ap": None, "spr_home_minus": None, "spr_home_plus": None, "spr_away_minus": None, "spr_away_plus": None, "spr_exp_margin": None, "exp_total": None, "total_std": 3.2}
     row = build_rf_feature_row(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f, hp_rec=hp_rec, ap_rec=ap_rec, weather=weather)
     x = np.array([[row[c] for c in _cols]])
+    x_ou = np.array([[row.get(c, 0) for c in _ou_cols]]) if _ou_cols and _ou_cols != _cols else x
     if _xgb_hw is not None:
         hw_prob = _xgb_hw.predict_proba(x)[0, 1]
         exp_rdiff = _xgb_rd.predict(x)[0]
-        exp_total = _xgb_tot.predict(x)[0]
+        exp_total = _xgb_tot.predict(x_ou)[0]
     else:
         hw_prob = _rf_hw.predict_proba(x)[0, 1]
         exp_rdiff = _rf_rd.predict(x)[0]
