@@ -891,6 +891,22 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 579
+    },
+    {
+      "id": 54,
+      "date": "2026-06-14",
+      "game": "ATL @ NYM",
+      "market": "ML",
+      "team": "Atlanta Braves",
+      "detail": "",
+      "model_prob": 0.745,
+      "odds": 105,
+      "stake": 100,
+      "bankroll_before": 1436.55,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
