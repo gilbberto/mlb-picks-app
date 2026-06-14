@@ -494,4 +494,45 @@ for seed in SEEDS:
 with open(BASE + "xgb_cols.pkl", "wb") as f: pickle.dump(cols_base, f)
 with open(BASE + "xgb_ou_cols.pkl", "wb") as f: pickle.dump(cols_ou, f)
 print(f"\n  Models saved. Base cols: {len(cols_base)}, OU cols: {len(cols_ou)}")
+
+# ─── Platt Scaling Calibration ───
+print("\n=== Calibration (Platt scaling) ===")
+from sklearn.linear_model import LogisticRegression
+from sklearn.calibration import calibration_curve
+
+# Use seed-42 model for calibration (ensembles average the probas anyway)
+calib_hw = m_hw
+calib_tot = m_tot
+
+# HW calibration: Platt scale on validation set
+hw_probas = calib_hw.predict_proba(Xv)[:, 1]
+platt_hw = LogisticRegression(C=1.0, solver='lbfgs')
+platt_hw.fit(hw_probas.reshape(-1, 1), yhv)
+cal_hw = platt_hw.predict_proba(hw_probas.reshape(-1, 1))[:, 1]
+cal_hw_acc = accuracy_score(yhv, (cal_hw > 0.5).astype(int))
+print(f"  HW calibration: {len(yhv)} pts, acc={cal_hw_acc:.3f}")
+
+# Show calibration curves (before/after)
+for name, probs in [("raw", hw_probas), ("calibrated", cal_hw)]:
+    frac_pos, mean_pred = calibration_curve(yhv, probs, n_bins=10, strategy='uniform')
+    print(f"  {name:12s}: bins={[f'{fp:.2f}' for fp in frac_pos[:5]]}...")
+
+# O/U calibration: predict total → over_prob → Platt scale
+tot_preds = calib_tot.predict(Xov)
+median_total = np.median(y_tot)
+# For O/U: use the market line median as threshold to get binary outcomes
+ou_binary = (ytv > median_total).astype(int)
+# Raw O/U probability via normal CDF (std=3.2)
+from scipy.stats import norm
+ou_raw_probs = norm.cdf(tot_preds - median_total, 0, 3.2)
+platt_ou = LogisticRegression(C=1.0, solver='lbfgs')
+platt_ou.fit(ou_raw_probs.reshape(-1, 1), ou_binary)
+cal_ou = platt_ou.predict_proba(ou_raw_probs.reshape(-1, 1))[:, 1]
+cal_ou_acc = accuracy_score(ou_binary, (cal_ou > 0.5).astype(int))
+print(f"  O/U calibration: {len(ytv)} pts, acc={cal_ou_acc:.3f}")
+
+# Save calibrators
+with open(BASE + "calib_hw.pkl", "wb") as f: pickle.dump(platt_hw, f)
+with open(BASE + "calib_ou.pkl", "wb") as f: pickle.dump(platt_ou, f)
+print(f"  Calibrators saved: calib_hw.pkl, calib_ou.pkl")
 print(f"  Previous Tot MAE ~4.0 → New Tot MAE: {tot_mae:.3f}")

@@ -284,6 +284,10 @@ def log_all_todays_predictions():
             ov_price, _, ov_point = extract_market_odds(og, "totals")
             if ov_price and ov_point:
                 over_prob = norm_cdf(exp_total - ov_point, 0, total_std)
+                try:
+                    from bankroll import calibrate_ou
+                    over_prob = calibrate_ou(over_prob)
+                except: pass
                 if over_prob > 0.5:
                     ou_team = "Over"
                     ou_detail = f"o{ov_point}"
@@ -950,6 +954,10 @@ def generate_recommendations():
         ov_price, ov_book, ov_point = extract_market_odds(og, "totals")
         if ov_price and ov_point:
             over_prob = norm_cdf(exp_total - ov_point, 0, total_std)
+            try:
+                from bankroll import calibrate_ou
+                over_prob = calibrate_ou(over_prob)
+            except: pass
             if over_prob > 0.5:
                 ou_entry = {
                     "game": gl, "market": "O/U", "team": "Over", "detail": f"o{ov_point}",

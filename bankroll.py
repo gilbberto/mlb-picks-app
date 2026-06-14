@@ -31,22 +31,29 @@ REV_TEAM = {v.lower(): k for k, v in TEAM_NAMES.items()}
 # ─── Calibration ───
 # Based on XGBoost validation on 262 games (2026 season)
 def calibrate_ml(prob):
-    """Calibrate ML probability. XGBoost (35 features, 8198 games 2023-2026).
-    Light calibration — XGBoost binary:logistic tends to be well-calibrated.
-    Revisit after ≥50 settled picks."""
+    """Calibrate ML probability using Platt scaling (train_v4.py).
+    Falls back to piecewise linear for compatibility."""
     if prob < 0.50:
         return 1.0 - calibrate_ml(1.0 - prob)
-    # Gentle piecewise linear (50% of old calibration strength)
+    try:
+        import pickle, os
+        base = os.path.join(os.path.dirname(__file__), "")
+        with open(base + "calib_hw.pkl", "rb") as f:
+            platt = pickle.load(f)
+        cal = platt.predict_proba([[prob]])[0, 1]
+        return round(cal, 4)
+    except:
+        pass
     if prob < 0.55:
         t = (prob - 0.50) / 0.05
-        return 0.525 + t * 0.035  # 0.50->0.525, 0.55->0.560
+        return 0.525 + t * 0.035
     if prob < 0.65:
         t = (prob - 0.55) / 0.10
-        return 0.560 + t * 0.060  # 0.55->0.560, 0.65->0.620
+        return 0.560 + t * 0.060
     if prob < 0.80:
         t = (prob - 0.65) / 0.15
-        return 0.620 + t * 0.105  # 0.65->0.620, 0.80->0.725
-    return min(0.725 + (prob - 0.80) * 0.25, 0.85)  # 0.80->0.725, 0.95->0.762
+        return 0.620 + t * 0.105
+    return min(0.725 + (prob - 0.80) * 0.25, 0.85)
 
 def calibrate_rl(prob):
     """Calibrate RL probability. XGBoost (35 features, 8198 games 2023-2026).
@@ -63,6 +70,19 @@ def calibrate_rl(prob):
         t = (prob - 0.35) / 0.20
         return 0.32 + t * 0.14  # 0.35->0.32, 0.55->0.46
     return min(0.46 + (prob - 0.55) * 0.30, 0.70)  # 0.55->0.46, 0.70->0.51
+
+def calibrate_ou(prob):
+    """Calibrate O/U probability using Platt scaling (train_v4.py).
+    Falls back to identity (no calibration) if model not found."""
+    try:
+        import pickle, os
+        base = os.path.join(os.path.dirname(__file__), "")
+        with open(base + "calib_ou.pkl", "rb") as f:
+            platt = pickle.load(f)
+        cal = platt.predict_proba([[prob]])[0, 1]
+        return round(cal, 4)
+    except:
+        return prob
 
 # ─── Kelly Criterion ───
 def american_to_prob(odds):

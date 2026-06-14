@@ -1909,6 +1909,11 @@ def main():
                     ov_price, ov_book, ov_point = extract_market_odds(og, "totals")
                     if ov_price and ov_point:
                         over_prob = norm_cdf(exp_total - ov_point, 0, total_std)
+                        # Calibrate O/U probability (Platt scaling)
+                        try:
+                            from bankroll import calibrate_ou
+                            over_prob = calibrate_ou(over_prob)
+                        except: pass
                         if over_prob > 0.5:
                             ov_p = american_to_prob(ov_price)
                             ov_edge = round(over_prob*100 - (ov_p*100 if ov_p else 0), 1) if ov_p else None
