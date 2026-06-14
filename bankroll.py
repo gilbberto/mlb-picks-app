@@ -445,7 +445,7 @@ def log_predictions(picks, today=None):
     new_count = 0
     for pick in picks:
         gid = pick.get("game_id", "")
-        for mkt_key, label in [("moneyline", "ML"), ("spread_minus", "RL -1.5"),
+        for mkt_key, label in [("moneyline", "ML"),
                                 ("spread_plus", "RL +1.5"), ("total", "O/U")]:
             entry = pick.get(mkt_key)
             if not entry:

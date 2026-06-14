@@ -1048,7 +1048,7 @@ def render_card(pick, key_suffix="", game_idx=0):
         time_str = f"🕐 {pick['game_time']}  " if pick.get("game_time") else ""
         st.markdown(f"### {time_str}{status_label}{score_str}**{an}** @ **{hn}**" + "".join(f" `{s}`" for s in srcs) + badge + pitcher_line)
         mkt_list = [("moneyline", "ML", "💰")]
-        mkt_list += [("spread_minus", "RL -1.5", "📏"), ("spread_plus", "RL +1.5", "📏")]
+        mkt_list += [("spread_plus", "RL +1.5", "📏")]
         mkt_list += [("total", "O/U", "📈")]
         # Solo mostrar el mercado con mayor confianza
         _best_mkt = None
@@ -1946,7 +1946,7 @@ def main():
 
     if _get_perms(st.session_state.user).get("daily_picks", True) and len(upcoming) > 0:
         def _high_conf(game_row):
-            for mk in ("moneyline", "spread_minus", "spread_plus", "total"):
+            for mk in ("moneyline", "spread_plus", "total"):
                 e = game_row.get(mk)
                 if not isinstance(e, dict): continue
                 edge_val = e.get("edge")
@@ -2327,7 +2327,7 @@ def main():
                             markets[mkt]["l"] += 1
                         markets[mkt]["profit"] += p.get("profit", 0) or 0
                     mr = []
-                    for mkt in ("ML", "RL -1.5", "RL +1.5", "O/U"):
+                    for mkt in ("ML", "RL +1.5", "O/U"):
                         d = markets.get(mkt)
                         if d and (d["w"] + d["l"]) > 0:
                             tot = d["w"] + d["l"]
@@ -2533,7 +2533,7 @@ def main():
                         st.markdown(f"**📊 Rendimiento del modelo:** {pw}-{pl} ({pct}%) en {pt} predicciones liquidadas")
                         # By market
                         mkt_rows = []
-                        for mkt in ("ML", "RL -1.5", "RL +1.5", "O/U"):
+                        for mkt in ("ML", "RL +1.5", "O/U"):
                             pool = [p for p in settled_preds if p["market"] == mkt]
                             if not pool:
                                 continue
