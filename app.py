@@ -1984,16 +1984,16 @@ def main():
             import math
             if isinstance(time_str, float) and math.isnan(time_str):
                 time_str = ""
-            if cgs == "I" and score:
-                t = f"🔴 {score}"
+            if cgs == "F":
+                t = score if score else "Final"
             elif cgs == "I":
-                t = "🔴 EN VIVO"
+                t = f"🔴 {score}" if score else "🔴 EN VIVO"
             elif game_dt is not None:
                 mins = (game_dt - now_tz).total_seconds() / 60.0
                 if 0 <= mins <= 15:
                     t = f"⏳ {time_str}"
                 elif mins < 0:
-                    t = f"🔴 {score}" if score else "🔴 EN VIVO"
+                    t = time_str
                 else:
                     t = time_str
             else:
@@ -2384,8 +2384,8 @@ def main():
                                 mins_to_start = (gt - now_tz).total_seconds() / 60.0
                                 if 0 <= mins_to_start <= 15:
                                     r_icon = "⏳ Por Iniciar"
-                                elif mins_to_start < 0:
-                                    r_icon = "🔴 En Vivo"
+                                else:
+                                    r_icon = "⏳ Pendiente"
                         else:
                             r_icon = "⏳ Pendiente"
 
