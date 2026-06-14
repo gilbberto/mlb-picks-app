@@ -908,6 +908,22 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 580
+    },
+    {
+      "id": 55,
+      "date": "2026-06-14",
+      "game": "SD @ BAL",
+      "market": "ML",
+      "team": "San Diego Padres",
+      "detail": "",
+      "model_prob": 0.691,
+      "odds": 115,
+      "stake": 100,
+      "bankroll_before": 1436.55,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
