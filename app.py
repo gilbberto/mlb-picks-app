@@ -2052,7 +2052,7 @@ def main():
                 t = time_str
             _best_row = None
             _best_score = -1
-            for mk, ml in [("moneyline","ML"),("total","O/U")]:
+            for mk, ml in [("moneyline","ML"),("spread_plus","RL +1.5"),("total","O/U")]:
                 p = r.get(mk)
                 if not p: continue
                 _ev = p.get("ev")
@@ -2073,7 +2073,12 @@ def main():
                 if score > _best_score:
                     _best_score = score
                     pick_name = p.get("pick","—")
-                    display_name = fmt_ou(pick_name, p.get("detail","")) if mk == "total" else pick_name
+                    if mk == "total":
+                        display_name = fmt_ou(pick_name, p.get("detail",""))
+                    elif mk == "spread_plus":
+                        display_name = f"{pick_name} (+1.5)"
+                    else:
+                        display_name = pick_name
                     flames = ""
                     if edge is not None and edge > 2:
                         if edge > 8: flames = "🔥🔥🔥"
