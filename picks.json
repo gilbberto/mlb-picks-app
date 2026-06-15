@@ -959,6 +959,22 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 608
+    },
+    {
+      "id": 58,
+      "date": "2026-06-15",
+      "game": "LAA @ AZ",
+      "market": "O/U",
+      "team": "Under",
+      "detail": "u9.0",
+      "model_prob": 0.617,
+      "odds": 100,
+      "stake": 58.55,
+      "bankroll_before": 1000,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
