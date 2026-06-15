@@ -463,6 +463,9 @@ def _save_odds_cache(odds):
 
 @st.cache_data(ttl=14400)
 def fetch_odds():
+    cached = _check_odds_cache()
+    if cached is not None:
+        return cached
     odds = []
     if ODDS_API_KEY:
         try:
@@ -482,6 +485,12 @@ def fetch_odds():
             pass
     if odds:
         _save_odds_cache(odds)
+    else:
+        try:
+            with open(ODDS_CACHE_PATH) as f:
+                odds = json.load(f)
+        except:
+            pass
     try:
         with open(ODDS_COOLDOWN, "w") as f:
             f.write(str(time.time()))
@@ -1933,7 +1942,7 @@ def main():
                                 "ev": compute_ev((1-over_prob)*100, un_price or ov_price), "edge": un_edge,
                             }
                     else:
-                        pick_entry["total"] = {"pick": ov_verdict, "prob": ov_pct, "detail": f"~{exp_total:.1f}", "ev": None, "odds": "N/A", "book": "", "edge": None}
+                        pick_entry["total"] = {"pick": ov_verdict, "prob": ov_pct, "detail": f"(est ~{exp_total:.1f})", "ev": None, "odds": "N/A", "book": "", "edge": None}
                 else:
                     cal_p = max(cal_hp, cal_ap) if cal_hp else max(ml_hp, ml_ap)
                     raw_p = max(ml_hp, ml_ap)
@@ -2002,10 +2011,10 @@ def main():
                 e = game_row.get(mk)
                 if not isinstance(e, dict): continue
                 edge_val = e.get("edge")
-                if edge_val is not None and edge_val > 8:
+                if edge_val is not None and edge_val > 5:
                     return True
                 prob_val = e.get("prob")
-                if prob_val is not None and prob_val >= 75:
+                if prob_val is not None and prob_val >= 65:
                     return True
             return False
         high_conf_mask = upcoming.apply(_high_conf, axis=1)
@@ -2080,13 +2089,12 @@ def main():
                     else:
                         display_name = pick_name
                     flames = ""
-                    if edge is not None and edge > 2:
-                        if edge > 8: flames = "🔥🔥🔥"
-                        elif edge > 5: flames = "🔥🔥"
+                    if edge is not None and edge > 1:
+                        if edge > 5: flames = "🔥🔥🔥"
+                        elif edge > 3: flames = "🔥🔥"
                         else: flames = "🔥"
                     elif edge is None and prob_val is not None and prob_val >= 65:
-                        if prob_val >= 85: flames = "🔥🔥🔥"
-                        elif prob_val >= 75: flames = "🔥🔥🔥"
+                        if prob_val >= 75: flames = "🔥🔥🔥"
                         elif prob_val >= 65: flames = "🔥🔥"
                     display_pick = f"{flames} {display_name}" if flames else display_name
                     _best_row = {
