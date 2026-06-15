@@ -2011,10 +2011,10 @@ def main():
                 e = game_row.get(mk)
                 if not isinstance(e, dict): continue
                 edge_val = e.get("edge")
-                if edge_val is not None and edge_val > 5:
+                if edge_val is not None and edge_val > 8:
                     return True
                 prob_val = e.get("prob")
-                if prob_val is not None and prob_val >= 65:
+                if prob_val is not None and prob_val >= 75:
                     return True
             return False
         high_conf_mask = upcoming.apply(_high_conf, axis=1)
@@ -2089,12 +2089,13 @@ def main():
                     else:
                         display_name = pick_name
                     flames = ""
-                    if edge is not None and edge > 1:
-                        if edge > 5: flames = "🔥🔥🔥"
-                        elif edge > 3: flames = "🔥🔥"
+                    if edge is not None and edge > 2:
+                        if edge > 8: flames = "🔥🔥🔥"
+                        elif edge > 5: flames = "🔥🔥"
                         else: flames = "🔥"
                     elif edge is None and prob_val is not None and prob_val >= 65:
-                        if prob_val >= 75: flames = "🔥🔥🔥"
+                        if prob_val >= 85: flames = "🔥🔥🔥"
+                        elif prob_val >= 75: flames = "🔥🔥🔥"
                         elif prob_val >= 65: flames = "🔥🔥"
                     display_pick = f"{flames} {display_name}" if flames else display_name
                     _best_row = {
