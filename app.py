@@ -208,9 +208,9 @@ C = {
 
 # ─── MLB Stats API ───
 
-@st.cache_data(ttl=86400)
-def fetch_todays_schedule(_date_str=""):
-    today = _date_str or datetime.now(TZ).strftime("%m/%d/%Y")
+@st.cache_data(ttl=3600)
+def fetch_todays_schedule(date_str=""):
+    today = date_str or datetime.now(TZ).strftime("%m/%d/%Y")
     url = f"{MLB_API_BASE}/schedule?sportId=1&date={today}&hydrate=probablePitcher"
     resp = requests.get(url, timeout=10)
     resp.raise_for_status()
