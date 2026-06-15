@@ -925,6 +925,22 @@
       "label": "\ud83d\udd25 High",
       "settled": true,
       "telegram_msg_id": 581
+    },
+    {
+      "id": 56,
+      "date": "2026-06-15",
+      "game": "TB @ LAD",
+      "market": "ML",
+      "team": "Tampa Bay Rays",
+      "detail": "",
+      "model_prob": 0.636,
+      "odds": 135,
+      "stake": 91.51,
+      "bankroll_before": 1000,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
