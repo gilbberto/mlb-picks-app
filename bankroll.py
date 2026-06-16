@@ -31,9 +31,22 @@ REV_TEAM = {v.lower(): k for k, v in TEAM_NAMES.items()}
 # ─── Calibration ───
 # Based on XGBoost validation on 262 games (2026 season)
 def calibrate_ml(prob):
-    """ML calibration: XGBoost binary:logistic is well-calibrated by default.
-    Use raw probabilities — Platt over-shrinks and biases toward underdogs."""
-    return prob
+    """Calibrate ML probability. XGBoost (35 features, 8198 games 2023-2026).
+    Light calibration — XGBoost binary:logistic tends to be well-calibrated.
+    Revisit after ≥50 settled picks."""
+    if prob < 0.50:
+        return 1.0 - calibrate_ml(1.0 - prob)
+    # Gentle piecewise linear (50% of old calibration strength)
+    if prob < 0.55:
+        t = (prob - 0.50) / 0.05
+        return 0.525 + t * 0.035  # 0.50->0.525, 0.55->0.560
+    if prob < 0.65:
+        t = (prob - 0.55) / 0.10
+        return 0.560 + t * 0.060  # 0.55->0.560, 0.65->0.620
+    if prob < 0.80:
+        t = (prob - 0.65) / 0.15
+        return 0.620 + t * 0.105  # 0.65->0.620, 0.80->0.725
+    return min(0.725 + (prob - 0.80) * 0.25, 0.85)  # 0.80->0.725, 0.95->0.762
 
 def calibrate_rl(prob):
     """Calibrate RL probability. XGBoost (35 features, 8198 games 2023-2026).
@@ -50,19 +63,6 @@ def calibrate_rl(prob):
         t = (prob - 0.35) / 0.20
         return 0.32 + t * 0.14  # 0.35->0.32, 0.55->0.46
     return min(0.46 + (prob - 0.55) * 0.30, 0.70)  # 0.55->0.46, 0.70->0.51
-
-def calibrate_ou(prob):
-    """Calibrate O/U probability using Platt scaling (train_v4.py).
-    Falls back to identity (no calibration) if model not found."""
-    try:
-        import pickle, os
-        base = os.path.join(os.path.dirname(__file__), "")
-        with open(base + "calib_ou.pkl", "rb") as f:
-            platt = pickle.load(f)
-        cal = platt.predict_proba([[prob]])[0, 1]
-        return round(cal, 4)
-    except:
-        return prob
 
 # ─── Kelly Criterion ───
 def american_to_prob(odds):
@@ -189,7 +189,7 @@ def add_pick(date, game, market, model_prob, odds, stake, bankroll, label="", te
             # Default to first team (away) if not specified
             team = parts[0]
     pick = {
-        "id": max([p.get("id", 0) for p in data["history"]] + [0]) + 1,
+        "id": len(data["history"]) + 1,
         "date": date,
         "game": game,
         "market": market,
@@ -300,17 +300,8 @@ def _fetch_mlb_games(date_str):
         games = []
         for d in r.json().get("dates", []):
             for g in d.get("games", []):
-                away = g["teams"]["away"]
-                home = g["teams"]["home"]
-                away_name = away["team"]["name"]
-                home_name = home["team"]["name"]
-                away_abbr = REV_TEAM.get(away_name.lower(), away_name)
-                home_abbr = REV_TEAM.get(home_name.lower(), home_name)
-                label = f"{away_abbr} @ {home_abbr}"
-                status = g.get("status", {})
-                detailed = status.get("detailedState", "")
-                cgs = status.get("codedGameState", "")
-                if detailed in ("Postponed", "Cancelled", "Suspended"):
+                # Check if game was cancelled/postponed
+                if g.get("status", {}).get("detailedState") in ("Postponed", "Cancelled", "Suspended"):
                     games.append({
                         "away_abbr": away_abbr,
                         "home_abbr": home_abbr,
@@ -318,26 +309,26 @@ def _fetch_mlb_games(date_str):
                         "home_name": home_name,
                         "away_runs": 0,
                         "home_runs": 0,
-                        "label": label,
+                        "label": f"{away_abbr} @ {home_abbr}",
                         "cancelled": True,
-                        "status": detailed,
                     })
                     continue
-                if cgs not in ("F",):
+                if g.get("status", {}).get("codedGameState") not in ("F",):
                     continue
-                ar = away.get("score", 0) or 0
-                hr = home.get("score", 0) or 0
-                if ar == 0 and hr == 0 and detailed != "Final":
-                    continue
+                away = g["teams"]["away"]
+                home = g["teams"]["home"]
+                away_name = away["team"]["name"]
+                home_name = home["team"]["name"]
+                away_abbr = REV_TEAM.get(away_name.lower(), away_name)
+                home_abbr = REV_TEAM.get(home_name.lower(), home_name)
                 games.append({
                     "away_abbr": away_abbr,
                     "home_abbr": home_abbr,
                     "away_name": away_name,
                     "home_name": home_name,
-                    "away_runs": ar,
-                    "home_runs": hr,
-                    "label": label,
-                    "status": detailed,
+                    "away_runs": away.get("score", 0),
+                    "home_runs": home.get("score", 0),
+                    "label": f"{away_abbr} @ {home_abbr}",
                 })
         return games
     except:
@@ -377,13 +368,6 @@ def auto_settle():
                 won = None
                 if match.get("cancelled"):
                     profit = settle_pick(p["id"], "cancel")
-                    if profit is not None:
-                        settled_count += 1
-                    continue
-                if match.get("status") and match["status"] != "Final":
-                    continue
-                if match["away_runs"] == 0 and match["home_runs"] == 0:
-                    continue
                 if market == "ML":
                     if not team: continue
                     if _same_team(team, match["away_abbr"], match["away_name"]):
@@ -445,7 +429,7 @@ def log_predictions(picks, today=None):
     new_count = 0
     for pick in picks:
         gid = pick.get("game_id", "")
-        for mkt_key, label in [("moneyline", "ML"),
+        for mkt_key, label in [("moneyline", "ML"), ("spread_minus", "RL -1.5"),
                                 ("spread_plus", "RL +1.5"), ("total", "O/U")]:
             entry = pick.get(mkt_key)
             if not entry:
