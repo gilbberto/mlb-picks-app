@@ -31,29 +31,9 @@ REV_TEAM = {v.lower(): k for k, v in TEAM_NAMES.items()}
 # ─── Calibration ───
 # Based on XGBoost validation on 262 games (2026 season)
 def calibrate_ml(prob):
-    """Calibrate ML probability using Platt scaling (train_v4.py).
-    Falls back to piecewise linear for compatibility."""
-    if prob < 0.50:
-        return 1.0 - calibrate_ml(1.0 - prob)
-    try:
-        import pickle, os
-        base = os.path.join(os.path.dirname(__file__), "")
-        with open(base + "calib_hw.pkl", "rb") as f:
-            platt = pickle.load(f)
-        cal = platt.predict_proba([[prob]])[0, 1]
-        return round(cal, 4)
-    except:
-        pass
-    if prob < 0.55:
-        t = (prob - 0.50) / 0.05
-        return 0.525 + t * 0.035
-    if prob < 0.65:
-        t = (prob - 0.55) / 0.10
-        return 0.560 + t * 0.060
-    if prob < 0.80:
-        t = (prob - 0.65) / 0.15
-        return 0.620 + t * 0.105
-    return min(0.725 + (prob - 0.80) * 0.25, 0.85)
+    """ML calibration: XGBoost binary:logistic is well-calibrated by default.
+    Use raw probabilities — Platt over-shrinks and biases toward underdogs."""
+    return prob
 
 def calibrate_rl(prob):
     """Calibrate RL probability. XGBoost (35 features, 8198 games 2023-2026).
