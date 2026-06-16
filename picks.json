@@ -1044,23 +1044,6 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 638
-    },
-    {
-      "id": 63,
-      "date": "2026-06-16",
-      "game": "TOR @ BOS",
-      "market": "ML",
-      "team": "Boston Red Sox",
-      "detail": "",
-      "model_prob": 0.653,
-      "odds": 100,
-      "stake": 63.89,
-      "bankroll_before": 835.73,
-      "result": null,
-      "profit": null,
-      "label": "\ud83d\udd25 High",
-      "settled": false,
-      "telegram_msg_id": 639
     }
   ],
   "weekly_bankroll": 1000,
