@@ -993,6 +993,22 @@
       "label": "\ud83d\udd25 High",
       "settled": true,
       "telegram_msg_id": 610
+    },
+    {
+      "id": 60,
+      "date": "2026-06-16",
+      "game": "MIA @ PHI",
+      "market": "ML",
+      "team": "Miami Marlins",
+      "detail": "",
+      "model_prob": 0.74,
+      "odds": 150,
+      "stake": 100,
+      "bankroll_before": 835.73,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
