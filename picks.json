@@ -1027,23 +1027,6 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 637
-    },
-    {
-      "id": 62,
-      "date": "2026-06-16",
-      "game": "NYM @ CIN",
-      "market": "ML",
-      "team": "Cincinnati Reds",
-      "detail": "",
-      "model_prob": 0.649,
-      "odds": 105,
-      "stake": 65.84,
-      "bankroll_before": 835.73,
-      "result": null,
-      "profit": null,
-      "label": "\ud83d\udd25 High",
-      "settled": false,
-      "telegram_msg_id": 638
     }
   ],
   "weekly_bankroll": 1000,
