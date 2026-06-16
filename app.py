@@ -2006,6 +2006,7 @@ def main():
     completed = df[df["status"] == "Final"]
 
     if _get_perms(st.session_state.user).get("daily_picks", True) and len(upcoming) > 0:
+        has_odds = bool(odds_raw)
         def _high_conf(game_row):
             for mk in ("moneyline", "spread_plus", "total"):
                 e = game_row.get(mk)
@@ -2014,6 +2015,8 @@ def main():
                 if edge_val is not None and edge_val > 8:
                     return True
                 prob_val = e.get("prob")
+                if not has_odds and prob_val is not None and prob_val >= 60:
+                    return True
                 if prob_val is not None and prob_val >= 75:
                     return True
             return False
