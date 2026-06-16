@@ -1010,6 +1010,22 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 640
+    },
+    {
+      "id": 61,
+      "date": "2026-06-16",
+      "game": "CLE @ MIL",
+      "market": "O/U",
+      "team": "Over",
+      "detail": "o8.0",
+      "model_prob": 0.86,
+      "odds": -115,
+      "stake": 100,
+      "bankroll_before": 835.73,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
