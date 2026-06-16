@@ -993,23 +993,6 @@
       "label": "\ud83d\udd25 High",
       "settled": true,
       "telegram_msg_id": 610
-    },
-    {
-      "id": 61,
-      "date": "2026-06-16",
-      "game": "PIT @ ATH",
-      "market": "ML",
-      "team": "Pittsburgh Pirates",
-      "detail": "",
-      "model_prob": 0.63,
-      "odds": 118,
-      "stake": 66.08,
-      "bankroll_before": 835.73,
-      "result": null,
-      "profit": null,
-      "label": "\ud83d\udd25 High",
-      "settled": false,
-      "telegram_msg_id": 637
     }
   ],
   "weekly_bankroll": 1000,
