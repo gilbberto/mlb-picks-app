@@ -1095,6 +1095,22 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 678
+    },
+    {
+      "id": 66,
+      "date": "2026-06-17",
+      "game": "SD @ STL",
+      "market": "ML",
+      "team": "St. Louis Cardinals",
+      "detail": "",
+      "model_prob": 0.716,
+      "odds": -125,
+      "stake": 56.08,
+      "bankroll_before": 622.2,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
