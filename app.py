@@ -483,6 +483,14 @@ def fetch_odds():
             pass
     if odds:
         _save_odds_cache(odds)
+    else:
+        # API failed — load whatever is in cache (even if stale)
+        try:
+            with open(ODDS_CACHE_PATH) as f:
+                cached = json.load(f)
+            odds = cached.get("data", cached) if isinstance(cached, dict) else cached
+        except:
+            pass
     return odds
 
 
@@ -1490,10 +1498,9 @@ def main():
     _sync_users_from_github()
     _sync_odds_from_github()
     
-    # ─── Health Check: verify data is from TODAY ───
+    # ─── Health Check: verify data is from TODAY (no API calls) ───
     if _get_perms(st.session_state.user).get("daily_picks", True):
         _today_str = datetime.now(TZ).strftime("%Y-%m-%d")
-        # Check schedule
         schedule_ok = False
         odds_ok = False
         try:
@@ -1516,21 +1523,7 @@ def main():
         if not schedule_ok:
             st.error("⚠️ No se pudo cargar el calendario de hoy. Recarga la página.")
         if not odds_ok:
-            st.warning("⏳ Actualizando odds...")
-            # Force fresh odds
-            fresh = requests.get(
-                f"https://api.the-odds-api.com/v4/sports/baseball_mlb/odds?regions=us&markets=h2h,spreads,totals&oddsFormat=american&apiKey={ODDS_API_KEY}",
-                timeout=10
-            )
-            if fresh.status_code == 200:
-                _save_odds_cache(fresh.json())
-                st.cache_data.clear()
-                st.success("✅ Odds actualizados para hoy.")
-            else:
-                st.error(f"❌ No se pudo actualizar odds (error {fresh.status_code}). Usando datos en cache.")
-        elif schedule_ok and odds_ok:
-            # Everything OK — silent
-            pass
+            st.warning("⏳ Odds desactualizados. Se actualizarán pronto (máx 1 llamada/día). Si el problema persiste, avisa.")
     # ─── End Health Check ───
     if st.session_state.get("login_time") and time.time() - st.session_state.login_time > 28800:
         st.session_state.clear()
