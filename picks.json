@@ -1095,6 +1095,22 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 674
+    },
+    {
+      "id": 66,
+      "date": "2026-06-17",
+      "game": "PIT @ ATH",
+      "market": "O/U",
+      "team": "Under",
+      "detail": "u10.5",
+      "model_prob": 0.725,
+      "odds": 100,
+      "stake": 69.91,
+      "bankroll_before": 622.2,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
