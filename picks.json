@@ -1061,6 +1061,22 @@
       "label": "\ud83d\udd25 High",
       "settled": true,
       "telegram_msg_id": 643
+    },
+    {
+      "id": 64,
+      "date": "2026-06-17",
+      "game": "TOR @ BOS",
+      "market": "O/U",
+      "team": "Over",
+      "detail": "o7.5",
+      "model_prob": 0.867,
+      "odds": -115,
+      "stake": 100,
+      "bankroll_before": 622.2,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
