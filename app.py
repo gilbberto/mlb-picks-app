@@ -1997,19 +1997,14 @@ def main():
             for mk in ("moneyline", "spread_plus", "total"):
                 e = game_row.get(mk)
                 if not isinstance(e, dict): continue
-                edge_val = e.get("edge")
-                if edge_val is not None and edge_val > 8:
-                    return True
                 prob_val = e.get("prob")
-                if not has_odds and prob_val is not None and prob_val >= 60:
-                    return True
-                if prob_val is not None and prob_val >= 75:
+                if prob_val is not None and 60 <= prob_val <= 89:
                     return True
             return False
         high_conf_mask = upcoming.apply(_high_conf, axis=1)
         hc_count = high_conf_mask.sum()
         if hc_count < len(upcoming):
-            st.caption(f"🔥 Mostrando solo juegos con alta confianza")
+            st.caption(f"🎯 Mostrando picks con 60-89% de confianza (máximo profit histórico)")
             upcoming = upcoming[high_conf_mask]
         st.markdown(f"### 📋 Picks del Día ({len(upcoming)} juegos)")
         flat_rows = []
@@ -2065,9 +2060,11 @@ def main():
                     except: pass
                 score = 0
                 if edge is not None and edge > 2:
-                    score = 5 if edge > 8 else (4 if edge > 5 else 3)
-                elif edge is None and prob_val is not None and prob_val >= 65:
-                    score = 5 if prob_val >= 75 else 4
+                    score = prob_val + edge * 0.5 if prob_val else 0
+                elif prob_val is not None:
+                    score = prob_val
+                if prob_val is not None and prob_val > 89:
+                    score = 0
                 if score > _best_score:
                     _best_score = score
                     pick_name = p.get("pick","—")
@@ -2078,14 +2075,12 @@ def main():
                     else:
                         display_name = pick_name
                     flames = ""
-                    if edge is not None and edge > 2:
-                        if edge > 8: flames = "🔥🔥🔥"
-                        elif edge > 5: flames = "🔥🔥"
-                        else: flames = "🔥"
-                    elif edge is None and prob_val is not None and prob_val >= 65:
-                        if prob_val >= 85: flames = "🔥🔥🔥"
-                        elif prob_val >= 75: flames = "🔥🔥🔥"
+                    if prob_val is not None:
+                        if prob_val >= 75: flames = "🔥🔥🔥"
                         elif prob_val >= 65: flames = "🔥🔥"
+                        elif prob_val >= 60: flames = "🔥"
+                    if edge is not None and edge > 5 and not flames:
+                        flames = "🔥"
                     display_pick = f"{flames} {display_name}" if flames else display_name
                     _best_row = {
                         "Juego": gl, "Hora": t, "M": ml,
@@ -2096,6 +2091,8 @@ def main():
                     }
             if _best_row:
                 flat_rows.append(_best_row)
+        # Sort by probability (highest first) — backtest shows 60-89% range is optimal
+        flat_rows.sort(key=lambda r: float(r['Prob'].replace('%','')), reverse=True)
         if flat_rows:
             html = """<div style="overflow-x:auto">
             <table style="width:100%;border-collapse:collapse;color:#212121;font-size:14px">
