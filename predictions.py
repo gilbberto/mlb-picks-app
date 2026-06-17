@@ -663,18 +663,16 @@ ODDS_CACHE_PATH = os.path.join(os.path.dirname(__file__), ".odds_cache.json")
 ODDS_COOLDOWN_PATH = os.path.join(os.path.dirname(__file__), ".odds_cooldown")
 
 def fetch_odds(force_refresh=False):
-    cache_date = ""
-    try:
-        cache_date = datetime.fromtimestamp(os.path.getmtime(ODDS_CACHE_PATH), TZ).strftime("%Y-%m-%d")
-    except:
-        pass
     today = datetime.now(TZ).strftime("%Y-%m-%d")
-    if not force_refresh and cache_date == today:
+    if not force_refresh:
         try:
             with open(ODDS_CACHE_PATH) as f:
                 cached = json.load(f)
-                if cached:
-                    return cached
+            cache_date = cached.get("date", "") if isinstance(cached, dict) else ""
+            if cache_date == today:
+                data = cached.get("data", cached) if isinstance(cached, dict) else cached
+                if data:
+                    return data
         except:
             pass
     odds = []
@@ -688,15 +686,11 @@ def fetch_odds(force_refresh=False):
             pass
     if odds:
         try:
+            cache = {"date": today, "data": odds}
             with open(ODDS_CACHE_PATH, "w") as f:
-                json.dump(odds, f)
+                json.dump(cache, f)
         except:
             pass
-    try:
-        with open(ODDS_COOLDOWN_PATH, "w") as f:
-            f.write(str(time.time()))
-    except:
-        pass
     return odds
 
 def match_game(odds_list, home_name, away_name):

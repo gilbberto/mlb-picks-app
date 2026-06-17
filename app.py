@@ -437,24 +437,25 @@ def _sync_odds_from_github():
 ODDS_COOLDOWN = os.path.join(os.path.dirname(__file__), ".odds_cooldown")
 
 def _check_odds_cache():
-    """Return cached odds if file exists and is from today.
-    Returns None if cache is stale or missing (caller should fetch fresh)."""
+    """Return cached odds if cache date is today. Uses date field inside JSON (not file mtime)."""
     try:
         with open(ODDS_CACHE_PATH) as f:
             cached = json.load(f)
-        cache_mtime = datetime.fromtimestamp(os.path.getmtime(ODDS_CACHE_PATH), TZ).strftime("%Y-%m-%d")
+        cache_date = cached.get("date", "") if isinstance(cached, dict) else ""
         today_str = datetime.now(TZ).strftime("%Y-%m-%d")
-        if cache_mtime == today_str:
-            return cached
-        # Cache is from yesterday — force refresh, no cooldown
-        return None
+        if cache_date == today_str:
+            data = cached.get("data", cached) if isinstance(cached, dict) else cached
+            if data:
+                return data
     except:
-        return None
+        pass
+    return None
 
 def _save_odds_cache(odds):
     try:
+        cache = {"date": datetime.now(TZ).strftime("%Y-%m-%d"), "data": odds}
         with open(ODDS_CACHE_PATH, "w") as f:
-            json.dump(odds, f)
+            json.dump(cache, f)
     except:
         pass
 
