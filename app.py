@@ -2096,12 +2096,14 @@ def main():
                         if ip: edge = round(prob_val - ip * 100, 1)
                     except: pass
                 score = 0
-                if edge is not None and edge > 2:
-                    score = prob_val + edge * 0.5 if prob_val else 0
+                if edge is not None and edge > 2 and prob_val is not None:
+                    score = prob_val + edge * 0.3
                 elif prob_val is not None:
                     score = prob_val
-                if prob_val is not None and prob_val > 89:
+                if prob_val is not None and (prob_val < 60 or prob_val > 89):
                     score = 0
+                if mk == "spread_plus":
+                    score = score * 0.85  # slightly lower priority for RL +1.5
                 if score > _best_score:
                     _best_score = score
                     pick_name = p.get("pick","—")
@@ -2130,6 +2132,7 @@ def main():
                 flat_rows.append(_best_row)
         # Sort by probability (highest first) — backtest shows 60-89% range is optimal
         flat_rows.sort(key=lambda r: float(r['Prob'].replace('%','')), reverse=True)
+        flat_rows = flat_rows[:6]  # Top 6 picks only
         if flat_rows:
             html = """<div style="overflow-x:auto">
             <table style="width:100%;border-collapse:collapse;color:#212121;font-size:14px">
