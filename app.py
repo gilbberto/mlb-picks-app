@@ -1489,6 +1489,49 @@ def main():
         st.session_state.role = None
     _sync_users_from_github()
     _sync_odds_from_github()
+    
+    # ─── Health Check: verify data is from TODAY ───
+    if _get_perms(st.session_state.user).get("daily_picks", True):
+        _today_str = datetime.now(TZ).strftime("%Y-%m-%d")
+        # Check schedule
+        schedule_ok = False
+        odds_ok = False
+        try:
+            raw_schedule = requests.get(f"{MLB_API_BASE}/schedule?sportId=1&date={datetime.now(TZ).strftime('%m/%d/%Y')}&hydrate=probablePitcher", timeout=8)
+            if raw_schedule.status_code == 200:
+                sched_games = []
+                for d in raw_schedule.json().get("dates", []):
+                    sched_games.extend(d.get("games", []))
+                schedule_ok = len(sched_games) > 0
+        except:
+            pass
+        try:
+            with open(ODDS_CACHE_PATH) as f:
+                oc = json.load(f)
+            odds_date = oc.get("date", "") if isinstance(oc, dict) else ""
+            odds_ok = odds_date == _today_str
+        except:
+            pass
+        
+        if not schedule_ok:
+            st.error("⚠️ No se pudo cargar el calendario de hoy. Recarga la página.")
+        if not odds_ok:
+            st.warning("⏳ Actualizando odds...")
+            # Force fresh odds
+            fresh = requests.get(
+                f"https://api.the-odds-api.com/v4/sports/baseball_mlb/odds?regions=us&markets=h2h,spreads,totals&oddsFormat=american&apiKey={ODDS_API_KEY}",
+                timeout=10
+            )
+            if fresh.status_code == 200:
+                _save_odds_cache(fresh.json())
+                st.cache_data.clear()
+                st.success("✅ Odds actualizados para hoy.")
+            else:
+                st.error(f"❌ No se pudo actualizar odds (error {fresh.status_code}). Usando datos en cache.")
+        elif schedule_ok and odds_ok:
+            # Everything OK — silent
+            pass
+    # ─── End Health Check ───
     if st.session_state.get("login_time") and time.time() - st.session_state.login_time > 28800:
         st.session_state.clear()
         st.rerun()

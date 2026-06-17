@@ -34,6 +34,22 @@ jobs:
       - name: Install dependencies
         run: pip install requests pandas numpy scikit-learn xgboost
 
+      - name: Health check (refresh odds cache)
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+        run: python health_check.py
+
+      - name: Commit odds cache if updated
+        run: |
+          git config user.name "MLB Picks Bot"
+          git config user.email "bot@mlb-picks.local"
+          for f in .odds_cache.json; do
+            [ -f "$f" ] && git add "$f"
+          done
+          git diff --cached --quiet && exit 0
+          git commit -m "auto-health: refresh odds cache for today"
+          git push
+
       - name: Run morning summary
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
