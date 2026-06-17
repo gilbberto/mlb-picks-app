@@ -6477,8 +6477,8 @@
       "odds": -125,
       "edge": -1.7,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "824503_total",
@@ -6492,8 +6492,8 @@
       "odds": -118,
       "edge": 10.6,
       "detail": "o9.5",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "822721_moneyline",
@@ -6507,8 +6507,8 @@
       "odds": 115,
       "edge": 16.3,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "822721_total",
@@ -6522,8 +6522,8 @@
       "odds": -120,
       "edge": 17.9,
       "detail": "o8.5",
-      "result": null,
-      "settled": false
+      "result": "W",
+      "settled": true
     },
     {
       "id": "823450_moneyline",
@@ -6537,8 +6537,8 @@
       "odds": 150,
       "edge": 21.5,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "823450_total",
@@ -6552,8 +6552,8 @@
       "odds": -110,
       "edge": 35.8,
       "detail": "o8.0",
-      "result": null,
-      "settled": false
+      "result": "W",
+      "settled": true
     },
     {
       "id": "824912_moneyline",
@@ -6597,8 +6597,8 @@
       "odds": 135,
       "edge": 16.5,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "824178_total",
@@ -6612,8 +6612,8 @@
       "odds": -105,
       "edge": 5.4,
       "detail": "u8.0",
-      "result": null,
-      "settled": false
+      "result": "W",
+      "settled": true
     },
     {
       "id": "823044_moneyline",
@@ -6627,8 +6627,8 @@
       "odds": -120,
       "edge": 12.7,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "W",
+      "settled": true
     },
     {
       "id": "823044_total",
@@ -6642,8 +6642,8 @@
       "odds": -110,
       "edge": 7.4,
       "detail": "o8.0",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "823940_moneyline",
@@ -6657,8 +6657,8 @@
       "odds": -150,
       "edge": -0.4,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "W",
+      "settled": true
     },
     {
       "id": "823940_total",
@@ -6672,8 +6672,8 @@
       "odds": -105,
       "edge": 16.7,
       "detail": "u8.0",
-      "result": null,
-      "settled": false
+      "result": "W",
+      "settled": true
     },
     {
       "id": "825072_moneyline",
@@ -6687,8 +6687,8 @@
       "odds": -110,
       "edge": 21.7,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "W",
+      "settled": true
     },
     {
       "id": "825072_total",
@@ -6702,8 +6702,8 @@
       "odds": -120,
       "edge": 20.1,
       "detail": "u9.0",
-      "result": null,
-      "settled": false
+      "result": "W",
+      "settled": true
     },
     {
       "id": "824746_moneyline",
@@ -6717,8 +6717,8 @@
       "odds": -120,
       "edge": -0.9,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "W",
+      "settled": true
     },
     {
       "id": "824746_total",
@@ -6732,8 +6732,8 @@
       "odds": -115,
       "edge": 34.3,
       "detail": "o7.5",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "823536_moneyline",
@@ -6747,8 +6747,8 @@
       "odds": 125,
       "edge": 9.0,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "823536_total",
@@ -6762,8 +6762,8 @@
       "odds": -118,
       "edge": 3.8,
       "detail": "o8.0",
-      "result": null,
-      "settled": false
+      "result": "W",
+      "settled": true
     },
     {
       "id": "824913_moneyline",
@@ -6807,8 +6807,8 @@
       "odds": -155,
       "edge": 2.4,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "W",
+      "settled": true
     },
     {
       "id": "823774_total",
@@ -6822,8 +6822,8 @@
       "odds": -115,
       "edge": 0.7,
       "detail": "o8.0",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "824668_moneyline",
@@ -6837,8 +6837,8 @@
       "odds": -200,
       "edge": -13.8,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "824668_total",
@@ -6852,8 +6852,8 @@
       "odds": -110,
       "edge": 5.2,
       "detail": "u9.5",
-      "result": null,
-      "settled": false
+      "result": "W",
+      "settled": true
     },
     {
       "id": "824992_moneyline",
@@ -6867,8 +6867,8 @@
       "odds": 118,
       "edge": 15.3,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "W",
+      "settled": true
     },
     {
       "id": "824992_total",
@@ -6882,8 +6882,8 @@
       "odds": 100,
       "edge": 28.4,
       "detail": "u10.5",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "823127_moneyline",
@@ -6897,8 +6897,8 @@
       "odds": -155,
       "edge": -6.4,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "W",
+      "settled": true
     },
     {
       "id": "823127_total",
@@ -6912,8 +6912,8 @@
       "odds": -115,
       "edge": 11.8,
       "detail": "u7.5",
-      "result": null,
-      "settled": false
+      "result": "W",
+      "settled": true
     }
   ]
 }
