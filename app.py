@@ -2200,7 +2200,7 @@ def main():
 
                 if has_real_odds:
                     stake, units, stake_label = recommend_stake(prob/100, odds_int, bankroll=actual_bankroll)
-                    if stake < 15:
+                    if stake < 25:
                         continue  # skip insignificant bets
                 else:
                     stake, units, stake_label = 0, 0, "—"
