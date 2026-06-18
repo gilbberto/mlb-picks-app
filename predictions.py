@@ -54,14 +54,40 @@ LG_AVG_RUNS = 4.5
 
 _xgb_hw = _xgb_rd = _xgb_tot = None
 _rf_hw = _rf_rd = _rf_tot = None
+_xgb_models_hw = []
+_xgb_models_rd = []
+_xgb_models_tot = []
 _cols = None
 _ou_cols = None
 _MODELS_LOADED = False
 
+def _load_xgb_seeds(prefix):
+    models = []
+    for seed in [42, 123, 456]:
+        try:
+            with open(BASE + f"{prefix}_s{seed}.pkl", "rb") as f:
+                models.append(pickle.load(f))
+        except:
+            pass
+    return models
+
 def load_models():
     global _xgb_hw, _xgb_rd, _xgb_tot, _rf_hw, _rf_rd, _rf_tot, _cols, _ou_cols, _MODELS_LOADED
+    global _xgb_models_hw, _xgb_models_rd, _xgb_models_tot
     try:
         import xgboost as xgb
+        _xgb_models_hw = _load_xgb_seeds("xgb_hw")
+        _xgb_models_rd = _load_xgb_seeds("xgb_rd")
+        _xgb_models_tot = _load_xgb_seeds("xgb_tot")
+        if _xgb_models_hw:
+            with open(BASE + "xgb_cols.pkl", "rb") as f: _cols = pickle.load(f)
+            try:
+                with open(BASE + "xgb_ou_cols.pkl", "rb") as f: _ou_cols = pickle.load(f)
+            except:
+                _ou_cols = _cols
+            _MODELS_LOADED = True
+            return
+        # Fallback: single XGBoost
         with open(BASE + "xgb_hw.pkl", "rb") as f: _xgb_hw = pickle.load(f)
         with open(BASE + "xgb_rd.pkl", "rb") as f: _xgb_rd = pickle.load(f)
         with open(BASE + "xgb_tot.pkl", "rb") as f: _xgb_tot = pickle.load(f)
@@ -623,7 +649,11 @@ def monte_carlo_predict(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f, h
     row = build_rf_feature_row(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f, hp_rec=hp_rec, ap_rec=ap_rec, weather=weather)
     x = np.array([[row[c] for c in _cols]])
     x_ou = np.array([[row.get(c, 0) for c in _ou_cols]]) if _ou_cols and _ou_cols != _cols else x
-    if _xgb_hw is not None:
+    if _xgb_models_hw:
+        hw_prob = sum(m.predict_proba(x)[0, 1] for m in _xgb_models_hw) / len(_xgb_models_hw)
+        exp_rdiff = sum(m.predict(x)[0] for m in _xgb_models_rd) / len(_xgb_models_rd)
+        exp_total = sum(m.predict(x_ou)[0] for m in _xgb_models_tot) / len(_xgb_models_tot)
+    elif _xgb_hw is not None:
         hw_prob = _xgb_hw.predict_proba(x)[0, 1]
         exp_rdiff = _xgb_rd.predict(x)[0]
         exp_total = _xgb_tot.predict(x_ou)[0]
