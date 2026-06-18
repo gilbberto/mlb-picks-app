@@ -2250,7 +2250,7 @@ def main():
                 g = r["game"]
                 if g not in best_per_game or r["edge"] > best_per_game[g]["edge"]:
                     best_per_game[g] = r
-            recs = sorted(best_per_game.values(), key=lambda x: x["edge"], reverse=True)
+            recs = sorted(best_per_game.values(), key=lambda x: x["prob"], reverse=True)
             st.divider()
             st.markdown("## 🏆 Recomendaciones del Día")
             has_real_odds = any(r.get("odds","N/A") not in ("N/A","—","") for r in recs)
@@ -2273,7 +2273,7 @@ def main():
                     existing.add((epg, epm, ept))
             html_rows = ""
             _reasons_list = []
-            for i, r in enumerate(recs[:6]):
+            for i, r in enumerate(recs[:4]):
                 is_regd = (r["game"].strip(), r["market"].strip(), r["pick"].strip()) in existing
                 icon = "🔥🔥🔥" if r["edge"] > 8 else "🔥🔥" if r["edge"] > 5 else "🔥"
                 pick_str = fmt_ou(r["pick"], r.get("entry",{}).get("detail",""))
