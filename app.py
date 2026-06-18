@@ -2023,6 +2023,9 @@ def main():
                 e = game_row.get(mk)
                 if not isinstance(e, dict): continue
                 prob_val = e.get("prob")
+                odds_val = e.get("odds", "N/A")
+                # Require real odds and 60-89% prob
+                if odds_val in ("N/A", "—", "", None): continue
                 if prob_val is not None and 60 <= prob_val <= 89:
                     return True
             return False
@@ -2091,7 +2094,7 @@ def main():
                 if prob_val is not None and (prob_val < 60 or prob_val > 89):
                     score = 0
                 if mk == "spread_plus":
-                    score = score * 0.85  # slightly lower priority for RL +1.5
+                    score = score * 0.7   # heavier penalty — RL +1.5 dominates picks
                 if score > _best_score:
                     _best_score = score
                     pick_name = p.get("pick","—")
