@@ -1163,6 +1163,22 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 716
+    },
+    {
+      "id": 70,
+      "date": "2026-06-18",
+      "game": "MIN @ TEX",
+      "market": "ML",
+      "team": "Minnesota Twins",
+      "detail": "",
+      "model_prob": 0.663,
+      "odds": -125,
+      "stake": 38.53,
+      "bankroll_before": 639.83,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
