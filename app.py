@@ -2255,7 +2255,7 @@ def main():
             st.markdown("## 🏆 Recomendaciones del Día")
             has_real_odds = any(r.get("odds","N/A") not in ("N/A","—","") for r in recs)
             if has_real_odds:
-                st.caption(f"Top {min(len(recs),4)} de {len(recs)} — Kelly Criterion (25% fraccional, bankroll ${actual_bankroll:,.0f}).")
+                st.caption(f"Top {min(len(recs),6)} de {len(recs)} — Kelly Criterion (25% fraccional, bankroll ${actual_bankroll:,.0f}). Stakes aumentan con el bankroll.")
             else:
                 st.caption(f"Top {min(len(recs),4)} de {len(recs)} — Basado en probabilidad del modelo (sin odds disponibles).")
 
@@ -2273,7 +2273,7 @@ def main():
                     existing.add((epg, epm, ept))
             html_rows = ""
             _reasons_list = []
-            for i, r in enumerate(recs[:4]):
+            for i, r in enumerate(recs[:6]):
                 is_regd = (r["game"].strip(), r["market"].strip(), r["pick"].strip()) in existing
                 icon = "🔥🔥🔥" if r["edge"] > 8 else "🔥🔥" if r["edge"] > 5 else "🔥"
                 pick_str = fmt_ou(r["pick"], r.get("entry",{}).get("detail",""))
