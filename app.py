@@ -1498,11 +1498,9 @@ def main():
     _sync_users_from_github()
     _sync_odds_from_github()
     
-    # ─── Health Check: verify data is from TODAY (no API calls) ───
+    # ─── Health Check: verify data is from TODAY ───
     if _get_perms(st.session_state.user).get("daily_picks", True):
-        _today_str = datetime.now(TZ).strftime("%Y-%m-%d")
         schedule_ok = False
-        odds_ok = False
         try:
             raw_schedule = requests.get(f"{MLB_API_BASE}/schedule?sportId=1&date={datetime.now(TZ).strftime('%m/%d/%Y')}&hydrate=probablePitcher", timeout=8)
             if raw_schedule.status_code == 200:
@@ -1512,18 +1510,8 @@ def main():
                 schedule_ok = len(sched_games) > 0
         except:
             pass
-        try:
-            with open(ODDS_CACHE_PATH) as f:
-                oc = json.load(f)
-            odds_date = oc.get("date", "") if isinstance(oc, dict) else ""
-            odds_ok = odds_date == _today_str
-        except:
-            pass
-        
         if not schedule_ok:
             st.error("⚠️ No se pudo cargar el calendario de hoy. Recarga la página.")
-        if not odds_ok:
-            st.warning("⏳ Odds desactualizados. Se actualizarán pronto (máx 1 llamada/día). Si el problema persiste, avisa.")
     # ─── End Health Check ───
     if st.session_state.get("login_time") and time.time() - st.session_state.login_time > 28800:
         st.session_state.clear()
