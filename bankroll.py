@@ -51,6 +51,25 @@ def calibrate_rl(prob):
         return 0.32 + t * 0.14  # 0.35->0.32, 0.55->0.46
     return min(0.46 + (prob - 0.55) * 0.30, 0.70)  # 0.55->0.46, 0.70->0.51
 
+def calibrate_ou(prob):
+    """Calibrate O/U probability. Model is overconfident above 70%.
+    Based on 100 historical O/U predictions (57% actual win rate).
+    70-79% model → 56% actual, 80-89% model → 71% actual."""
+    if prob < 0.50:
+        return 1.0 - calibrate_ou(1.0 - prob)
+    if prob < 0.60:
+        return prob
+    if prob < 0.70:
+        t = (prob - 0.60) / 0.10
+        return 0.60 + t * 0.05
+    if prob < 0.80:
+        t = (prob - 0.70) / 0.10
+        return 0.65 + t * 0.03
+    if prob < 0.90:
+        t = (prob - 0.80) / 0.10
+        return 0.68 + t * 0.04
+    return min(0.72 + (prob - 0.90) * 0.10, 0.75)
+
 # ─── Kelly Criterion ───
 def american_to_prob(odds):
     if odds is None or odds == 0: return None
