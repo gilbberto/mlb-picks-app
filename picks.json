@@ -1146,6 +1146,22 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 714
+    },
+    {
+      "id": 69,
+      "date": "2026-06-18",
+      "game": "LAA @ ATH",
+      "market": "ML",
+      "team": "Athletics",
+      "detail": "",
+      "model_prob": 0.735,
+      "odds": -165,
+      "stake": 47.63,
+      "bankroll_before": 639.83,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
