@@ -1180,6 +1180,22 @@
       "label": "\ud83d\udd25 High",
       "settled": true,
       "telegram_msg_id": 717
+    },
+    {
+      "id": 71,
+      "date": "2026-06-19",
+      "game": "TOR @ CHC",
+      "market": "O/U",
+      "team": "Under",
+      "detail": "u7.5",
+      "model_prob": 0.744,
+      "odds": -125,
+      "stake": 77.5,
+      "bankroll_before": 730.5,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
