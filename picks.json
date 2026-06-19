@@ -1182,23 +1182,6 @@
       "telegram_msg_id": 717
     },
     {
-      "id": 71,
-      "date": "2026-06-19",
-      "game": "LAA @ ATH",
-      "market": "ML",
-      "team": "Los Angeles Angels",
-      "detail": "",
-      "model_prob": 0.736,
-      "odds": 135,
-      "stake": 98.83,
-      "bankroll_before": 730.5,
-      "result": null,
-      "profit": null,
-      "label": "\ud83d\udd25 High",
-      "settled": false,
-      "telegram_msg_id": 738
-    },
-    {
       "id": 72,
       "date": "2026-06-19",
       "game": "SF @ MIA",
