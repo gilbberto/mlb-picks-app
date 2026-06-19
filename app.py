@@ -2024,15 +2024,14 @@ def main():
                 if not isinstance(e, dict): continue
                 prob_val = e.get("prob")
                 odds_val = e.get("odds", "N/A")
-                # Require real odds and 60-89% prob
                 if odds_val in ("N/A", "—", "", None): continue
-                if prob_val is not None and 60 <= prob_val <= 89:
+                if prob_val is not None and prob_val >= 75:
                     return True
             return False
         high_conf_mask = upcoming.apply(_high_conf, axis=1)
         hc_count = high_conf_mask.sum()
         if hc_count < len(upcoming):
-            st.caption(f"🎯 Mostrando picks con 60-89% de confianza (máximo profit histórico)")
+            st.caption(f"🎯 Solo picks con 75%+ de confianza (🔥🔥🔥)")
             upcoming = upcoming[high_conf_mask]
         st.markdown(f"### 📋 Picks del Día ({len(upcoming)} juegos)")
         flat_rows = []
