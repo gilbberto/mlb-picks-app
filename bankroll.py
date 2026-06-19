@@ -31,9 +31,21 @@ REV_TEAM = {v.lower(): k for k, v in TEAM_NAMES.items()}
 # ─── Calibration ───
 # Based on XGBoost validation on 262 games (2026 season)
 def calibrate_ml(prob):
-    """No calibration — XGBoost binary:logistic is naturally well-calibrated.
-    v4 model with 55 features and bullpen stats performs best raw."""
-    return prob
+    """Calibrate ML probability. XGBoost (47 features, 8198 games 2023-2026).
+    Light calibration — XGBoost binary:logistic tends to be well-calibrated."""
+    if prob < 0.50:
+        return 1.0 - calibrate_ml(1.0 - prob)
+    # Gentle piecewise linear
+    if prob < 0.55:
+        t = (prob - 0.50) / 0.05
+        return 0.525 + t * 0.035  # 0.50→0.525, 0.55→0.560
+    if prob < 0.65:
+        t = (prob - 0.55) / 0.10
+        return 0.560 + t * 0.060  # 0.55→0.560, 0.65→0.620
+    if prob < 0.80:
+        t = (prob - 0.65) / 0.15
+        return 0.620 + t * 0.105  # 0.65→0.620, 0.80→0.725
+    return min(0.725 + (prob - 0.80) * 0.25, 0.85)  # 0.80→0.725, 0.95→0.762
 
 def calibrate_rl(prob):
     """Calibrate RL probability. XGBoost (35 features, 8198 games 2023-2026).
