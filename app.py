@@ -141,7 +141,6 @@ _xgb_models_rd = []
 _xgb_models_tot = []
 _rf_hw = _rf_rd = _rf_tot = None
 _cols = None
-_ou_cols = None
 _model_type = ""
 
 def _load_xgb_seeds(base, prefix):
@@ -155,7 +154,7 @@ def _load_xgb_seeds(base, prefix):
     return models
 
 def load_models():
-    global _xgb_models_hw, _xgb_models_rd, _xgb_models_tot, _rf_hw, _rf_rd, _rf_tot, _cols, _ou_cols, _MODELS_LOADED, _model_type
+    global _xgb_models_hw, _xgb_models_rd, _xgb_models_tot, _rf_hw, _rf_rd, _rf_tot, _cols, _MODELS_LOADED, _model_type
     base = os.path.join(os.path.dirname(__file__), "")
     try:
         import xgboost as xgb
@@ -164,10 +163,6 @@ def load_models():
         _xgb_models_tot = _load_xgb_seeds(base, "xgb_tot")
         if _xgb_models_hw:
             with open(base + "xgb_cols.pkl", "rb") as f: _cols = pickle.load(f)
-            try:
-                with open(base + "xgb_ou_cols.pkl", "rb") as f: _ou_cols = pickle.load(f)
-            except:
-                _ou_cols = _cols
             _model_type = f"XGBoost Ensemble ({len(_xgb_models_hw)} seeds)"
             _MODELS_LOADED = True
         else:
@@ -176,10 +171,6 @@ def load_models():
             with open(base + "xgb_rd.pkl", "rb") as f: _xgb_models_rd = [pickle.load(f)]
             with open(base + "xgb_tot.pkl", "rb") as f: _xgb_models_tot = [pickle.load(f)]
             with open(base + "xgb_cols.pkl", "rb") as f: _cols = pickle.load(f)
-            try:
-                with open(base + "xgb_ou_cols.pkl", "rb") as f: _ou_cols = pickle.load(f)
-            except:
-                _ou_cols = _cols
             _model_type = "XGBoost"
             _MODELS_LOADED = True
     except Exception as e:
@@ -701,29 +692,8 @@ def compute_ev(prob, odds):
 # ─── RandomForest + Monte Carlo ───
 
 def build_rf_feature_row(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f,
-                          hp_rec=None, ap_rec=None, weather=None):
+                           hp_rec=None, ap_rec=None, weather=None):
     weather = weather or {}
-    # Compute bullpen stats: team totals minus starter contribution
-    h_bp_ip = max(hs.get("pitching",{}).get("ip", 0) - (hpitch.get("ip", 0) if hpitch else 0), 1.0)
-    h_bp_er = max(hs.get("pitching",{}).get("er", 0) - (hpitch.get("er", 0) if hpitch else 0), 0)
-    h_bp_era = 9 * h_bp_er / h_bp_ip
-    h_bp_bb = max(hs.get("pitching",{}).get("bb", 0) - (hpitch.get("bb", 0) if hpitch else 0), 0)
-    h_bp_so = max(hs.get("pitching",{}).get("so", 0) - (hpitch.get("so", 0) if hpitch else 0), 0)
-    h_bp_h = max(hs.get("pitching",{}).get("h", 0) - (hpitch.get("h", 0) if hpitch else 0), 0)
-    h_bp_whip = (h_bp_bb + h_bp_h) / h_bp_ip if h_bp_ip > 0 else 1.35
-    h_bp_k9 = 9 * h_bp_so / h_bp_ip if h_bp_ip > 0 else 8.0
-    h_bp_bb9 = 9 * h_bp_bb / h_bp_ip if h_bp_ip > 0 else 3.0
-
-    a_bp_ip = max(aws.get("pitching",{}).get("ip", 0) - (apitch.get("ip", 0) if apitch else 0), 1.0)
-    a_bp_er = max(aws.get("pitching",{}).get("er", 0) - (apitch.get("er", 0) if apitch else 0), 0)
-    a_bp_era = 9 * a_bp_er / a_bp_ip
-    a_bp_bb = max(aws.get("pitching",{}).get("bb", 0) - (apitch.get("bb", 0) if apitch else 0), 0)
-    a_bp_so = max(aws.get("pitching",{}).get("so", 0) - (apitch.get("so", 0) if apitch else 0), 0)
-    a_bp_h = max(aws.get("pitching",{}).get("h", 0) - (apitch.get("h", 0) if apitch else 0), 0)
-    a_bp_whip = (a_bp_bb + a_bp_h) / a_bp_ip if a_bp_ip > 0 else 1.35
-    a_bp_k9 = 9 * a_bp_so / a_bp_ip if a_bp_ip > 0 else 8.0
-    a_bp_bb9 = 9 * a_bp_bb / a_bp_ip if a_bp_ip > 0 else 3.0
-
     f = {
         "h_elo": h_elo, "a_elo": a_elo,
         "h_wp": hf.get("wp", 0.5), "a_wp": af.get("wp", 0.5),
@@ -763,10 +733,6 @@ def build_rf_feature_row(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f,
         "ap_rec_k9": ap_rec.get("rec_k9", apitch.get("k9", 8.0)) if ap_rec else 8.0,
         "ap_rec_bb9": ap_rec.get("rec_bb9", apitch.get("bb9", 3.0)) if ap_rec else 3.0,
         "ap_rec_hr9": ap_rec.get("rec_hr9", apitch.get("hr9", 1.2)) if ap_rec else 1.2,
-        "h_bp_era": h_bp_era, "h_bp_whip": h_bp_whip, "h_bp_k9": h_bp_k9, "h_bp_bb9": h_bp_bb9,
-        "a_bp_era": a_bp_era, "a_bp_whip": a_bp_whip, "a_bp_k9": a_bp_k9, "a_bp_bb9": a_bp_bb9,
-        "h_hr": hs.get("hitting",{}).get("hr", 0),
-        "a_hr": aws.get("hitting",{}).get("hr", 0),
         "temp_f": weather.get("temp_f", 72.0), "wind_mph": weather.get("wind_mph", 0.0),
         "humidity": weather.get("humidity", 50), "is_dome": 1 if weather.get("conditions") == "dome" else 0,
     }
@@ -786,14 +752,13 @@ def monte_carlo_predict(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f,
     row = build_rf_feature_row(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f,
                                 hp_rec=hp_rec, ap_rec=ap_rec, weather=weather)
     x = np.array([[row[c] for c in _cols]])
-    x_ou = np.array([[row.get(c, 0) for c in _ou_cols]]) if _ou_cols and _ou_cols != _cols else x
 
     if _xgb_models_hw:
         hw_probs = [m.predict_proba(x)[0, 1] for m in _xgb_models_hw]
         hw_prob = sum(hw_probs) / len(hw_probs)
         exp_rdiffs = [m.predict(x)[0] for m in _xgb_models_rd]
         exp_rdiff = sum(exp_rdiffs) / len(exp_rdiffs)
-        exp_totals = [m.predict(x_ou)[0] for m in _xgb_models_tot]
+        exp_totals = [m.predict(x)[0] for m in _xgb_models_tot]
         exp_total = sum(exp_totals) / len(exp_totals)
     else:
         hw_prob = _rf_hw.predict_proba(x)[0, 1]
@@ -1505,7 +1470,7 @@ def main():
     _sync_users_from_github()
     _sync_odds_from_github()
     
-    # ─── Health Check: auto-refresh odds if stale ───
+    # ─── Health Check: verify odds are from today (no API call) ───
     if _get_perms(st.session_state.user).get("daily_picks", True):
         try:
             with open(ODDS_CACHE_PATH) as f:
@@ -1513,13 +1478,7 @@ def main():
             cache_date = oc.get("date", "") if isinstance(oc, dict) else ""
             today_str = datetime.now(TZ).strftime("%Y-%m-%d")
             if cache_date != today_str:
-                st.cache_data.clear()
-                fresh = requests.get(
-                    f"https://api.the-odds-api.com/v4/sports/baseball_mlb/odds?regions=us&markets=h2h,spreads,totals&oddsFormat=american&apiKey={ODDS_API_KEY}",
-                    timeout=10
-                )
-                if fresh.status_code == 200:
-                    _save_odds_cache(fresh.json())
+                st.warning(f"⏳ Odds del {cache_date}. Se actualizarán pronto (1 llamada/día).")
         except:
             pass
     # ─── End Health Check ───
@@ -1939,11 +1898,6 @@ def main():
                     ov_price, ov_book, ov_point = extract_market_odds(og, "totals")
                     if ov_price and ov_point:
                         over_prob = norm_cdf(exp_total - ov_point, 0, total_std)
-                        # Calibrate O/U probability (Platt scaling)
-                        try:
-                            from bankroll import calibrate_ou
-                            over_prob = calibrate_ou(over_prob)
-                        except: pass
                         if over_prob > 0.5:
                             ov_p = american_to_prob(ov_price)
                             ov_edge = round(over_prob*100 - (ov_p*100 if ov_p else 0), 1) if ov_p else None
