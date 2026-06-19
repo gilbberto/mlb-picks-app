@@ -2264,7 +2264,7 @@ def main():
                 g = r["game"]
                 if g not in best_per_game or r["edge"] > best_per_game[g]["edge"]:
                     best_per_game[g] = r
-            recs = sorted(best_per_game.values(), key=lambda x: x["edge"], reverse=True)
+            recs = sorted(best_per_game.values(), key=lambda x: x["prob"], reverse=True)
             st.divider()
             st.markdown("## 🏆 Recomendaciones del Día")
             has_real_odds = any(r.get("odds","N/A") not in ("N/A","—","") for r in recs)
