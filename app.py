@@ -2025,13 +2025,14 @@ def main():
                 prob_val = e.get("prob")
                 odds_val = e.get("odds", "N/A")
                 if odds_val in ("N/A", "—", "", None): continue
-                if prob_val is not None and prob_val >= 75:
-                    return True
+                edge_val = e.get("edge")
+                if edge_val is not None and edge_val > 8: return True
+                if prob_val is not None and prob_val >= 75: return True
             return False
         high_conf_mask = upcoming.apply(_high_conf, axis=1)
         hc_count = high_conf_mask.sum()
         if hc_count < len(upcoming):
-            st.caption(f"🎯 Solo picks con 75%+ de confianza (🔥🔥🔥)")
+            st.caption(f"🎯 Solo picks con alta confianza (edge > 8% o prob ≥ 75%)")
             upcoming = upcoming[high_conf_mask]
         st.markdown(f"### 📋 Picks del Día ({len(upcoming)} juegos)")
         flat_rows = []
@@ -2181,10 +2182,14 @@ def main():
                 if not entry: continue
                 edge = entry.get("edge") if mkt_key == "moneyline" else get_edge(entry)
                 prob = entry.get("prob", 0)
-                if edge is not None and edge > 2:
-                    pass
-                elif prob >= 55:
-                    edge = round((prob - 50) * 0.5, 1)
+                if edge is not None and edge > 8:
+                    pass  # 🔥🔥🔥 high confidence
+                elif edge is not None and edge > 5:
+                    pass  # 🔥🔥 medium confidence
+                elif prob >= 75:
+                    pass  # 🔥🔥🔥 high probability
+                elif prob >= 65 and edge is not None and edge > 3:
+                    pass  # 🔥 decent
                 else:
                     continue
 
@@ -2199,8 +2204,6 @@ def main():
 
                 if has_real_odds:
                     stake, units, stake_label = recommend_stake(prob/100, odds_int, bankroll=actual_bankroll)
-                    if stake < 25:
-                        continue  # skip insignificant bets
                 else:
                     stake, units, stake_label = 0, 0, "—"
 
@@ -2251,7 +2254,7 @@ def main():
                 g = r["game"]
                 if g not in best_per_game or r["edge"] > best_per_game[g]["edge"]:
                     best_per_game[g] = r
-            recs = sorted(best_per_game.values(), key=lambda x: x["prob"], reverse=True)
+            recs = sorted(best_per_game.values(), key=lambda x: x["edge"], reverse=True)
             st.divider()
             st.markdown("## 🏆 Recomendaciones del Día")
             has_real_odds = any(r.get("odds","N/A") not in ("N/A","—","") for r in recs)
@@ -2276,7 +2279,7 @@ def main():
             _reasons_list = []
             for i, r in enumerate(recs[:4]):
                 is_regd = (r["game"].strip(), r["market"].strip(), r["pick"].strip()) in existing
-                icon = "🔥🔥🔥" if r["edge"] > 8 else "🔥🔥" if r["edge"] > 5 else "🔥"
+                icon = "🔥🔥🔥" if r["edge"] > 8 or r["prob"] >= 75 else "🔥🔥" if r["edge"] > 5 or r["prob"] >= 65 else "🔥"
                 pick_str = fmt_ou(r["pick"], r.get("entry",{}).get("detail",""))
                 # Warning for O/U when predicted total is close to the line
                 warn = ""
