@@ -2105,11 +2105,11 @@ def main():
                     else:
                         display_name = pick_name
                     flames = ""
-                    if prob_val is not None:
-                        if prob_val >= 75: flames = "🔥🔥🔥"
-                        elif prob_val >= 65: flames = "🔥🔥"
-                        elif prob_val >= 60: flames = "🔥"
-                    if edge is not None and edge > 5 and not flames:
+                    if (edge is not None and edge > 8) or (prob_val is not None and prob_val >= 75):
+                        flames = "🔥🔥🔥"
+                    elif (edge is not None and edge > 5) or (prob_val is not None and prob_val >= 65):
+                        flames = "🔥🔥"
+                    elif (edge is not None and edge > 3) or (prob_val is not None and prob_val >= 60):
                         flames = "🔥"
                     display_pick = f"{flames} {display_name}" if flames else display_name
                     _best_row = {
