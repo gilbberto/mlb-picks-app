@@ -421,16 +421,21 @@ def fetch_advanced_stats():
 ODDS_CACHE_PATH = os.path.join(os.path.dirname(__file__), ".odds_cache.json")
 
 def _sync_odds_from_github():
-    """Download .odds_cache.json from GitHub to avoid API call when cache is fresh."""
+    """Download .odds_cache.json from GitHub ONLY if it's from today."""
     try:
         owner, repo_name, branch, headers = _gh_headers()
         if not owner: return
+        today_str = datetime.now(TZ).strftime("%Y-%m-%d")
         url = f"https://api.github.com/repos/{owner}/{repo_name}/contents/.odds_cache.json?ref={branch}"
         r = requests.get(url, headers=headers, timeout=10)
         if r.status_code == 200:
             import base64
-            with open(ODDS_CACHE_PATH, "w") as f:
-                f.write(base64.b64decode(r.json()["content"]).decode())
+            content = base64.b64decode(r.json()["content"]).decode()
+            cached = json.loads(content)
+            gh_date = cached.get("date", "") if isinstance(cached, dict) else ""
+            if gh_date == today_str:
+                with open(ODDS_CACHE_PATH, "w") as f:
+                    f.write(content)
     except:
         pass
 
@@ -459,7 +464,7 @@ def _save_odds_cache(odds):
     except:
         pass
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=600)
 def fetch_odds():
     cached = _check_odds_cache()
     if cached is not None:
@@ -1498,20 +1503,23 @@ def main():
     _sync_users_from_github()
     _sync_odds_from_github()
     
-    # ─── Health Check: verify data is from TODAY ───
+    # ─── Health Check: auto-refresh odds if stale ───
     if _get_perms(st.session_state.user).get("daily_picks", True):
-        schedule_ok = False
         try:
-            raw_schedule = requests.get(f"{MLB_API_BASE}/schedule?sportId=1&date={datetime.now(TZ).strftime('%m/%d/%Y')}&hydrate=probablePitcher", timeout=8)
-            if raw_schedule.status_code == 200:
-                sched_games = []
-                for d in raw_schedule.json().get("dates", []):
-                    sched_games.extend(d.get("games", []))
-                schedule_ok = len(sched_games) > 0
+            with open(ODDS_CACHE_PATH) as f:
+                oc = json.load(f)
+            cache_date = oc.get("date", "") if isinstance(oc, dict) else ""
+            today_str = datetime.now(TZ).strftime("%Y-%m-%d")
+            if cache_date != today_str:
+                st.cache_data.clear()
+                fresh = requests.get(
+                    f"https://api.the-odds-api.com/v4/sports/baseball_mlb/odds?regions=us&markets=h2h,spreads,totals&oddsFormat=american&apiKey={ODDS_API_KEY}",
+                    timeout=10
+                )
+                if fresh.status_code == 200:
+                    _save_odds_cache(fresh.json())
         except:
             pass
-        if not schedule_ok:
-            st.error("⚠️ No se pudo cargar el calendario de hoy. Recarga la página.")
     # ─── End Health Check ───
     if st.session_state.get("login_time") and time.time() - st.session_state.login_time > 28800:
         st.session_state.clear()
