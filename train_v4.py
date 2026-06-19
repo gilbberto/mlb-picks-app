@@ -411,7 +411,7 @@ cols_base = ["h_elo", "a_elo", "h_wp", "a_wp", "h_rs", "a_rs", "h_ra", "a_ra",
              "temp_f", "wind_mph", "humidity", "is_dome"]
 
 # O/U-specific extra features
-cols_ou = cols_base + ["h_hr", "a_hr", "h_rs", "a_rs"]  # HR + recent runs for totals
+cols_ou = cols_base + ["h_hr", "a_hr"]  # HR + recent runs for totals
 
 X_base = np.array([[f[c] for c in cols_base] for f in features])
 X_ou = np.array([[f[c] for c in cols_ou] for f in features])

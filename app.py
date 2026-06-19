@@ -765,6 +765,8 @@ def build_rf_feature_row(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f,
         "ap_rec_hr9": ap_rec.get("rec_hr9", apitch.get("hr9", 1.2)) if ap_rec else 1.2,
         "h_bp_era": h_bp_era, "h_bp_whip": h_bp_whip, "h_bp_k9": h_bp_k9, "h_bp_bb9": h_bp_bb9,
         "a_bp_era": a_bp_era, "a_bp_whip": a_bp_whip, "a_bp_k9": a_bp_k9, "a_bp_bb9": a_bp_bb9,
+        "h_hr": hs.get("hitting",{}).get("hr", 0),
+        "a_hr": aws.get("hitting",{}).get("hr", 0),
         "temp_f": weather.get("temp_f", 72.0), "wind_mph": weather.get("wind_mph", 0.0),
         "humidity": weather.get("humidity", 50), "is_dome": 1 if weather.get("conditions") == "dome" else 0,
     }
@@ -2007,7 +2009,7 @@ def main():
     }
 
     def best_ev(row):
-        for m in ["moneyline","spread","total"]:
+        for m in ["moneyline","spread_plus","spread_minus","total"]:
             p = row.get(m, {})
             if p and p.get("ev") is not None:
                 return p["ev"]
@@ -2287,7 +2289,7 @@ def main():
             _reasons_list = []
             for i, r in enumerate(recs[:4]):
                 is_regd = (r["game"].strip(), r["market"].strip(), r["pick"].strip()) in existing
-                icon = "🔥🔥🔥" if r["edge"] > 8 or r["prob"] >= 75 else "🔥🔥" if r["edge"] > 5 or r["prob"] >= 65 else "🔥"
+                icon = "🔥🔥🔥" if (r.get("edge") or 0) > 8 or r["prob"] >= 75 else "🔥🔥" if (r.get("edge") or 0) > 5 or r["prob"] >= 65 else "🔥"
                 pick_str = fmt_ou(r["pick"], r.get("entry",{}).get("detail",""))
                 # Warning for O/U when predicted total is close to the line
                 warn = ""
