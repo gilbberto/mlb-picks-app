@@ -1230,6 +1230,22 @@
       "profit": null,
       "label": "\ud83d\udd25 High",
       "settled": false
+    },
+    {
+      "id": 74,
+      "date": "2026-06-19",
+      "game": "CLE @ HOU",
+      "market": "ML",
+      "team": "Cleveland Guardians",
+      "detail": "",
+      "model_prob": 0.689,
+      "odds": 105,
+      "stake": 71.69,
+      "bankroll_before": 730.5,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
