@@ -1197,6 +1197,22 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 741
+    },
+    {
+      "id": 72,
+      "date": "2026-06-19",
+      "game": "STL @ KC",
+      "market": "O/U",
+      "team": "Under",
+      "detail": "u9.0",
+      "model_prob": 0.711,
+      "odds": 100,
+      "stake": 77.06,
+      "bankroll_before": 730.5,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
