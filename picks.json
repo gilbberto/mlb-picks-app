@@ -1182,23 +1182,6 @@
       "telegram_msg_id": 717
     },
     {
-      "id": 72,
-      "date": "2026-06-19",
-      "game": "SF @ MIA",
-      "market": "ML",
-      "team": "San Francisco Giants",
-      "detail": "",
-      "model_prob": 0.742,
-      "odds": 105,
-      "stake": 90.49,
-      "bankroll_before": 730.5,
-      "result": null,
-      "profit": null,
-      "label": "\ud83d\udd25 High",
-      "settled": false,
-      "telegram_msg_id": 739
-    },
-    {
       "id": 73,
       "date": "2026-06-19",
       "game": "CLE @ HOU",
