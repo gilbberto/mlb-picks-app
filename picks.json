@@ -1264,6 +1264,22 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 771
+    },
+    {
+      "id": 76,
+      "date": "2026-06-20",
+      "game": "LAA @ ATH",
+      "market": "O/U",
+      "team": "Under",
+      "detail": "u9.5",
+      "model_prob": 0.735,
+      "odds": -102,
+      "stake": 53.09,
+      "bankroll_before": 456.88,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
