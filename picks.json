@@ -1281,6 +1281,22 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 772
+    },
+    {
+      "id": 77,
+      "date": "2026-06-20",
+      "game": "CIN @ NYY",
+      "market": "O/U",
+      "team": "Under",
+      "detail": "u9.5",
+      "model_prob": 0.647,
+      "odds": -115,
+      "stake": 27.61,
+      "bankroll_before": 456.88,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
