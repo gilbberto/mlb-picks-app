@@ -452,6 +452,8 @@ def _save_odds_cache(odds):
         cache = {"date": datetime.now(TZ).strftime("%Y-%m-%d"), "data": odds}
         with open(ODDS_CACHE_PATH, "w") as f:
             json.dump(cache, f)
+        with open(ODDS_COOLDOWN, "w") as f:
+            f.write(str(time.time()))
     except:
         pass
 
@@ -1470,7 +1472,7 @@ def main():
     _sync_users_from_github()
     _sync_odds_from_github()
     
-    # ─── Health Check: verify odds are from today (no API call) ───
+    # ─── Health Check: auto-refresh odds once per day if stale ───
     if _get_perms(st.session_state.user).get("daily_picks", True):
         try:
             with open(ODDS_CACHE_PATH) as f:
@@ -1478,7 +1480,22 @@ def main():
             cache_date = oc.get("date", "") if isinstance(oc, dict) else ""
             today_str = datetime.now(TZ).strftime("%Y-%m-%d")
             if cache_date != today_str:
-                st.warning(f"⏳ Odds del {cache_date}. Se actualizarán pronto (1 llamada/día).")
+                # Check cooldown (max 1 refresh per 6h)
+                try:
+                    cd_age = time.time() - os.path.getmtime(ODDS_COOLDOWN)
+                    if cd_age < 21600:
+                        st.warning(f"⏳ Odds del {cache_date}. Próxima actualización automática pronto.")
+                    else:
+                        fresh = requests.get(f"https://api.the-odds-api.com/v4/sports/baseball_mlb/odds?regions=us&markets=h2h,spreads,totals&oddsFormat=american&apiKey={ODDS_API_KEY}", timeout=10)
+                        if fresh.status_code == 200:
+                            _save_odds_cache(fresh.json())
+                            st.cache_data.clear()
+                except:
+                    # No cooldown file yet — proceed with refresh
+                    fresh = requests.get(f"https://api.the-odds-api.com/v4/sports/baseball_mlb/odds?regions=us&markets=h2h,spreads,totals&oddsFormat=american&apiKey={ODDS_API_KEY}", timeout=10)
+                    if fresh.status_code == 200:
+                        _save_odds_cache(fresh.json())
+                        st.cache_data.clear()
         except:
             pass
     # ─── End Health Check ───
