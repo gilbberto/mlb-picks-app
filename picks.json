@@ -1,5 +1,5 @@
 {
-  "bankroll": -7038.03,
+  "bankroll": -7085.4,
   "history": [
     {
       "id": 1,
@@ -1226,10 +1226,10 @@
       "odds": -145,
       "stake": 47.37,
       "bankroll_before": 730.5,
-      "result": null,
-      "profit": null,
+      "result": "L",
+      "profit": -47.37,
       "label": "\ud83d\udd25 High",
-      "settled": false
+      "settled": true
     },
     {
       "id": 74,
