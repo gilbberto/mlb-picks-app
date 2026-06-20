@@ -2166,13 +2166,9 @@ def main():
                 edge = entry.get("edge") if mkt_key == "moneyline" else get_edge(entry)
                 prob = entry.get("prob", 0)
                 if edge is not None and edge > 8:
-                    pass  # 🔥🔥🔥 high confidence
-                elif edge is not None and edge > 5:
-                    pass  # 🔥🔥 medium confidence
+                    pass  # 🔥🔥🔥
                 elif prob >= 75:
-                    pass  # 🔥🔥🔥 high probability
-                elif prob >= 65 and edge is not None and edge > 3:
-                    pass  # 🔥 decent
+                    pass  # 🔥🔥🔥
                 else:
                     continue
 
@@ -2264,7 +2260,7 @@ def main():
             _reasons_list = []
             for i, r in enumerate(recs[:4]):
                 is_regd = (r["game"].strip(), r["market"].strip(), r["pick"].strip()) in existing
-                icon = "🔥🔥🔥" if (r.get("edge") or 0) > 8 or r["prob"] >= 75 else "🔥🔥" if (r.get("edge") or 0) > 5 or r["prob"] >= 65 else "🔥"
+                icon = "🔥🔥🔥"
                 pick_str = fmt_ou(r["pick"], r.get("entry",{}).get("detail",""))
                 # Warning for O/U when predicted total is close to the line
                 warn = ""
