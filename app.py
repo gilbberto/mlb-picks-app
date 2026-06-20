@@ -2059,6 +2059,8 @@ def main():
                     score = 0
                 if mk == "spread_plus":
                     score = score * 0.7   # heavier penalty — RL +1.5 dominates picks
+                if mk == "total" and p.get("detail","").startswith("o"):
+                    score = 0  # skip Over — model Under bias 62% vs Over 49%
                 if score > _best_score:
                     _best_score = score
                     pick_name = p.get("pick","—")
@@ -2178,7 +2180,9 @@ def main():
                 ap = p.get("away_pitcher", "TBD")
                 if label == "O/U":
                     detail = entry.get("detail", "")
-                    side = "Over" if detail.startswith("o") else "Under"
+                    if detail.startswith("o"):
+                        continue  # skip Over — model has strong Under bias (62% Under vs 49% Over)
+                    side = "Under"
                     exp_t = p.get('exp_total', 0)
                     vars_ou = [
                         f"El duelo {ap} vs {hp} pinta cerrado. Proyectamos ~{exp_t:.1f} carreras, muy por debajo de {detail}. {side} es el lado con valor.",
