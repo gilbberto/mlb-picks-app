@@ -1247,6 +1247,22 @@
       "label": "\ud83d\udd25 High",
       "settled": true,
       "telegram_msg_id": 744
+    },
+    {
+      "id": 75,
+      "date": "2026-06-20",
+      "game": "CWS @ DET",
+      "market": "O/U",
+      "team": "Under",
+      "detail": "u9.0",
+      "model_prob": 0.768,
+      "odds": -115,
+      "stake": 57.17,
+      "bankroll_before": 456.88,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
