@@ -1314,6 +1314,22 @@
       "profit": -29.74,
       "label": "\ud83d\udd25 High",
       "settled": true
+    },
+    {
+      "id": 79,
+      "date": "2026-06-21",
+      "game": "SD @ TEX",
+      "market": "O/U",
+      "team": "Under",
+      "detail": "u8.0",
+      "model_prob": 0.821,
+      "odds": -105,
+      "stake": 79.31,
+      "bankroll_before": 501.29,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
