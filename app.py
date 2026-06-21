@@ -1470,35 +1470,7 @@ def main():
         st.session_state.user = None
         st.session_state.role = None
     _sync_users_from_github()
-    _sync_odds_from_github()
-    
-    # ─── Health Check: auto-refresh odds once per day if stale ───
-    if _get_perms(st.session_state.user).get("daily_picks", True):
-        try:
-            with open(ODDS_CACHE_PATH) as f:
-                oc = json.load(f)
-            cache_date = oc.get("date", "") if isinstance(oc, dict) else ""
-            today_str = datetime.now(TZ).strftime("%Y-%m-%d")
-            if cache_date != today_str:
-                # Check cooldown (max 1 refresh per 6h)
-                try:
-                    cd_age = time.time() - os.path.getmtime(ODDS_COOLDOWN)
-                    if cd_age < 21600:
-                        st.warning(f"⏳ Odds del {cache_date}. Próxima actualización automática pronto.")
-                    else:
-                        fresh = requests.get(f"https://api.the-odds-api.com/v4/sports/baseball_mlb/odds?regions=us&markets=h2h,spreads,totals&oddsFormat=american&apiKey={ODDS_API_KEY}", timeout=10)
-                        if fresh.status_code == 200:
-                            _save_odds_cache(fresh.json())
-                            st.cache_data.clear()
-                except:
-                    # No cooldown file yet — proceed with refresh
-                    fresh = requests.get(f"https://api.the-odds-api.com/v4/sports/baseball_mlb/odds?regions=us&markets=h2h,spreads,totals&oddsFormat=american&apiKey={ODDS_API_KEY}", timeout=10)
-                    if fresh.status_code == 200:
-                        _save_odds_cache(fresh.json())
-                        st.cache_data.clear()
-        except:
-            pass
-    # ─── End Health Check ───
+    # odds auto-refresh is handled by fetch_odds() — date check + Streamlit cache = 1 call/day
     if st.session_state.get("login_time") and time.time() - st.session_state.login_time > 28800:
         st.session_state.clear()
         st.rerun()
