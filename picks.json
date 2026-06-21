@@ -1347,6 +1347,22 @@
       "profit": null,
       "label": "\ud83d\udd25 High",
       "settled": false
+    },
+    {
+      "id": 81,
+      "date": "2026-06-21",
+      "game": "SF @ MIA",
+      "market": "ML",
+      "team": "San Francisco Giants",
+      "detail": "",
+      "model_prob": 0.715,
+      "odds": -145,
+      "stake": 37.83,
+      "bankroll_before": 501.29,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
