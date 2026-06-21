@@ -1363,6 +1363,22 @@
       "profit": null,
       "label": "\ud83d\udd25 High",
       "settled": false
+    },
+    {
+      "id": 82,
+      "date": "2026-06-21",
+      "game": "WSH @ TB",
+      "market": "O/U",
+      "team": "Under",
+      "detail": "u8.0",
+      "model_prob": 0.698,
+      "odds": -102,
+      "stake": 48.88,
+      "bankroll_before": 501.29,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
