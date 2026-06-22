@@ -1379,6 +1379,22 @@
       "profit": 47.92,
       "label": "\ud83d\udd25 High",
       "settled": true
+    },
+    {
+      "id": 83,
+      "date": "2026-06-22",
+      "game": "PHI @ WSH",
+      "market": "O/U",
+      "team": "Under",
+      "detail": "u10.0",
+      "model_prob": 0.85,
+      "odds": -115,
+      "stake": 100,
+      "bankroll_before": 1000,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
