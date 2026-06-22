@@ -1470,7 +1470,17 @@ def main():
         st.session_state.user = None
         st.session_state.role = None
     _sync_users_from_github()
-    # odds auto-refresh is handled by fetch_odds() — date check + Streamlit cache = 1 call/day
+    # ─── Odds freshness check (runs once after fetch_odds) ───
+    if _get_perms(st.session_state.user).get("daily_picks", True):
+        try:
+            with open(ODDS_CACHE_PATH) as f:
+                oc = json.load(f)
+            cache_date = oc.get("date", "") if isinstance(oc, dict) else ""
+            today_str = datetime.now(TZ).strftime("%Y-%m-%d")
+            if cache_date != today_str:
+                st.warning(f"⚠️ Odds del {cache_date}. No se pudo actualizar a hoy. La API puede estar saturada.")
+        except:
+            pass
     if st.session_state.get("login_time") and time.time() - st.session_state.login_time > 28800:
         st.session_state.clear()
         st.rerun()
