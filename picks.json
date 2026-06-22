@@ -1430,6 +1430,22 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 832
+    },
+    {
+      "id": 86,
+      "date": "2026-06-22",
+      "game": "LAD @ MIN",
+      "market": "ML",
+      "team": "Los Angeles Dodgers",
+      "detail": "",
+      "model_prob": 0.715,
+      "odds": -150,
+      "stake": 71.83,
+      "bankroll_before": 1000,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
