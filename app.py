@@ -2017,7 +2017,6 @@ def main():
             if isinstance(score, float) and math.isnan(score):
                 score = ""
             time_str = r.get("game_time", "")
-            import math
             if isinstance(time_str, float) and math.isnan(time_str):
                 time_str = ""
             if cgs == "F":
