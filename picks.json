@@ -1,5 +1,5 @@
 {
-  "bankroll": -7860.7,
+  "bankroll": 1601.17,
   "history": [
     {
       "id": 1,
@@ -1391,8 +1391,8 @@
       "odds": -115,
       "stake": 100,
       "bankroll_before": 1000,
-      "result": "W",
-      "profit": 86.96,
+      "result": "C",
+      "profit": 0,
       "label": "\ud83d\udd25 High",
       "settled": true,
       "telegram_msg_id": 830
@@ -1499,7 +1499,7 @@
       "telegram_msg_id": 860
     }
   ],
-  "weekly_bankroll": 1000,
+  "weekly_bankroll": 1601.17,
   "weekly_start": "2026-06-22",
   "weekly_history": [
     {
