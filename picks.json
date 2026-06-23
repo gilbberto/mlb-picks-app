@@ -1480,6 +1480,22 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 859
+    },
+    {
+      "id": 89,
+      "date": "2026-06-23",
+      "game": "HOU @ TOR",
+      "market": "ML",
+      "team": "Houston Astros",
+      "detail": "",
+      "model_prob": 0.74,
+      "odds": 110,
+      "stake": 100,
+      "bankroll_before": 1214.85,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
