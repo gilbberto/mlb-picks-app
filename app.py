@@ -1470,7 +1470,7 @@ def main():
         st.session_state.user = None
         st.session_state.role = None
     _sync_users_from_github()
-    # ─── Odds freshness check (runs once after fetch_odds) ───
+    # ─── Auto-refresh odds on date change (runs before fetch_odds, outside cache) ───
     if _get_perms(st.session_state.user).get("daily_picks", True):
         try:
             with open(ODDS_CACHE_PATH) as f:
@@ -1478,9 +1478,14 @@ def main():
             cache_date = oc.get("date", "") if isinstance(oc, dict) else ""
             today_str = datetime.now(TZ).strftime("%Y-%m-%d")
             if cache_date != today_str:
-                st.warning(f"⚠️ Odds del {cache_date}. No se pudo actualizar a hoy. La API puede estar saturada.")
-        except:
-            pass
+                st.cache_data.clear()
+                r = requests.get(f"https://api.the-odds-api.com/v4/sports/baseball_mlb/odds?regions=us&markets=h2h,spreads,totals&oddsFormat=american&apiKey={ODDS_API_KEY}", timeout=10)
+                if r.status_code == 200:
+                    _save_odds_cache(r.json())
+                else:
+                    st.warning(f"⚠️ Odds del {cache_date}. API no disponible (error {r.status_code}).")
+        except Exception as e:
+            st.warning(f"⚠️ No se pudo verificar odds: {e}")
     if st.session_state.get("login_time") and time.time() - st.session_state.login_time > 28800:
         st.session_state.clear()
         st.rerun()
