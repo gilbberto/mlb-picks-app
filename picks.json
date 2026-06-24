@@ -1480,6 +1480,22 @@
       "label": "\ud83d\udd25 High",
       "settled": true,
       "telegram_msg_id": 860
+    },
+    {
+      "id": 89,
+      "date": "2026-06-24",
+      "game": "LAD @ MIN",
+      "market": "O/U",
+      "team": "Under",
+      "detail": "u8.0",
+      "model_prob": 0.769,
+      "odds": -118,
+      "stake": 100,
+      "bankroll_before": 937.89,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
