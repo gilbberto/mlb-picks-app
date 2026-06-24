@@ -1513,6 +1513,22 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 899
+    },
+    {
+      "id": 91,
+      "date": "2026-06-24",
+      "game": "ATH @ SF",
+      "market": "ML",
+      "team": "Athletics",
+      "detail": "",
+      "model_prob": 0.747,
+      "odds": -130,
+      "stake": 98.25,
+      "bankroll_before": 937.89,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
