@@ -48,7 +48,7 @@ jobs:
           done
           git diff --cached --quiet && exit 0
           git commit -m "auto-health: refresh odds cache for today"
-          git push
+          git pull --rebase -X theirs origin main && git push
 
       - name: Run morning summary
         env:
@@ -66,4 +66,4 @@ jobs:
           done
           git diff --cached --quiet && exit 0
           git commit -m "auto-summary: mark morning_sent"
-          git push
+          git pull --rebase -X theirs origin main && git push
