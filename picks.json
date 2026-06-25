@@ -1581,6 +1581,22 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 930
+    },
+    {
+      "id": 95,
+      "date": "2026-06-25",
+      "game": "SEA @ PIT",
+      "market": "ML",
+      "team": "Seattle Mariners",
+      "detail": "",
+      "model_prob": 0.733,
+      "odds": -150,
+      "stake": 73.15,
+      "bankroll_before": 882.33,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
