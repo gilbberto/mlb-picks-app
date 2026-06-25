@@ -1597,6 +1597,22 @@
       "profit": null,
       "label": "\ud83d\udd25 High",
       "settled": false
+    },
+    {
+      "id": 96,
+      "date": "2026-06-25",
+      "game": "NYY @ BOS",
+      "market": "O/U",
+      "team": "Under",
+      "detail": "u7.5",
+      "model_prob": 0.698,
+      "odds": 100,
+      "stake": 87.36,
+      "bankroll_before": 882.33,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
