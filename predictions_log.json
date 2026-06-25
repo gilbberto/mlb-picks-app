@@ -7347,8 +7347,8 @@
       "odds": -130,
       "edge": 17.7,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "823208_total",
@@ -7362,8 +7362,8 @@
       "odds": -110,
       "edge": 11.7,
       "detail": "o8.0",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     }
   ]
 }
