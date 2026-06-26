@@ -1647,6 +1647,22 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 965
+    },
+    {
+      "id": 99,
+      "date": "2026-06-26",
+      "game": "COL @ MIN",
+      "market": "ML",
+      "team": "Colorado Rockies",
+      "detail": "",
+      "model_prob": 0.552,
+      "odds": 140,
+      "stake": 30.38,
+      "bankroll_before": 522.08,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
