@@ -696,6 +696,27 @@ def compute_ev(prob, odds):
 def build_rf_feature_row(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f,
                            hp_rec=None, ap_rec=None, weather=None):
     weather = weather or {}
+    # Compute bullpen stats
+    h_bp_ip = max(hs.get("pitching",{}).get("ip", 0) - (hpitch.get("ip", 0) if hpitch else 0), 1.0)
+    h_bp_er = max(hs.get("pitching",{}).get("er", 0) - (hpitch.get("er", 0) if hpitch else 0), 0)
+    h_bp_era = 9 * h_bp_er / h_bp_ip
+    h_bp_bb = max(hs.get("pitching",{}).get("bb", 0) - (hpitch.get("bb", 0) if hpitch else 0), 0)
+    h_bp_so = max(hs.get("pitching",{}).get("so", 0) - (hpitch.get("so", 0) if hpitch else 0), 0)
+    h_bp_h = max(hs.get("pitching",{}).get("h", 0) - (hpitch.get("h", 0) if hpitch else 0), 0)
+    h_bp_whip = (h_bp_bb + h_bp_h) / h_bp_ip if h_bp_ip > 0 else 1.35
+    h_bp_k9 = 9 * h_bp_so / h_bp_ip if h_bp_ip > 0 else 8.0
+    h_bp_bb9 = 9 * h_bp_bb / h_bp_ip if h_bp_ip > 0 else 3.0
+
+    a_bp_ip = max(aws.get("pitching",{}).get("ip", 0) - (apitch.get("ip", 0) if apitch else 0), 1.0)
+    a_bp_er = max(aws.get("pitching",{}).get("er", 0) - (apitch.get("er", 0) if apitch else 0), 0)
+    a_bp_era = 9 * a_bp_er / a_bp_ip
+    a_bp_bb = max(aws.get("pitching",{}).get("bb", 0) - (apitch.get("bb", 0) if apitch else 0), 0)
+    a_bp_so = max(aws.get("pitching",{}).get("so", 0) - (apitch.get("so", 0) if apitch else 0), 0)
+    a_bp_h = max(aws.get("pitching",{}).get("h", 0) - (apitch.get("h", 0) if apitch else 0), 0)
+    a_bp_whip = (a_bp_bb + a_bp_h) / a_bp_ip if a_bp_ip > 0 else 1.35
+    a_bp_k9 = 9 * a_bp_so / a_bp_ip if a_bp_ip > 0 else 8.0
+    a_bp_bb9 = 9 * a_bp_bb / a_bp_ip if a_bp_ip > 0 else 3.0
+
     f = {
         "h_elo": h_elo, "a_elo": a_elo,
         "h_wp": hf.get("wp", 0.5), "a_wp": af.get("wp", 0.5),
@@ -735,6 +756,8 @@ def build_rf_feature_row(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f,
         "ap_rec_k9": ap_rec.get("rec_k9", apitch.get("k9", 8.0)) if ap_rec else 8.0,
         "ap_rec_bb9": ap_rec.get("rec_bb9", apitch.get("bb9", 3.0)) if ap_rec else 3.0,
         "ap_rec_hr9": ap_rec.get("rec_hr9", apitch.get("hr9", 1.2)) if ap_rec else 1.2,
+        "h_bp_era": h_bp_era, "h_bp_whip": h_bp_whip, "h_bp_k9": h_bp_k9, "h_bp_bb9": h_bp_bb9,
+        "a_bp_era": a_bp_era, "a_bp_whip": a_bp_whip, "a_bp_k9": a_bp_k9, "a_bp_bb9": a_bp_bb9,
         "temp_f": weather.get("temp_f", 72.0), "wind_mph": weather.get("wind_mph", 0.0),
         "humidity": weather.get("humidity", 50), "is_dome": 1 if weather.get("conditions") == "dome" else 0,
     }
@@ -1994,13 +2017,13 @@ def main():
                 odds_val = e.get("odds", "N/A")
                 if odds_val in ("N/A", "—", "", None): continue
                 edge_val = e.get("edge")
-                if edge_val is not None and edge_val > 8: return True
-                if prob_val is not None and prob_val >= 75: return True
+                if edge_val is not None and edge_val > 12: return True
+                if prob_val is not None and prob_val >= 75 and edge_val is not None and edge_val > 8: return True
             return False
         high_conf_mask = upcoming.apply(_high_conf, axis=1)
         hc_count = high_conf_mask.sum()
         if hc_count < len(upcoming):
-            st.caption(f"🎯 Solo picks con alta confianza (edge > 8% o prob ≥ 75%)")
+            st.caption(f"🎯 Solo picks con edge > 12% (o prob ≥ 75% + edge > 8%) — ultra selectivo")
             upcoming = upcoming[high_conf_mask]
         st.markdown(f"### 📋 Picks del Día ({len(upcoming)} juegos)")
         flat_rows = []
@@ -2074,7 +2097,7 @@ def main():
                     else:
                         display_name = pick_name
                     flames = ""
-                    if (edge is not None and edge > 8) or (prob_val is not None and prob_val >= 75):
+                    if (edge is not None and edge > 12) or (prob_val is not None and prob_val >= 75):
                         flames = "🔥🔥🔥"
                     elif (edge is not None and edge > 5) or (prob_val is not None and prob_val >= 65):
                         flames = "🔥🔥"
@@ -2151,10 +2174,10 @@ def main():
                 if not entry: continue
                 edge = entry.get("edge") if mkt_key == "moneyline" else get_edge(entry)
                 prob = entry.get("prob", 0)
-                if edge is not None and edge > 8:
-                    pass  # 🔥🔥🔥
-                elif prob >= 75:
-                    pass  # 🔥🔥🔥
+                if edge is not None and edge > 12:
+                    pass  # 🔥🔥🔥 only strongest signals
+                elif prob >= 75 and edge is not None and edge > 8:
+                    pass  # high prob + decent edge
                 else:
                     continue
 
@@ -2221,7 +2244,7 @@ def main():
                 g = r["game"]
                 if g not in best_per_game or r["edge"] > best_per_game[g]["edge"]:
                     best_per_game[g] = r
-            recs = sorted(best_per_game.values(), key=lambda x: x["prob"], reverse=True)
+            recs = sorted(best_per_game.values(), key=lambda x: x["edge"], reverse=True)[:3]  # top 3 only
             st.divider()
             st.markdown("## 🏆 Recomendaciones del Día")
             has_real_odds = any(r.get("odds","N/A") not in ("N/A","—","") for r in recs)
