@@ -1630,6 +1630,22 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 964
+    },
+    {
+      "id": 98,
+      "date": "2026-06-26",
+      "game": "AZ @ TB",
+      "market": "ML",
+      "team": "Tampa Bay Rays",
+      "detail": "",
+      "model_prob": 0.751,
+      "odds": -140,
+      "stake": 52.54,
+      "bankroll_before": 522.08,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
