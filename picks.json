@@ -1681,6 +1681,22 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 991
+    },
+    {
+      "id": 101,
+      "date": "2026-06-27",
+      "game": "SEA @ CLE",
+      "market": "ML",
+      "team": "Cleveland Guardians",
+      "detail": "",
+      "model_prob": 0.582,
+      "odds": 120,
+      "stake": 33.41,
+      "bankroll_before": 569.89,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
