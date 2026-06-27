@@ -1698,6 +1698,22 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 992
+    },
+    {
+      "id": 102,
+      "date": "2026-06-27",
+      "game": "MIA @ STL",
+      "market": "ML",
+      "team": "St. Louis Cardinals",
+      "detail": "",
+      "model_prob": 0.72,
+      "odds": -145,
+      "stake": 44.62,
+      "bankroll_before": 569.89,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
