@@ -274,6 +274,16 @@ features = []
 N = len(all_games)
 batch = max(N // 20, 1)
 
+# Load Statcast lookup for 2026 season
+sc_2026 = {}
+try:
+    import json
+    with open(BASE + "statcast_2026.json") as f:
+        sc_2026 = json.load(f)
+    print(f"  Loaded Statcast for {len(sc_2026)} teams")
+except:
+    pass
+
 for i, g in enumerate(all_games):
     if i % batch == 0:
         print(f"    {i}/{N} ({i*100//N}%)")
@@ -351,6 +361,17 @@ for i, g in enumerate(all_games):
     a_bp_k9 = 9 * a_bp_so / a_bp_ip if a_bp_ip > 0 else 8.0
     a_bp_bb9 = 9 * a_bp_bb / a_bp_ip if a_bp_ip > 0 else 3.0
 
+    # Statcast data (2026 only, defaults for other seasons)
+    sc_defaults = [82.65, 7.51, 24.46, 0.37, 70.72, 18.06]
+    sc_h = sc_defaults[:]
+    sc_a = sc_defaults[:]
+    if season == 2026:
+        try:
+            sc_h = sc_2026.get(away_abbr, sc_defaults)
+            sc_a = sc_2026.get(home_abbr, sc_defaults)
+        except:
+            pass
+    
     features.append({
         "h_elo": h_elo, "a_elo": a_elo,
         "h_wp": hf[0], "a_wp": af[0],
@@ -374,6 +395,10 @@ for i, g in enumerate(all_games):
         "h_hr": ts_h["hr"], "a_hr": ts_a["hr"],
         "temp_f": 72.0, "wind_mph": 0.0, "humidity": 50,
         "is_dome": is_dome,
+        "h_sc_ev": sc_h[0], "h_sc_barrel": sc_h[1], "h_sc_hardhit": sc_h[2],
+        "h_sc_xwoba": sc_h[3], "h_sc_batspeed": sc_h[4], "h_sc_la": sc_h[5],
+        "a_sc_ev": sc_a[0], "a_sc_barrel": sc_a[1], "a_sc_hardhit": sc_a[2],
+        "a_sc_xwoba": sc_a[3], "a_sc_batspeed": sc_a[4], "a_sc_la": sc_a[5],
         "hw": 1 if hs > as_ else 0,
         "rd": hs - as_,
         "tot": hs + as_,
@@ -402,7 +427,12 @@ cols_base = ["h_elo", "a_elo", "h_wp", "a_wp", "h_rs", "a_rs", "h_ra", "a_ra",
              "ap_fip", "ap_babip", "ap_kbb", "ap_gb_rate",
               "hp_rec_era", "hp_rec_k9", "hp_rec_bb9", "hp_rec_hr9",
               "ap_rec_era", "ap_rec_k9", "ap_rec_bb9", "ap_rec_hr9",
-              "temp_f", "wind_mph", "humidity", "is_dome"]
+              "temp_f", "wind_mph", "humidity", "is_dome",
+              # Statcast features (6 per team = 12)
+              "h_sc_ev", "h_sc_barrel", "h_sc_hardhit",
+              "h_sc_xwoba", "h_sc_batspeed", "h_sc_la",
+              "a_sc_ev", "a_sc_barrel", "a_sc_hardhit",
+              "a_sc_xwoba", "a_sc_batspeed", "a_sc_la"]
 
 X = np.array([[f[c] for c in cols_base] for f in features])
 y_hw = np.array([f["hw"] for f in features])

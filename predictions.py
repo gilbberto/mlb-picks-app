@@ -574,29 +574,24 @@ def compute_form(games, tid):
             pass
     return {"wp": w/n, "rs": np.mean(rs) if rs else 4.5, "ra": np.mean(ra) if ra else 4.5, "rest": rest}
 
-def build_rf_feature_row(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f, hp_rec=None, ap_rec=None, weather=None):
+def build_rf_feature_row(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f, hp_rec=None, ap_rec=None, weather=None, home_abbrev=None, away_abbrev=None):
     weather = weather or {}
-    # Compute bullpen stats: team totals minus starter contribution
-    h_bp_ip = max(hs.get("pitching",{}).get("ip", 0) - (hpitch.get("ip", 0) if hpitch else 0), 1.0)
-    h_bp_er = max(hs.get("pitching",{}).get("er", 0) - (hpitch.get("er", 0) if hpitch else 0), 0)
-    h_bp_era = 9 * h_bp_er / h_bp_ip
-    h_bp_bb = max(hs.get("pitching",{}).get("bb", 0) - (hpitch.get("bb", 0) if hpitch else 0), 0)
-    h_bp_so = max(hs.get("pitching",{}).get("so", 0) - (hpitch.get("so", 0) if hpitch else 0), 0)
-    h_bp_h = max(hs.get("pitching",{}).get("h", 0) - (hpitch.get("h", 0) if hpitch else 0), 0)
-    h_bp_whip = (h_bp_bb + h_bp_h) / h_bp_ip if h_bp_ip > 0 else 1.35
-    h_bp_k9 = 9 * h_bp_so / h_bp_ip if h_bp_ip > 0 else 8.0
-    h_bp_bb9 = 9 * h_bp_bb / h_bp_ip if h_bp_ip > 0 else 3.0
-
-    a_bp_ip = max(aws.get("pitching",{}).get("ip", 0) - (apitch.get("ip", 0) if apitch else 0), 1.0)
-    a_bp_er = max(aws.get("pitching",{}).get("er", 0) - (apitch.get("er", 0) if apitch else 0), 0)
-    a_bp_era = 9 * a_bp_er / a_bp_ip
-    a_bp_bb = max(aws.get("pitching",{}).get("bb", 0) - (apitch.get("bb", 0) if apitch else 0), 0)
-    a_bp_so = max(aws.get("pitching",{}).get("so", 0) - (apitch.get("so", 0) if apitch else 0), 0)
-    a_bp_h = max(aws.get("pitching",{}).get("h", 0) - (apitch.get("h", 0) if apitch else 0), 0)
-    a_bp_whip = (a_bp_bb + a_bp_h) / a_bp_ip if a_bp_ip > 0 else 1.35
-    a_bp_k9 = 9 * a_bp_so / a_bp_ip if a_bp_ip > 0 else 8.0
-    a_bp_bb9 = 9 * a_bp_bb / a_bp_ip if a_bp_ip > 0 else 3.0
-
+    sc_h = [82.65, 7.51, 24.46, 0.37, 70.72, 18.06]
+    sc_a = [82.65, 7.51, 24.46, 0.37, 70.72, 18.06]
+    if home_abbrev or away_abbrev:
+        try:
+            import json, os
+            base = os.path.join(os.path.dirname(__file__) or ".", "")
+            with open(base + "statcast_2026.json") as f:
+                sc_data = json.load(f)
+            if home_abbrev:
+                h_sc = sc_data.get(home_abbrev, sc_h)
+                sc_h = [h_sc[0], h_sc[1], h_sc[2], h_sc[3], h_sc[4], h_sc[5]]
+            if away_abbrev:
+                a_sc = sc_data.get(away_abbrev, sc_a)
+                sc_a = [a_sc[0], a_sc[1], a_sc[2], a_sc[3], a_sc[4], a_sc[5]]
+        except:
+            pass
     f = {
         "h_elo": h_elo, "a_elo": a_elo,
         "h_wp": hf.get("wp", 0.5), "a_wp": af.get("wp", 0.5),
@@ -636,394 +631,68 @@ def build_rf_feature_row(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f, 
         "ap_rec_k9": ap_rec.get("rec_k9", apitch.get("k9", 8.0)) if ap_rec else 8.0,
         "ap_rec_bb9": ap_rec.get("rec_bb9", apitch.get("bb9", 3.0)) if ap_rec else 3.0,
         "ap_rec_hr9": ap_rec.get("rec_hr9", apitch.get("hr9", 1.2)) if ap_rec else 1.2,
-        "h_bp_era": h_bp_era, "h_bp_whip": h_bp_whip, "h_bp_k9": h_bp_k9, "h_bp_bb9": h_bp_bb9,
-        "a_bp_era": a_bp_era, "a_bp_whip": a_bp_whip, "a_bp_k9": a_bp_k9, "a_bp_bb9": a_bp_bb9,
-        "h_hr": hs.get("hitting",{}).get("hr", 0),
-        "a_hr": aws.get("hitting",{}).get("hr", 0),
         "temp_f": weather.get("temp_f", 72.0), "wind_mph": weather.get("wind_mph", 0.0),
         "humidity": weather.get("humidity", 50), "is_dome": 1 if weather.get("conditions") == "dome" else 0,
+        "h_sc_ev": sc_h[0], "h_sc_barrel": sc_h[1], "h_sc_hardhit": sc_h[2],
+        "h_sc_xwoba": sc_h[3], "h_sc_batspeed": sc_h[4], "h_sc_la": sc_h[5],
+        "a_sc_ev": sc_a[0], "a_sc_barrel": sc_a[1], "a_sc_hardhit": sc_a[2],
+        "a_sc_xwoba": sc_a[3], "a_sc_batspeed": sc_a[4], "a_sc_la": sc_a[5],
     }
     return f
 
-def monte_carlo_predict(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f, hp_rec=None, ap_rec=None, n_sims=5000, weather=None):
-    if not _MODELS_LOADED:
-        return {"ml_hp": None, "ml_ap": None, "spr_home_minus": None, "spr_home_plus": None, "spr_away_minus": None, "spr_away_plus": None, "spr_exp_margin": None, "exp_total": None, "total_std": 3.2}
-    row = build_rf_feature_row(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f, hp_rec=hp_rec, ap_rec=ap_rec, weather=weather)
-    x = np.array([[row[c] for c in _cols]])
-    x_ou = np.array([[row.get(c, 0) for c in _ou_cols]]) if _ou_cols and _ou_cols != _cols else x
-    if _xgb_models_hw:
-        hw_prob = sum(m.predict_proba(x)[0, 1] for m in _xgb_models_hw) / len(_xgb_models_hw)
-        exp_rdiff = sum(m.predict(x)[0] for m in _xgb_models_rd) / len(_xgb_models_rd)
-        exp_total = sum(m.predict(x_ou)[0] for m in _xgb_models_tot) / len(_xgb_models_tot)
-    elif _xgb_hw is not None:
-        hw_prob = _xgb_hw.predict_proba(x)[0, 1]
-        exp_rdiff = _xgb_rd.predict(x)[0]
-        exp_total = _xgb_tot.predict(x_ou)[0]
-    else:
-        hw_prob = _rf_hw.predict_proba(x)[0, 1]
-        exp_rdiff = _rf_rd.predict(x)[0]
-        exp_total = _rf_tot.predict(x)[0]
-    rdiff_sims = np.random.normal(exp_rdiff, 3.0, n_sims)
-    total_sims = np.random.normal(exp_total, 3.2, n_sims)
-    mc_hw = np.mean(rdiff_sims > 0)
-    mc_home_minus = np.mean(rdiff_sims >= 1.5)
-    mc_home_plus = np.mean(rdiff_sims >= -1.5)
-    mc_over = np.mean(total_sims > 8.5)
-    mc_away_minus = 1.0 - mc_home_plus
-    mc_away_plus = 1.0 - mc_home_minus
-    return {
-        "ml_hp": round(float(mc_hw), 4), "ml_ap": round(float(1 - mc_hw), 4),
-        "spr_home_minus": round(float(mc_home_minus), 4), "spr_home_plus": round(float(mc_home_plus), 4),
-        "spr_away_minus": round(float(mc_away_minus), 4), "spr_away_plus": round(float(mc_away_plus), 4),
-        "spr_exp_margin": round(float(exp_rdiff), 2), "exp_total": round(float(exp_total), 2), "total_std": 3.2,
-        "hw_prob_raw": round(float(hw_prob), 4), "exp_rdiff_raw": round(float(exp_rdiff), 2),
-    }
 
-def american_to_prob(odds):
-    if odds is None or odds == 0: return None
-    return 100/(odds+100) if odds > 0 else abs(odds)/(abs(odds)+100)
-
-def norm_cdf(x, mu=0, sigma=1):
-    return 0.5 * (1 + math.erf((x-mu)/(sigma*math.sqrt(2))))
-
-def compute_ev(prob, odds):
-    if odds is None: return None
-    dec = 1 + odds/100 if odds > 0 else 1 + 100/abs(odds)
-    return round((prob/100 * dec) - 1, 4)
-
-ODDS_CACHE_PATH = os.path.join(os.path.dirname(__file__), ".odds_cache.json")
-ODDS_COOLDOWN_PATH = os.path.join(os.path.dirname(__file__), ".odds_cooldown")
-
-def fetch_odds(force_refresh=False):
-    today = datetime.now(TZ).strftime("%Y-%m-%d")
-    if not force_refresh:
-        try:
-            with open(ODDS_CACHE_PATH) as f:
-                cached = json.load(f)
-            cache_date = cached.get("date", "") if isinstance(cached, dict) else ""
-            if cache_date == today:
-                data = cached.get("data", cached) if isinstance(cached, dict) else cached
-                if data:
-                    return data
-        except:
-            pass
-    odds = []
-    if ODDS_API_KEY:
-        try:
-            url = f"https://api.the-odds-api.com/v4/sports/baseball_mlb/odds?regions=us&markets=h2h,spreads,totals&oddsFormat=american&apiKey={ODDS_API_KEY}"
-            r = requests.get(url, timeout=10)
-            if r.status_code == 200:
-                odds = r.json()
-        except:
-            pass
-    if odds:
-        try:
-            cache = {"date": today, "data": odds}
-            with open(ODDS_CACHE_PATH, "w") as f:
-                json.dump(cache, f)
-        except:
-            pass
-    return odds
-
-def match_game(odds_list, home_name, away_name):
-    hn = home_name.replace("Los Angeles","LA").replace("New York","NY").replace("San Francisco","SF")
-    an = away_name.replace("Los Angeles","LA").replace("New York","NY").replace("San Francisco","SF")
-    for og in odds_list:
-        oh, oa = og.get("home_team",""), og.get("away_team","")
-        if (home_name in oh or hn in oh or oh in home_name) and (away_name in oa or an in oa or oa in away_name):
-            return og
-        if (home_name in oa or hn in oa or oa in home_name) and (away_name in oh or an in oh or oh in away_name):
-            return og
-    return None
-
-PREFERRED_BOOK = "BetMGM"
-
-def extract_market_odds(game_odds, market_key, outcome_name=None, expect_point=None):
-    if not game_odds: return None, None, None
-    best_price, best_book, best_point = None, None, None
-    for book in game_odds.get("bookmakers", []):
-        if book.get("title", "") != PREFERRED_BOOK: continue
-        for mkt in book.get("markets", []):
-            if mkt.get("key") != market_key: continue
-            for oc in mkt.get("outcomes", []):
-                if outcome_name and oc.get("name") != outcome_name: continue
-                point = oc.get("point")
-                if expect_point is not None and point != expect_point: continue
-                price = oc.get("price")
-                if best_price is None or (price is not None and abs(price) > abs(best_price)):
-                    best_price = price; best_book = book.get("title", "Unknown"); best_point = point
-    return best_price, best_book, best_point
-
-def run_backtest():
-    """Backtest using existing predictions_log.json + fetch more historical data."""
-    import requests as _req
-    from datetime import timedelta
-    from bankroll import american_to_prob, kelly_fraction
-
-    # Load existing predictions
+def fetch_team_statcast(team_abbrev, days=14):
+    """Get team-level Statcast stats for recent games. Returns dict with keys:
+    avg_ev, xwoba, barrel_pct, hard_hit_pct, bat_speed, avg_launch_angle"""
+    import pandas as pd
+    from datetime import datetime as dt, timedelta
+    from zoneinfo import ZoneInfo
     try:
-        with open(PRED_LOG_PATH) as f:
-            data = json.load(f)
+        TZ = ZoneInfo("America/Chihuahua")
     except:
-        data = {"predictions": []}
-    preds = data["predictions"]
-    existing_dates = set(p["date"] for p in preds if p.get("date"))
-
-    # Try to fetch more historical data from MLB API
-    today = datetime.now(TZ)
-    backtest_results = {"by_date": {}, "by_market": {}, "by_prob": {}, "total": {}}
-
-    for days_ago in range(1, 11):
-        d = (today - timedelta(days=days_ago)).strftime("%Y-%m-%d")
-        if d in existing_dates:
-            continue
-        try:
-            url = f"{MLB_API_BASE}/schedule?sportId=1&date={d}&hydrate=linescore,team,probablePitcher"
-            r = _req.get(url, timeout=10)
-            if r.status_code != 200:
-                continue
-            games = r.json().get("dates", [])
-            if not games:
-                continue
-            print(f"  Backtest: fetching {d}...")
-        except:
-            continue
-
-    # Analyze all predictions (existing + new)
-    banks = {"kelly25": 1000, "flat100": 1000, "flat50": 1000}
-    results = {"total": 0, "wins": 0, "by_market": {}, "by_prob_bin": {}, "bankrolls": banks.copy()}
-
-    settled = [p for p in preds if p.get("settled")]
-    for p in settled:
-        results["total"] += 1
-        if p.get("result") == "W":
-            results["wins"] += 1
-        mkt = p.get("market", "?")
-        if mkt not in results["by_market"]:
-            results["by_market"][mkt] = {"w": 0, "l": 0, "profit": 0}
-        if p["result"] == "W":
-            results["by_market"][mkt]["w"] += 1
-        else:
-            results["by_market"][mkt]["l"] += 1
-        pf = p.get("profit") or 0
-        results["by_market"][mkt]["profit"] += pf
-
-        prob_bin = round((p.get("prob", 50) / 10)) * 10
-        key = f"{prob_bin}-{prob_bin+10}%"
-        if key not in results["by_prob_bin"]:
-            results["by_prob_bin"][key] = {"w": 0, "l": 0}
-        if p["result"] == "W":
-            results["by_prob_bin"][key]["w"] += 1
-        else:
-            results["by_prob_bin"][key]["l"] += 1
-
-    pct = round(results["wins"] / results["total"] * 100, 1) if results["total"] else 0
-
-    lines = ["📊 *BACKTEST COMPLETO*\n"]
-    lines.append(f"📅 Periodo: múltiples días")
-    lines.append(f"🎯 Total predicciones liquidadas: {results['total']}")
-    lines.append(f"📊 Record: {results['wins']}-{results['total']-results['wins']} ({pct}%)\n")
-
-    for mkt in ["ML", "O/U"]:
-        if mkt in results["by_market"]:
-            d = results["by_market"][mkt]
-            n = d["w"] + d["l"]
-            mp = round(d["w"] / n * 100, 1) if n else 0
-            lines.append(f"• *{mkt}:* {d['w']}-{d['l']} ({mp}%) | Profit: ${d['profit']:+.2f}")
-
-    lines.append(f"\n💰 *Estrategia Kelly 25%:* ${banks['kelly25']:.2f}")
-    lines.append(f"💰 *Flat $100:* ${banks['flat100']:.2f}")
-    lines.append(f"📈 *Model Accuracy:* {pct}%")
-
-    if results["by_prob_bin"]:
-        lines.append("\n*Calibración por probabilidad:*")
-        for k in sorted(results["by_prob_bin"].keys()):
-            d = results["by_prob_bin"][k]
-            n = d["w"] + d["l"]
-            rp = round(d["w"] / n * 100) if n else 0
-            lines.append(f"  {k}: {d['w']}-{d['l']} ({rp}%)")
-
-    return "\n".join(lines)
-
-
-def get_edge_for_entry(entry):
-    if not entry or not entry.get("odds") or entry["odds"] in ("N/A", "—", ""):
-        return None
+        from datetime import timezone
+        TZ = timezone(timedelta(hours=-6))
+    
+    cache_key = f"{team_abbrev}_{dt.now(TZ).strftime('%Y-%m-%d')}"
+    if cache_key in _STATCAST_CACHE:
+        return _STATCAST_CACHE[cache_key]
+    
+    end = dt.now(TZ)
+    start = end - timedelta(days=days)
+    
     try:
-        odds = int(str(entry["odds"]).replace("$",""))
-    except:
-        return None
-    if odds == 0: return None
-    ip = american_to_prob(odds)
-    if ip is None: return None
-    prob = entry.get("prob", 0) / 100.0
-    return round((prob - ip) * 100, 1)
+        from pybaseball import statcast
+        df = statcast(start_dt=start.strftime('%Y-%m-%d'), end_dt=end.strftime('%Y-%m-%d'))
+        if df is None or len(df) == 0:
+            return _default_statcast()
+        
+        # Filter to team's games
+        team_df = df[(df['home_team'] == team_abbrev) | (df['away_team'] == team_abbrev)]
+        if len(team_df) == 0:
+            return _default_statcast()
+        
+        # Only batted balls
+        batted = team_df[team_df['launch_speed'].notna() & (team_df['launch_speed'] > 0)]
+        if len(batted) == 0:
+            return _default_statcast()
+        
+        # Barrel: launch_speed >= 95 AND launch_angle between 8 and 32
+        barrels = batted[(batted['launch_speed'] >= 95) & (batted['launch_angle'].between(8, 32))]
+        hard_hit = batted[batted['launch_speed'] >= 95]
+        
+        result = {
+            'avg_ev': round(batted['launch_speed'].mean(), 1),
+            'xwoba': round(batted['estimated_woba_using_speedangle'].mean(), 3) if 'estimated_woba_using_speedangle' in batted.columns else 0.310,
+            'barrel_pct': round(len(barrels) / len(batted) * 100, 1),
+            'hard_hit_pct': round(len(hard_hit) / len(batted) * 100, 1),
+            'bat_speed': round(batted['bat_speed'].mean(), 1) if 'bat_speed' in batted.columns else 72.0,
+            'avg_launch_angle': round(batted['launch_angle'].mean(), 1),
+        }
+        _STATCAST_CACHE[cache_key] = result
+        return result
+    except Exception as e:
+        return _default_statcast()
 
-def generate_recommendations():
-    """Run full prediction pipeline matching app.py exactly.
-    Returns list of recommendation dicts (best-per-game, edge>2%, up to 4)."""
-    from bankroll import load_picks, recommend_stake, calibrate_ml, calibrate_rl
-
-    today_str = datetime.now(TZ).strftime("%Y-%m-%d")
-    games = fetch_todays_schedule()
-    odds_raw = fetch_odds()
-    ab_map = fetch_team_abbrevs()
-    from bankroll import get_pnl
-    actual_bankroll = get_pnl()["weekly_bankroll"]
-
-    all_recs = []
-
-    for g in games:
-        sc = g.get("status",{}).get("codedGameState","S")
-        sd = g.get("status",{}).get("detailedState","Scheduled")
-        if sc in ("F", "O") or sd == "Final":
-            continue
-        t = g["teams"]
-        hi, ai = t["home"]["team"], t["away"]["team"]
-        hid, aid = hi["id"], ai["id"]
-        hn, an = hi["name"], ai["name"]
-        ha, aa = ab_map.get(hid, "??"), ab_map.get(aid, "??")
-
-        hs = fetch_team_stats_mlb(hid) if hid else {}
-        aws = fetch_team_stats_mlb(aid) if aid else {}
-        hr = fetch_recent_games(hid) if hid else []
-        ar = fetch_recent_games(aid) if aid else []
-        hf = compute_form(hr, hid)
-        af = compute_form(ar, aid)
-
-        hp_info = g.get("teams",{}).get("home",{}).get("probablePitcher") or {}
-        ap_info = g.get("teams",{}).get("away",{}).get("probablePitcher") or {}
-        hpitch = fetch_pitcher_stats(hp_info.get("id")) if hp_info.get("id") else {}
-        apitch = fetch_pitcher_stats(ap_info.get("id")) if ap_info.get("id") else {}
-        hprec = fetch_pitcher_recent_form(hp_info.get("id")) if hp_info.get("id") else {}
-        aprec = fetch_pitcher_recent_form(ap_info.get("id")) if ap_info.get("id") else {}
-        elo_hp, h_elo, a_elo = compute_elo(hr, ar, hid, aid)
-        venue_name = g.get("venue",{}).get("name", "")
-        park_f = PARK_FACTORS.get(venue_name, 1.0)
-        weather = fetch_weather(venue_name)
-
-        mc = monte_carlo_predict(hs, aws, hf, af, h_elo, a_elo,
-                                 hpitch if hpitch.get("ip",0) >= 10 else None,
-                                 apitch if apitch.get("ip",0) >= 10 else None,
-                                 park_f, hp_rec=hprec, ap_rec=aprec, weather=weather)
-
-        ml_hp = mc["ml_hp"]
-        ml_ap = mc["ml_ap"]
-        spr_home_minus = mc["spr_home_minus"]
-        spr_home_plus = mc["spr_home_plus"]
-        spr_away_minus = mc["spr_away_minus"]
-        spr_away_plus = mc["spr_away_plus"]
-        spr_exp_margin = mc["spr_exp_margin"]
-        exp_total = mc["exp_total"]
-        total_std = mc["total_std"]
-
-        spr_fav_team = hn if spr_exp_margin >= 0 else an
-        spr_dog_team = an if spr_exp_margin >= 0 else hn
-        spr_fav_prob = spr_home_minus if spr_exp_margin >= 0 else spr_away_minus
-        spr_dog_prob = spr_away_plus if spr_exp_margin >= 0 else spr_home_plus
-
-        if ml_hp is None:
-            continue
-
-        cal_hp = calibrate_ml(ml_hp)
-        cal_ap = 1.0 - cal_hp
-
-        gl = f"{aa} @ {ha}"
-
-        if not odds_raw:
-            continue
-
-        og = match_game(odds_raw, hn, an)
-        if not og:
-            continue
-
-        m_fav, m_dog = None, None
-        for book in og.get("bookmakers", []):
-            for mkt in book.get("markets", []):
-                if mkt.get("key") == "spreads":
-                    oc = mkt.get("outcomes", [])
-                    if len(oc) >= 2:
-                        for o in oc:
-                            if o.get("point", 0) < 0: m_fav = o["name"]
-                            elif o.get("point", 0) > 0: m_dog = o["name"]
-                    break
-            if m_fav: break
-        if m_fav and m_dog:
-            spr_fav_team = m_fav
-            spr_dog_team = m_dog
-            if m_fav == hn:
-                spr_fav_prob = spr_home_minus
-                spr_dog_prob = spr_away_plus
-            else:
-                spr_fav_prob = spr_away_minus
-                spr_dog_prob = spr_home_plus
-            spr_fav_prob = calibrate_rl(spr_fav_prob)
-            spr_dog_prob = 1.0 - spr_fav_prob
-
-        # ML
-        tgt = hn if ml_hp > 0.50 else an
-        ml_price, ml_book, _ = extract_market_odds(og, "h2h", tgt)
-        if ml_price:
-            cal_prob = max(cal_hp, cal_ap)
-            ml_entry = {
-                "game": gl, "market": "ML", "team": tgt, "detail": "",
-                "prob": cal_prob*100, "odds": ml_price, "edge": None,
-            }
-            mp = american_to_prob(ml_price)
-            if mp:
-                ml_entry["edge"] = round(cal_prob*100 - (mp*100 if mp else 0), 1)
-            all_recs.append(ml_entry)
-
-        # RL omitido — bajo rendimiento (15-39 histórico)
-
-        # O/U
-        ov_price, ov_book, ov_point = extract_market_odds(og, "totals")
-        if ov_price and ov_point:
-            over_prob = norm_cdf(exp_total - ov_point, 0, total_std)
-            try:
-                from bankroll import calibrate_ou
-                over_prob = calibrate_ou(over_prob)
-            except: pass
-            if over_prob > 0.5:
-                ou_entry = {
-                    "game": gl, "market": "O/U", "team": "Over", "detail": f"o{ov_point}",
-                    "prob": over_prob*100, "odds": ov_price, "edge": None,
-                }
-            else:
-                un_price, un_book, _ = extract_market_odds(og, "totals", "Under")
-                ou_entry = {
-                    "game": gl, "market": "O/U", "team": "Under", "detail": f"u{ov_point}",
-                    "prob": (1-over_prob)*100, "odds": un_price or ov_price, "edge": None,
-                }
-            ed = get_edge_for_entry(ou_entry)
-            if ed: ou_entry["edge"] = ed
-            all_recs.append(ou_entry)
-
-    # Filter + rank (matching app.py)
-    recs = []
-    for r in all_recs:
-        if r["edge"] is not None and r["edge"] > 2:
-            recs.append(r)
-        elif r["prob"] >= 55:
-            r["edge"] = round((r["prob"] - 50) * 0.5, 1)
-            recs.append(r)
-    best_per_game = {}
-    for r in recs:
-        g = r["game"]
-        if g not in best_per_game or r["edge"] > best_per_game[g]["edge"]:
-            best_per_game[g] = r
-    recs = sorted(best_per_game.values(), key=lambda x: x["edge"], reverse=True)
-
-    result = []
-    for r in recs[:4]:
-        stake, units, stake_label = 0, 0, ""
-        try:
-            stake, units, stake_label = recommend_stake(r["prob"]/100, r["odds"], bankroll=actual_bankroll)
-        except:
-            pass
-        r["stake"] = stake
-        r["units"] = units
-        r["stake_label"] = stake_label
-        result.append(r)
-
-    return result
+def _default_statcast():
+    return {'avg_ev': 88.5, 'xwoba': 0.310, 'barrel_pct': 8.0, 
+            'hard_hit_pct': 38.0, 'bat_speed': 72.0, 'avg_launch_angle': 12.0}

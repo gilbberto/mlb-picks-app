@@ -694,8 +694,25 @@ def compute_ev(prob, odds):
 # ─── RandomForest + Monte Carlo ───
 
 def build_rf_feature_row(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f,
-                           hp_rec=None, ap_rec=None, weather=None):
+                          hp_rec=None, ap_rec=None, weather=None, home_abbrev=None, away_abbrev=None):
     weather = weather or {}
+    # Load Statcast lookup
+    sc_h = _sc_defaults()
+    sc_a = _sc_defaults()
+    if home_abbrev or away_abbrev:
+        try:
+            import json, os
+            base = os.path.join(os.path.dirname(__file__) or ".", "")
+            with open(base + "statcast_2026.json") as f:
+                sc_data = json.load(f)
+            if home_abbrev:
+                h_sc = sc_data.get(home_abbrev, _sc_defaults())
+                sc_h = [h_sc[0], h_sc[1], h_sc[2], h_sc[3], h_sc[4], h_sc[5]]
+            if away_abbrev:
+                a_sc = sc_data.get(away_abbrev, _sc_defaults())
+                sc_a = [a_sc[0], a_sc[1], a_sc[2], a_sc[3], a_sc[4], a_sc[5]]
+        except:
+            pass
     f = {
         "h_elo": h_elo, "a_elo": a_elo,
         "h_wp": hf.get("wp", 0.5), "a_wp": af.get("wp", 0.5),
@@ -737,13 +754,22 @@ def build_rf_feature_row(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f,
         "ap_rec_hr9": ap_rec.get("rec_hr9", apitch.get("hr9", 1.2)) if ap_rec else 1.2,
         "temp_f": weather.get("temp_f", 72.0), "wind_mph": weather.get("wind_mph", 0.0),
         "humidity": weather.get("humidity", 50), "is_dome": 1 if weather.get("conditions") == "dome" else 0,
+        # Statcast features (6 per team)
+        "h_sc_ev": sc_h[0], "h_sc_barrel": sc_h[1], "h_sc_hardhit": sc_h[2],
+        "h_sc_xwoba": sc_h[3], "h_sc_batspeed": sc_h[4], "h_sc_la": sc_h[5],
+        "a_sc_ev": sc_a[0], "a_sc_barrel": sc_a[1], "a_sc_hardhit": sc_a[2],
+        "a_sc_xwoba": sc_a[3], "a_sc_batspeed": sc_a[4], "a_sc_la": sc_a[5],
     }
     return f
+
+def _sc_defaults():
+    return [82.65, 7.51, 24.46, 0.37, 70.72, 18.06]
 
 
 @st.cache_data(ttl=86400)
 def monte_carlo_predict(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f,
-                         hp_rec=None, ap_rec=None, n_sims=5000, weather=None, total_std=3.2):
+                         hp_rec=None, ap_rec=None, n_sims=5000, weather=None, total_std=3.2,
+                         home_abbrev=None, away_abbrev=None):
     """Run Monte Carlo simulation using trained models. Returns dict."""
     if not _MODELS_LOADED:
         return {"ml_hp": None, "ml_ap": None,
@@ -752,7 +778,8 @@ def monte_carlo_predict(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f,
                 "exp_total": None, "total_std": total_std}
 
     row = build_rf_feature_row(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f,
-                                hp_rec=hp_rec, ap_rec=ap_rec, weather=weather)
+                                hp_rec=hp_rec, ap_rec=ap_rec, weather=weather,
+                                home_abbrev=home_abbrev, away_abbrev=away_abbrev)
     x = np.array([[row[c] for c in _cols]])
 
     if _xgb_models_hw:
@@ -1705,7 +1732,8 @@ def main():
             mc = monte_carlo_predict(hs, aws, hf, af, h_elo, a_elo,
                                      hpitch if hpitch.get("ip",0) >= 10 else None,
                                      apitch if apitch.get("ip",0) >= 10 else None,
-                                     park_f, hp_rec=hprec, ap_rec=aprec, weather=weather)
+                                     park_f, hp_rec=hprec, ap_rec=aprec, weather=weather,
+                                     home_abbrev=ha, away_abbrev=aa)
 
             ml_hp = mc["ml_hp"]
             ml_ap = mc["ml_ap"]
