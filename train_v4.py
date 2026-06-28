@@ -400,11 +400,9 @@ cols_base = ["h_elo", "a_elo", "h_wp", "a_wp", "h_rs", "a_rs", "h_ra", "a_ra",
              "hp_fip", "hp_babip", "hp_kbb", "hp_gb_rate",
              "ap_era", "ap_k9", "ap_bb9", "ap_hr9", "ap_v",
              "ap_fip", "ap_babip", "ap_kbb", "ap_gb_rate",
-             "hp_rec_era", "hp_rec_k9", "hp_rec_bb9", "hp_rec_hr9",
-             "ap_rec_era", "ap_rec_k9", "ap_rec_bb9", "ap_rec_hr9",
-             "h_bp_era", "h_bp_whip", "h_bp_k9", "h_bp_bb9",
-             "a_bp_era", "a_bp_whip", "a_bp_k9", "a_bp_bb9",
-             "temp_f", "wind_mph", "humidity", "is_dome"]
+              "hp_rec_era", "hp_rec_k9", "hp_rec_bb9", "hp_rec_hr9",
+              "ap_rec_era", "ap_rec_k9", "ap_rec_bb9", "ap_rec_hr9",
+              "temp_f", "wind_mph", "humidity", "is_dome"]
 
 X = np.array([[f[c] for c in cols_base] for f in features])
 y_hw = np.array([f["hw"] for f in features])
