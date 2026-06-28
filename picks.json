@@ -1732,6 +1732,22 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 1008
+    },
+    {
+      "id": 104,
+      "date": "2026-06-28",
+      "game": "MIA @ STL",
+      "market": "O/U",
+      "team": "Under",
+      "detail": "u9.0",
+      "model_prob": 0.659,
+      "odds": -102,
+      "stake": 40.07,
+      "bankroll_before": 515.48,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
