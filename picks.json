@@ -1749,6 +1749,22 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 1009
+    },
+    {
+      "id": 105,
+      "date": "2026-06-28",
+      "game": "TEX @ TOR",
+      "market": "ML",
+      "team": "Texas Rangers",
+      "detail": "",
+      "model_prob": 0.626,
+      "odds": 110,
+      "stake": 36.9,
+      "bankroll_before": 515.48,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
