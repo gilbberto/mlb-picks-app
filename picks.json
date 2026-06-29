@@ -1769,7 +1769,7 @@
     }
   ],
   "weekly_bankroll": 1000,
-  "weekly_start": "2026-06-22",
+  "weekly_start": "2026-06-29",
   "weekly_history": [
     {
       "week_start": "2026-06-01",
@@ -1797,7 +1797,16 @@
       "wins": 11,
       "losses": 16,
       "picks": 27
+    },
+    {
+      "week_start": "2026-06-22",
+      "week_end": "2026-06-28",
+      "bankroll_start": 1000,
+      "profit": -347.54,
+      "wins": 11,
+      "losses": 12,
+      "picks": 23
     }
   ],
-  "last_weekly_reset": "2026-06-22"
+  "last_weekly_reset": "2026-06-29"
 }
