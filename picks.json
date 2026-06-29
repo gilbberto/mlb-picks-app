@@ -1800,6 +1800,22 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 1029
+    },
+    {
+      "id": 108,
+      "date": "2026-06-29",
+      "game": "TEX @ CLE",
+      "market": "O/U",
+      "team": "Under",
+      "detail": "u7.5",
+      "model_prob": 0.616,
+      "odds": -105,
+      "stake": 52.96,
+      "bankroll_before": 1000,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
