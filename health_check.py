@@ -1,5 +1,5 @@
-"""Daily health check: pre-fetch odds and validate schedule. Runs at 6 AM Chihuahua via GitHub Actions."""
-import requests, json, os, sys
+"""Daily odds refresh — uses GitHub API to update .odds_cache.json directly (no git conflicts)."""
+import requests, json, os, base64
 from datetime import datetime, timezone, timedelta
 from zoneinfo import ZoneInfo
 
@@ -9,58 +9,66 @@ except:
     TZ = timezone(timedelta(hours=-6))
 
 ODDS_API_KEY = os.environ.get("ODDS_API_KEY", "")
-ODDS_CACHE_PATH = os.path.join(os.path.dirname(__file__) or ".", ".odds_cache.json")
-MLB_API = "https://statsapi.mlb.com/api/v1"
-
+GH_TOKEN = os.environ.get("GH_TOKEN", "")
+REPO = "gilbberto/mlb-picks-app"
+FILE_PATH = ".odds_cache.json"
 today_str = datetime.now(TZ).strftime("%Y-%m-%d")
-today_api = datetime.now(TZ).strftime("%m/%d/%Y")
 
 print(f"=== Health Check {today_str} ===")
 
-# 1. Check MLB schedule
-print("1. Schedule...")
-try:
-    r = requests.get(f"{MLB_API}/schedule?sportId=1&date={today_api}&hydrate=probablePitcher", timeout=10)
-    if r.status_code == 200:
-        games = []
-        for d in r.json().get("dates", []):
-            games.extend(d.get("games", []))
-        print(f"   ✅ {len(games)} juegos hoy")
-    else:
-        print(f"   ❌ MLB API error {r.status_code}")
-except Exception as e:
-    print(f"   ❌ {e}")
+# 1. Fetch fresh odds
+print("1. Odds API...")
+if not ODDS_API_KEY:
+    print("   ❌ Sin ODDS_API_KEY")
+    exit(1)
 
-# 2. Check/fetch odds
-print("2. Odds...")
+r = requests.get(
+    f"https://api.the-odds-api.com/v4/sports/baseball_mlb/odds?regions=us&markets=h2h,spreads,totals&oddsFormat=american&apiKey={ODDS_API_KEY}",
+    timeout=10
+)
+if r.status_code != 200:
+    print(f"   ❌ Odds API error {r.status_code}")
+    exit(1)
+
+odds = r.json()
+cache = {"date": today_str, "data": odds}
+content = json.dumps(cache, indent=2)
+print(f"   ✅ {len(odds)} juegos | Requests: {r.headers.get('x-requests-remaining','?')}")
+
+# 2. Update GitHub via API (no git needed)
+print("2. GitHub update...")
+if not GH_TOKEN:
+    print("   ⚠️ Sin GH_TOKEN, guardando localmente")
+    with open(FILE_PATH, "w") as f:
+        f.write(content)
+    print(f"   ✅ Guardado local: {len(odds)} juegos")
+    exit(0)
+
+headers = {"Authorization": f"token {GH_TOKEN}", "Accept": "application/vnd.github.v3+json"}
+api_url = f"https://api.github.com/repos/{REPO}/contents/{FILE_PATH}"
+
+# Get current file SHA
+sha = None
 try:
-    with open(ODDS_CACHE_PATH) as f:
-        cached = json.load(f)
-    cache_date = cached.get("date", "") if isinstance(cached, dict) else ""
+    get_r = requests.get(api_url, headers=headers, timeout=10)
+    if get_r.status_code == 200:
+        sha = get_r.json().get("sha")
 except:
-    cache_date = ""
+    pass
 
-if cache_date == today_str:
-    print(f"   ✅ Cache ya es de hoy")
+# Put new content
+payload = {
+    "message": f"auto-health: refresh odds cache for {today_str}",
+    "content": base64.b64encode(content.encode()).decode(),
+    "branch": "main"
+}
+if sha:
+    payload["sha"] = sha
+
+put_r = requests.put(api_url, headers=headers, json=payload, timeout=10)
+if put_r.status_code in (200, 201):
+    print(f"   ✅ GitHub actualizado: {len(odds)} juegos")
 else:
-    print(f"   ⏳ Cache es de {cache_date or 'N/A'}, refrescando...")
-    if ODDS_API_KEY:
-        try:
-            r = requests.get(
-                f"https://api.the-odds-api.com/v4/sports/baseball_mlb/odds?regions=us&markets=h2h,spreads,totals&oddsFormat=american&apiKey={ODDS_API_KEY}",
-                timeout=10
-            )
-            if r.status_code == 200:
-                odds = r.json()
-                cache = {"date": today_str, "data": odds}
-                with open(ODDS_CACHE_PATH, "w") as f:
-                    json.dump(cache, f)
-                print(f"   ✅ {len(odds)} juegos con odds actualizados")
-            else:
-                print(f"   ❌ Odds API error {r.status_code}")
-        except Exception as e:
-            print(f"   ❌ {e}")
-    else:
-        print(f"   ❌ Sin ODDS_API_KEY")
+    print(f"   ❌ GitHub error {put_r.status_code}: {put_r.text[:200]}")
 
-print("=== Health Check Done ===")
+print("=== Done ===")
