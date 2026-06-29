@@ -1766,6 +1766,22 @@
       "label": "\ud83d\udd25 High",
       "settled": true,
       "telegram_msg_id": 1010
+    },
+    {
+      "id": 106,
+      "date": "2026-06-29",
+      "game": "PIT @ PHI",
+      "market": "ML",
+      "team": "Pittsburgh Pirates",
+      "detail": "",
+      "model_prob": 0.684,
+      "odds": -110,
+      "stake": 83.87,
+      "bankroll_before": 1000,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
