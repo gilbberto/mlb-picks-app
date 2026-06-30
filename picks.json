@@ -1817,6 +1817,22 @@
       "label": "\ud83d\udd25 High",
       "settled": true,
       "telegram_msg_id": 1030
+    },
+    {
+      "id": 109,
+      "date": "2026-06-30",
+      "game": "CWS @ BAL",
+      "market": "ML",
+      "team": "Chicago White Sox",
+      "detail": "",
+      "model_prob": 0.681,
+      "odds": 115,
+      "stake": 100,
+      "bankroll_before": 1095.34,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
