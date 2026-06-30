@@ -1849,7 +1849,8 @@
       "result": null,
       "profit": null,
       "label": "\ud83d\udd25 High",
-      "settled": false
+      "settled": false,
+      "telegram_msg_id": 1052
     }
   ],
   "weekly_bankroll": 1000,
