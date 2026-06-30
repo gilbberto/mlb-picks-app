@@ -1834,6 +1834,22 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 1051
+    },
+    {
+      "id": 110,
+      "date": "2026-06-30",
+      "game": "SD @ CHC",
+      "market": "ML",
+      "team": "San Diego Padres",
+      "detail": "",
+      "model_prob": 0.567,
+      "odds": 135,
+      "stake": 67.24,
+      "bankroll_before": 1095.34,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
