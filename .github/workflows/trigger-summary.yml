@@ -34,11 +34,41 @@ jobs:
       - name: Install dependencies
         run: pip install requests pandas numpy scikit-learn xgboost
 
-      - name: Health check (refresh odds via GitHub API)
+      - name: Refresh odds cache
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: python health_check.py
+        run: |
+          TODAY=$(TZ='America/Chihuahua' date +%Y-%m-%d)
+          echo "Health check $TODAY"
+          
+          # Check if cache already from today
+          CACHE_DATE=$(python3 -c "import json; d=json.load(open('.odds_cache.json')); print(d.get('date',''))" 2>/dev/null || echo "")
+          if [ "$CACHE_DATE" = "$TODAY" ]; then
+            echo "Cache already from today, skipping"
+            exit 0
+          fi
+          
+          echo "Fetching fresh odds..."
+          python3 -c "
+          import requests, json
+          r = requests.get('https://api.the-odds-api.com/v4/sports/baseball_mlb/odds?regions=us&markets=h2h,spreads,totals&oddsFormat=american&apiKey=' + '$ODDS_API_KEY', timeout=10)
+          if r.status_code == 200:
+              data = r.json()
+              cache = {'date': '$TODAY', 'data': data}
+              with open('.odds_cache.json', 'w') as f:
+                  json.dump(cache, f)
+              print(f'Updated: {len(data)} games')
+          else:
+              print(f'Odds API error: {r.status_code}')
+          "
+          
+          git config user.name "MLB Picks Bot"
+          git config user.email "bot@mlb-picks.local"
+          git add .odds_cache.json
+          git diff --cached --quiet && exit 0
+          git commit -m "auto-health: refresh odds"
+          git pull --rebase -X theirs origin main
+          git push
 
       - name: Run morning summary
         env:
