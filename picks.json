@@ -1868,6 +1868,22 @@
       "label": "\ud83d\udd25 High",
       "settled": true,
       "telegram_msg_id": 1053
+    },
+    {
+      "id": 112,
+      "date": "2026-07-01",
+      "game": "SD @ CHC",
+      "market": "O/U",
+      "team": "Under",
+      "detail": "u12.0",
+      "model_prob": 0.821,
+      "odds": -110,
+      "stake": 100,
+      "bankroll_before": 1079.94,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
