@@ -1885,6 +1885,22 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 1075
+    },
+    {
+      "id": 113,
+      "date": "2026-07-01",
+      "game": "TB @ KC",
+      "market": "O/U",
+      "team": "Under",
+      "detail": "u10.5",
+      "model_prob": 0.776,
+      "odds": -110,
+      "stake": 100,
+      "bankroll_before": 1079.94,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
