@@ -1953,6 +1953,22 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 1094
+    },
+    {
+      "id": 117,
+      "date": "2026-07-02",
+      "game": "DET @ TEX",
+      "market": "ML",
+      "team": "Texas Rangers",
+      "detail": "",
+      "model_prob": 0.629,
+      "odds": -115,
+      "stake": 59.14,
+      "bankroll_before": 1166.09,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
