@@ -1919,6 +1919,22 @@
       "label": "\ud83d\udd25 High",
       "settled": true,
       "telegram_msg_id": 1077
+    },
+    {
+      "id": 115,
+      "date": "2026-07-02",
+      "game": "LAA @ SEA",
+      "market": "ML",
+      "team": "Los Angeles Angels",
+      "detail": "",
+      "model_prob": 0.576,
+      "odds": 180,
+      "stake": 99.12,
+      "bankroll_before": 1166.09,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
