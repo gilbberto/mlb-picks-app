@@ -38,37 +38,50 @@ jobs:
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
         run: |
-          TODAY=$(TZ='America/Chihuahua' date +%Y-%m-%d)
-          echo "Health check $TODAY"
+          python3 << 'PYEOF'
+          import requests, json, os, subprocess
+          from datetime import datetime
+          
+          today = datetime.now().strftime("%Y-%m-%d")
+          print(f"Health check {today}")
           
           # Check if cache already from today
-          CACHE_DATE=$(python3 -c "import json; d=json.load(open('.odds_cache.json')); print(d.get('date',''))" 2>/dev/null || echo "")
-          if [ "$CACHE_DATE" = "$TODAY" ]; then
-            echo "Cache already from today, skipping"
-            exit 0
-          fi
+          try:
+              with open(".odds_cache.json") as f:
+                  d = json.load(f)
+              if d.get("date") == today:
+                  print("Cache already from today, skipping")
+                  exit(0)
+          except:
+              pass
           
-          echo "Fetching fresh odds..."
-          python3 -c "
-          import requests, json
-          r = requests.get('https://api.the-odds-api.com/v4/sports/baseball_mlb/odds?regions=us&markets=h2h,spreads,totals&oddsFormat=american&apiKey=' + '$ODDS_API_KEY', timeout=10)
-          if r.status_code == 200:
-              data = r.json()
-              cache = {'date': '$TODAY', 'data': data}
-              with open('.odds_cache.json', 'w') as f:
-                  json.dump(cache, f)
-              print(f'Updated: {len(data)} games')
-          else:
-              print(f'Odds API error: {r.status_code}')
-          "
+          api_key = os.environ.get("ODDS_API_KEY", "")
+          print("Fetching fresh odds...")
+          r = requests.get(f"https://api.the-odds-api.com/v4/sports/baseball_mlb/odds?regions=us&markets=h2h,spreads,totals&oddsFormat=american&apiKey={api_key}", timeout=10)
+          if r.status_code != 200:
+              print(f"Odds API error {r.status_code}")
+              exit(0)
           
-          git config user.name "MLB Picks Bot"
-          git config user.email "bot@mlb-picks.local"
-          git add .odds_cache.json
-          git diff --cached --quiet && exit 0
-          git commit -m "auto-health: refresh odds"
-          git pull --rebase -X theirs origin main
-          git push
+          data = r.json()
+          with open(".odds_cache.json", "w") as f:
+              json.dump({"date": today, "data": data}, f)
+          print(f"Updated: {len(data)} games")
+          
+          # Git commit and push
+          subprocess.run(["git", "config", "user.name", "MLB Picks Bot"], check=False)
+          subprocess.run(["git", "config", "user.email", "bot@mlb-picks.local"], check=False)
+          subprocess.run(["git", "add", ".odds_cache.json"], check=False)
+          
+          r = subprocess.run(["git", "diff", "--cached", "--quiet"], check=False)
+          if r.returncode == 0:
+              print("No changes to commit")
+              exit(0)
+          
+          subprocess.run(["git", "commit", "-m", "auto-health: refresh odds"], check=False)
+          subprocess.run(["git", "pull", "--rebase", "-X", "theirs", "origin", "main"], check=False)
+          subprocess.run(["git", "push"], check=False)
+          print("Pushed to GitHub")
+          PYEOF
 
       - name: Run morning summary
         env:
