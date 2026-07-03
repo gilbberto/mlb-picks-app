@@ -125,6 +125,14 @@ if settled_today:
     cycle = 0
     while True:
         sync_from_github()
+        # Refresh odds cache daily (cycle 0 and every 24h = 2880 cycles)
+        if cycle % 2880 == 0:
+            print("=== Refrescando odds (diario) ===")
+            subprocess.run(["python3", "-c", """
+import sys; sys.path.insert(0, '.')
+from predictions import fetch_odds; fetch_odds(force_refresh=True)
+"""], cwd=CWD, env=ENV)
+            sync_to_github()
         subprocess.run(["python3", "-c", "from bankroll import check_weekly_reset; check_weekly_reset()"], cwd=CWD, env=ENV)
         subprocess.run(["python3", "settle_and_notify.py"], cwd=CWD, env=ENV)
         sync_to_github()
