@@ -2055,6 +2055,22 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 1154
+    },
+    {
+      "id": 123,
+      "date": "2026-07-04",
+      "game": "STL @ CHC",
+      "market": "ML",
+      "team": "St. Louis Cardinals",
+      "detail": "",
+      "model_prob": 0.589,
+      "odds": 135,
+      "stake": 100,
+      "bankroll_before": 1620.17,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
