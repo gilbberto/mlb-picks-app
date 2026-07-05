@@ -2072,6 +2072,22 @@
       "label": "\ud83d\udd25 High",
       "settled": true,
       "telegram_msg_id": 1155
+    },
+    {
+      "id": 124,
+      "date": "2026-07-05",
+      "game": "NYM @ ATL",
+      "market": "O/U",
+      "team": "Under",
+      "detail": "u9.0",
+      "model_prob": 0.686,
+      "odds": -118,
+      "stake": 100,
+      "bankroll_before": 1760.17,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
