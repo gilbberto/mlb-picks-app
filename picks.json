@@ -2106,6 +2106,22 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 1174
+    },
+    {
+      "id": 126,
+      "date": "2026-07-05",
+      "game": "MIL @ AZ",
+      "market": "ML",
+      "team": "Arizona Diamondbacks",
+      "detail": "",
+      "model_prob": 0.619,
+      "odds": 100,
+      "stake": 100,
+      "bankroll_before": 1760.17,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
