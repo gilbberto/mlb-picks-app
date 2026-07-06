@@ -2173,6 +2173,22 @@
       "profit": null,
       "label": "\ud83d\udd25 High",
       "settled": false
+    },
+    {
+      "id": 130,
+      "date": "2026-07-06",
+      "game": "MIL @ STL",
+      "market": "ML",
+      "team": "Milwaukee Brewers",
+      "detail": "",
+      "model_prob": 0.657,
+      "odds": -110,
+      "stake": 70.14,
+      "bankroll_before": 1000,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
