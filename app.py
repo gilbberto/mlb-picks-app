@@ -2089,7 +2089,7 @@ def main():
                 if prob_val is not None and (prob_val < 60 or prob_val > 89):
                     score = 0
                 if mk == "spread_plus":
-                    score = score * 0.7   # heavier penalty — RL +1.5 dominates picks
+                    score = score * 1.0  # RL +1.5 has 75% win rate (3-1), no penalty
                 if mk == "total" and p.get("detail","").startswith("o"):
                     score = 0  # skip Over — model Under bias 62% vs Over 49%
                 if score > _best_score:
