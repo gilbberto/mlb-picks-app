@@ -13,6 +13,9 @@ CWD = os.path.dirname(os.path.abspath(__file__))
 ENV = os.environ.copy()
 ENV["PYTHONUNBUFFERED"] = "1"
 
+# Direct import for odds refresh (more reliable than subprocess)
+from predictions import fetch_odds as _fetch_odds
+
 REPO = "gilbberto/mlb-picks-app"
 BRANCH = "main"
 FILES_TO_SYNC = ("picks.json", "users.json", "game_starts_notified.json", "predictions_log.json", ".morning_sent", ".telegram_offset", ".notified_new_picks.json", ".odds_cache.json")
@@ -128,11 +131,11 @@ if settled_today:
         # Refresh odds cache daily (cycle 0 and every 24h = 2880 cycles)
         if cycle % 2880 == 0:
             print("=== Refrescando odds (diario) ===")
-            subprocess.run(["python3", "-c", """
-import sys; sys.path.insert(0, '.')
-from predictions import fetch_odds; fetch_odds(force_refresh=True)
-"""], cwd=CWD, env=ENV)
-            sync_to_github()
+            try:
+                _fetch_odds(force_refresh=True)
+                sync_to_github()
+            except Exception as e:
+                print(f"Error refrescando odds: {e}")
         subprocess.run(["python3", "-c", "from bankroll import check_weekly_reset; check_weekly_reset()"], cwd=CWD, env=ENV)
         subprocess.run(["python3", "settle_and_notify.py"], cwd=CWD, env=ENV)
         sync_to_github()

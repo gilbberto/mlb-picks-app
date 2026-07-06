@@ -696,3 +696,43 @@ def fetch_team_statcast(team_abbrev, days=14):
 def _default_statcast():
     return {'avg_ev': 88.5, 'xwoba': 0.310, 'barrel_pct': 8.0, 
             'hard_hit_pct': 38.0, 'bat_speed': 72.0, 'avg_launch_angle': 12.0}
+
+ODDS_CACHE_PATH = os.path.join(os.path.dirname(__file__) or ".", ".odds_cache.json")
+
+def fetch_odds(force_refresh=False):
+    """Fetch odds from API, cache by date. One call per day."""
+    from datetime import datetime
+    try:
+        from zoneinfo import ZoneInfo
+        TZ = ZoneInfo("America/Chihuahua")
+    except:
+        from datetime import timezone
+        TZ = timezone(timedelta(hours=-6))
+    today = datetime.now(TZ).strftime("%Y-%m-%d")
+    if not force_refresh:
+        try:
+            with open(ODDS_CACHE_PATH) as f:
+                cached = json.load(f)
+            cache_date = cached.get("date", "") if isinstance(cached, dict) else ""
+            if cache_date == today:
+                data = cached.get("data", cached) if isinstance(cached, dict) else cached
+                if data:
+                    return data
+        except:
+            pass
+    odds = []
+    if ODDS_API_KEY:
+        try:
+            r = requests.get(f"https://api.the-odds-api.com/v4/sports/baseball_mlb/odds?regions=us&markets=h2h,spreads,totals&oddsFormat=american&apiKey={ODDS_API_KEY}", timeout=10)
+            if r.status_code == 200:
+                odds = r.json()
+        except:
+            pass
+    if odds:
+        try:
+            cache = {"date": today, "data": odds}
+            with open(ODDS_CACHE_PATH, "w") as f:
+                json.dump(cache, f)
+        except:
+            pass
+    return odds
