@@ -2180,9 +2180,9 @@ def main():
                 edge = entry.get("edge") if mkt_key == "moneyline" else get_edge(entry)
                 prob = entry.get("prob", 0)
                 if edge is not None and edge > 8:
-                    pass  # 🔥🔥🔥 only strongest signals
-                elif prob >= 75 and edge is not None and edge > 8:
-                    pass  # high prob + decent edge
+                    pass
+                elif prob >= 75:
+                    pass
                 else:
                     continue
 
@@ -2249,12 +2249,12 @@ def main():
                 g = r["game"]
                 if g not in best_per_game or r["edge"] > best_per_game[g]["edge"]:
                     best_per_game[g] = r
-            recs = sorted(best_per_game.values(), key=lambda x: x["edge"], reverse=True)[:3]  # top 4
+            recs = sorted(best_per_game.values(), key=lambda x: x["prob"], reverse=True)[:4]
             st.divider()
             st.markdown("## 🏆 Recomendaciones del Día")
             has_real_odds = any(r.get("odds","N/A") not in ("N/A","—","") for r in recs)
             if has_real_odds:
-                st.caption(f"Top {min(len(recs),6)} de {len(recs)} — Kelly Criterion (25% fraccional, bankroll ${actual_bankroll:,.0f}). Stakes aumentan con el bankroll.")
+                st.caption(f"Top {min(len(recs),4)} — mismos picks que Picks del Día con Kelly stakes.")
             else:
                 st.caption(f"Top {min(len(recs),4)} de {len(recs)} — Basado en probabilidad del modelo (sin odds disponibles).")
 
