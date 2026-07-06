@@ -2123,6 +2123,22 @@
       "label": "\ud83d\udd25 High",
       "settled": true,
       "telegram_msg_id": 1175
+    },
+    {
+      "id": 127,
+      "date": "2026-07-06",
+      "game": "NYY @ TB",
+      "market": "ML",
+      "team": "New York Yankees",
+      "detail": "",
+      "model_prob": 0.692,
+      "odds": -105,
+      "stake": 91.99,
+      "bankroll_before": 1000,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
