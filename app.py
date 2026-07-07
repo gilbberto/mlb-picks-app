@@ -2247,7 +2247,7 @@ def main():
             best_per_game = {}
             for r in recs:
                 g = r["game"]
-                if g not in best_per_game or r["edge"] > best_per_game[g]["edge"]:
+                if g not in best_per_game or (r.get("edge") or 0) > (best_per_game[g].get("edge") or 0):
                     best_per_game[g] = r
             recs = sorted(best_per_game.values(), key=lambda x: x["prob"], reverse=True)[:4]
             st.divider()
