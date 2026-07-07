@@ -2241,6 +2241,22 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 1229
+    },
+    {
+      "id": 134,
+      "date": "2026-07-07",
+      "game": "HOU @ WSH",
+      "market": "ML",
+      "team": "Washington Nationals",
+      "detail": "",
+      "model_prob": 0.78,
+      "odds": -125,
+      "stake": 100,
+      "bankroll_before": 1111.16,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
