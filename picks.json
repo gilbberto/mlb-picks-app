@@ -2207,6 +2207,22 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 1227
+    },
+    {
+      "id": 132,
+      "date": "2026-07-07",
+      "game": "MIL @ STL",
+      "market": "ML",
+      "team": "Milwaukee Brewers",
+      "detail": "",
+      "model_prob": 0.837,
+      "odds": -190,
+      "stake": 100,
+      "bankroll_before": 1111.16,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
