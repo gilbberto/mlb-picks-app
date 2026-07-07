@@ -2190,6 +2190,22 @@
       "label": "\ud83d\udd25 High",
       "settled": true,
       "telegram_msg_id": 1190
+    },
+    {
+      "id": 131,
+      "date": "2026-07-07",
+      "game": "COL @ LAD",
+      "market": "ML",
+      "team": "Los Angeles Dodgers",
+      "detail": "",
+      "model_prob": 0.982,
+      "odds": -275,
+      "stake": 100,
+      "bankroll_before": 1111.16,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
