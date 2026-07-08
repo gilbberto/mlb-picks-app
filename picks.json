@@ -2258,6 +2258,22 @@
       "label": "\ud83d\udd25 High",
       "settled": true,
       "telegram_msg_id": 1230
+    },
+    {
+      "id": 135,
+      "date": "2026-07-08",
+      "game": "ATH @ DET",
+      "market": "ML",
+      "team": "Detroit Tigers",
+      "detail": "",
+      "model_prob": 0.793,
+      "odds": -165,
+      "stake": 97.72,
+      "bankroll_before": 863.79,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
