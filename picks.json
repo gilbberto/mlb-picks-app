@@ -2292,6 +2292,22 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 1276
+    },
+    {
+      "id": 137,
+      "date": "2026-07-08",
+      "game": "ATL @ PIT",
+      "market": "ML",
+      "team": "Atlanta Braves",
+      "detail": "",
+      "model_prob": 0.651,
+      "odds": -102,
+      "stake": 63.62,
+      "bankroll_before": 863.79,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
