@@ -13,7 +13,27 @@ CWD = os.path.dirname(os.path.abspath(__file__))
 ENV = os.environ.copy()
 ENV["PYTHONUNBUFFERED"] = "1"
 
-# Direct import for odds refresh (more reliable than subprocess)
+# ─── Integrity check: verify predictions.py has all required functions ───
+_REQUIRED_FUNCS = ["fetch_odds", "monte_carlo_predict", "load_models",
+                   "generate_recommendations", "match_game", "american_to_prob"]
+_MISSING = []
+for _fn in _REQUIRED_FUNCS:
+    try:
+        exec(f"from predictions import {_fn}")
+    except ImportError:
+        _MISSING.append(_fn)
+if _MISSING:
+    print(f"FATAL: predictions.py missing: {_MISSING}")
+    print("Worker cannot start. Check predictions.py integrity.")
+    # Notify via Telegram if possible
+    try:
+        from settle_and_notify import send_telegram
+        send_telegram(f"❌ Worker crashed: predictions.py missing {_MISSING}")
+    except:
+        pass
+    exit(1)
+
+# Direct import for odds refresh
 from predictions import fetch_odds as _fetch_odds
 
 REPO = "gilbberto/mlb-picks-app"
