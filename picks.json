@@ -2309,6 +2309,22 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 1277
+    },
+    {
+      "id": 138,
+      "date": "2026-07-08",
+      "game": "LAA @ TEX",
+      "market": "ML",
+      "team": "Los Angeles Angels",
+      "detail": "",
+      "model_prob": 0.628,
+      "odds": 135,
+      "stake": 76.18,
+      "bankroll_before": 863.79,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
