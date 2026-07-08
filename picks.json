@@ -2275,6 +2275,22 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 1275
+    },
+    {
+      "id": 136,
+      "date": "2026-07-08",
+      "game": "PHI @ CIN",
+      "market": "ML",
+      "team": "Cincinnati Reds",
+      "detail": "",
+      "model_prob": 0.748,
+      "odds": -145,
+      "stake": 82.83,
+      "bankroll_before": 863.79,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
