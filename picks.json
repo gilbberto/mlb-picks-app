@@ -2359,6 +2359,22 @@
       "profit": null,
       "label": "\ud83d\udd25 High",
       "settled": false
+    },
+    {
+      "id": 141,
+      "date": "2026-07-09",
+      "game": "KC @ NYM",
+      "market": "RL +1.5",
+      "team": "Kansas City Royals",
+      "detail": "+1.5",
+      "model_prob": 0.743,
+      "odds": -165,
+      "stake": 91.4,
+      "bankroll_before": 1145.34,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
