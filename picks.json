@@ -2326,6 +2326,22 @@
       "label": "\ud83d\udd25 High",
       "settled": true,
       "telegram_msg_id": 1278
+    },
+    {
+      "id": 139,
+      "date": "2026-07-09",
+      "game": "BOS @ CWS",
+      "market": "RL +1.5",
+      "team": "Chicago White Sox",
+      "detail": "+1.5",
+      "model_prob": 0.88,
+      "odds": -200,
+      "stake": 100,
+      "bankroll_before": 1145.34,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
