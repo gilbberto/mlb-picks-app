@@ -2376,6 +2376,22 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 1313
+    },
+    {
+      "id": 142,
+      "date": "2026-07-09",
+      "game": "MIL @ STL",
+      "market": "RL +1.5",
+      "team": "St. Louis Cardinals",
+      "detail": "+1.5",
+      "model_prob": 0.742,
+      "odds": -155,
+      "stake": 97.66,
+      "bankroll_before": 1145.34,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
