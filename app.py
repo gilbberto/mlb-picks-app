@@ -2015,7 +2015,7 @@ def main():
     if _get_perms(st.session_state.user).get("daily_picks", True) and len(upcoming) > 0:
         has_odds = bool(odds_raw)
         def _high_conf(game_row):
-            for mk in ("moneyline", "total"):  # solo ML y O/U
+            for mk in ("moneyline", "spread_plus", "total"):
                 e = game_row.get(mk)
                 if not isinstance(e, dict): continue
                 prob_val = e.get("prob")
@@ -2174,7 +2174,7 @@ def main():
                 continue
             gl = f"{p['away_abbrev']} @ {p['home_abbrev']}"
 
-            for mkt_key, label in [("moneyline", "ML"), ("total", "O/U")]:
+            for mkt_key, label in [("moneyline", "ML"), ("spread_plus", "RL +1.5"), ("total", "O/U")]:
                 entry = p.get(mkt_key)
                 if not entry: continue
                 edge = entry.get("edge") if mkt_key == "moneyline" else get_edge(entry)
