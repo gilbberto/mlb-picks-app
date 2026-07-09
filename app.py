@@ -2297,7 +2297,7 @@ def main():
                     <td style="padding:6px 8px;border-bottom:1px solid #E0E0E0">{r['game']}</td>
                     <td style="padding:6px 8px;border-bottom:1px solid #E0E0E0">{r['market']}</td>
                     <td style="padding:6px 8px;border-bottom:1px solid #E0E0E0">{warn}{pick_str}</td>
-                    <td style="padding:6px 8px;border-bottom:1px solid #E0E0E0">{icon} {r['edge']:+.1f}%</td>
+                    <td style="padding:6px 8px;border-bottom:1px solid #E0E0E0">{icon} {(r.get('edge') or 0):+.1f}%</td>
                     <td style="padding:6px 8px;border-bottom:1px solid #E0E0E0">{stake_str}</td>
                     <td style="padding:6px 8px;border-bottom:1px solid #E0E0E0;text-align:center">{btn}</td>
                 </tr>"""
