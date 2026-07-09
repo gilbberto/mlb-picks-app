@@ -2185,6 +2185,14 @@ def main():
                     pass
                 else:
                     continue
+                
+                # Skip Over O/U and picks without real odds
+                if label == "O/U":
+                    detail = entry.get("detail", "")
+                    if detail.startswith("o"):
+                        continue
+                if entry.get("odds", "N/A") in ("N/A", "—", ""):
+                    continue
 
                 pick_team = entry.get("pick", "")
                 odds_str = entry.get("odds", "N/A")
