@@ -2015,7 +2015,7 @@ def main():
     if _get_perms(st.session_state.user).get("daily_picks", True) and len(upcoming) > 0:
         has_odds = bool(odds_raw)
         def _high_conf(game_row):
-            for mk in ("moneyline", "spread_plus", "total"):
+            for mk in ("moneyline", "total"):
                 e = game_row.get(mk)
                 if not isinstance(e, dict): continue
                 prob_val = e.get("prob")
@@ -2068,7 +2068,7 @@ def main():
                 t = time_str
             _best_row = None
             _best_score = -1
-            for mk, ml in [("moneyline","ML"),("spread_plus","RL +1.5"),("total","O/U")]:
+            for mk, ml in [("moneyline","ML"),("total","O/U")]:
                 p = r.get(mk)
                 if not p: continue
                 _ev = p.get("ev")
@@ -2088,8 +2088,6 @@ def main():
                     score = prob_val
                 if prob_val is not None and (prob_val < 60 or prob_val > 89):
                     score = 0
-                if mk == "spread_plus":
-                    score = score * 1.0  # RL +1.5 has 75% win rate (3-1), no penalty
                 if mk == "total" and p.get("detail","").startswith("o"):
                     score = 0  # skip Over — model Under bias 62% vs Over 49%
                 if score > _best_score:
@@ -2097,8 +2095,6 @@ def main():
                     pick_name = p.get("pick","—")
                     if mk == "total":
                         display_name = fmt_ou(pick_name, p.get("detail",""))
-                    elif mk == "spread_plus":
-                        display_name = f"{pick_name} (+1.5)"
                     else:
                         display_name = pick_name
                     flames = ""
