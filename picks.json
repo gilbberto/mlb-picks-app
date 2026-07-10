@@ -2374,7 +2374,8 @@
       "result": "L",
       "profit": -97.66,
       "label": "\ud83d\udd25 High",
-      "settled": true
+      "settled": true,
+      "telegram_msg_id": 1342
     },
     {
       "id": 142,
