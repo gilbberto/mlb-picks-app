@@ -2170,7 +2170,7 @@ def main():
                 continue
             gl = f"{p['away_abbrev']} @ {p['home_abbrev']}"
 
-            for mkt_key, label in [("moneyline", "ML"), ("spread_plus", "RL +1.5"), ("total", "O/U")]:
+            for mkt_key, label in [("moneyline", "ML"), ("total", "O/U")]:
                 entry = p.get(mkt_key)
                 if not entry: continue
                 edge = entry.get("edge") if mkt_key == "moneyline" else get_edge(entry)
