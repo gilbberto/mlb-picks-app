@@ -2392,6 +2392,22 @@
       "profit": null,
       "label": "\ud83d\udd25 High",
       "settled": false
+    },
+    {
+      "id": 143,
+      "date": "2026-07-10",
+      "game": "LAA @ MIN",
+      "market": "ML",
+      "team": "Minnesota Twins",
+      "detail": "",
+      "model_prob": 0.769,
+      "odds": -155,
+      "stake": 100,
+      "bankroll_before": 1047.19,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
