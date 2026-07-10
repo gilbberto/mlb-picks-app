@@ -2426,6 +2426,22 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 1344
+    },
+    {
+      "id": 145,
+      "date": "2026-07-10",
+      "game": "SEA @ TB",
+      "market": "ML",
+      "team": "Tampa Bay Rays",
+      "detail": "",
+      "model_prob": 0.728,
+      "odds": -118,
+      "stake": 100,
+      "bankroll_before": 1047.19,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
