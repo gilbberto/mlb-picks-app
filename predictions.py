@@ -1,4 +1,5 @@
-"""predictions.py — Shared prediction pipeline (mirrors app.py exactly)."""
+"""predictionfrom core import build_rf_feature_row, _sc_defaults
+s.py — Shared prediction pipeline (mirrors app.py exactly)."""
 import os, sys, math, pickle, json, time
 from datetime import datetime, timezone, timedelta
 import numpy as np
@@ -574,75 +575,6 @@ def compute_form(games, tid):
             pass
     return {"wp": w/n, "rs": np.mean(rs) if rs else 4.5, "ra": np.mean(ra) if ra else 4.5, "rest": rest}
 
-def build_rf_feature_row(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f, hp_rec=None, ap_rec=None, weather=None, home_abbrev=None, away_abbrev=None):
-    weather = weather or {}
-    # Load Statcast lookup
-    sc_h = _sc_defaults()
-    sc_a = _sc_defaults()
-    if home_abbrev or away_abbrev:
-        try:
-            import json, os
-            base = os.path.join(os.path.dirname(__file__) or ".", "")
-            with open(base + "statcast_2026.json") as f:
-                sc_data = json.load(f)
-            if home_abbrev:
-                h_sc = sc_data.get(home_abbrev, _sc_defaults())
-                sc_h = [h_sc[0], h_sc[1], h_sc[2], h_sc[3], h_sc[4], h_sc[5]]
-            if away_abbrev:
-                a_sc = sc_data.get(away_abbrev, _sc_defaults())
-                sc_a = [a_sc[0], a_sc[1], a_sc[2], a_sc[3], a_sc[4], a_sc[5]]
-        except:
-            pass
-    f = {
-        "h_elo": h_elo, "a_elo": a_elo,
-        "h_wp": hf.get("wp", 0.5), "a_wp": af.get("wp", 0.5),
-        "h_rs": hf.get("rs", 4.5), "a_rs": af.get("rs", 4.5),
-        "h_ra": hf.get("ra", 4.5), "a_ra": af.get("ra", 4.5),
-        "h_rest": hf.get("rest", 3), "a_rest": af.get("rest", 3),
-        "h_ops": hs.get("hitting",{}).get("ops", 0.700),
-        "a_ops": aws.get("hitting",{}).get("ops", 0.700),
-        "h_whip": hs.get("pitching",{}).get("whip", 1.35),
-        "a_whip": aws.get("pitching",{}).get("whip", 1.35),
-        "h_era": hs.get("pitching",{}).get("era", 4.5),
-        "a_era": aws.get("pitching",{}).get("era", 4.5),
-        "park": park_f,
-        "hp_era": hpitch.get("era", 4.5) if hpitch else 4.5,
-        "hp_k9": hpitch.get("k9", 8.0) if hpitch else 8.0,
-        "hp_bb9": hpitch.get("bb9", 3.0) if hpitch else 3.0,
-        "hp_hr9": hpitch.get("hr9", 1.2) if hpitch else 1.2,
-        "hp_v": 1 if (hpitch and hpitch.get("ip",0) >= 10) else 0,
-        "hp_fip": hpitch.get("fip", 4.5) if hpitch else 4.5,
-        "hp_babip": hpitch.get("babip", 0.300) if hpitch else 0.300,
-        "hp_kbb": hpitch.get("kbb", 3.0) if hpitch else 3.0,
-        "hp_gb_rate": hpitch.get("gb_rate", 0.44) if hpitch else 0.44,
-        "ap_era": apitch.get("era", 4.5) if apitch else 4.5,
-        "ap_k9": apitch.get("k9", 8.0) if apitch else 8.0,
-        "ap_bb9": apitch.get("bb9", 3.0) if apitch else 3.0,
-        "ap_hr9": apitch.get("hr9", 1.2) if apitch else 1.2,
-        "ap_v": 1 if (apitch and apitch.get("ip",0) >= 10) else 0,
-        "ap_fip": apitch.get("fip", 4.5) if apitch else 4.5,
-        "ap_babip": apitch.get("babip", 0.300) if apitch else 0.300,
-        "ap_kbb": apitch.get("kbb", 3.0) if apitch else 3.0,
-        "ap_gb_rate": apitch.get("gb_rate", 0.44) if apitch else 0.44,
-        "hp_rec_era": hp_rec.get("rec_era", hpitch.get("era", 4.5)) if hp_rec else 4.5,
-        "hp_rec_k9": hp_rec.get("rec_k9", hpitch.get("k9", 8.0)) if hp_rec else 8.0,
-        "hp_rec_bb9": hp_rec.get("rec_bb9", hpitch.get("bb9", 3.0)) if hp_rec else 3.0,
-        "hp_rec_hr9": hp_rec.get("rec_hr9", hpitch.get("hr9", 1.2)) if hp_rec else 1.2,
-        "ap_rec_era": ap_rec.get("rec_era", apitch.get("era", 4.5)) if ap_rec else 4.5,
-        "ap_rec_k9": ap_rec.get("rec_k9", apitch.get("k9", 8.0)) if ap_rec else 8.0,
-        "ap_rec_bb9": ap_rec.get("rec_bb9", apitch.get("bb9", 3.0)) if ap_rec else 3.0,
-        "ap_rec_hr9": ap_rec.get("rec_hr9", apitch.get("hr9", 1.2)) if ap_rec else 1.2,
-        "temp_f": weather.get("temp_f", 72.0), "wind_mph": weather.get("wind_mph", 0.0),
-        "humidity": weather.get("humidity", 50), "is_dome": 1 if weather.get("conditions") == "dome" else 0,
-        # Statcast features (6 per team)
-        "h_sc_ev": sc_h[0], "h_sc_barrel": sc_h[1], "h_sc_hardhit": sc_h[2],
-        "h_sc_xwoba": sc_h[3], "h_sc_batspeed": sc_h[4], "h_sc_la": sc_h[5],
-        "a_sc_ev": sc_a[0], "a_sc_barrel": sc_a[1], "a_sc_hardhit": sc_a[2],
-        "a_sc_xwoba": sc_a[3], "a_sc_batspeed": sc_a[4], "a_sc_la": sc_a[5],
-    }
-    return f
-
-
 def monte_carlo_predict(hs, aws, hf, af, h_elo, a_elo, hpitch, apitch, park_f, hp_rec=None, ap_rec=None, n_sims=5000, weather=None):
     if not _MODELS_LOADED:
         return {"ml_hp": None, "ml_ap": None, "spr_home_minus": None, "spr_home_plus": None, "spr_away_minus": None, "spr_away_plus": None, "spr_exp_margin": None, "exp_total": None, "total_std": 3.2}
@@ -1025,5 +957,3 @@ def generate_recommendations():
         result.append(r)
 
     return result
-def _sc_defaults():
-    return [82.65, 7.51, 24.46, 0.37, 70.72, 18.06]
