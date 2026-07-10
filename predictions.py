@@ -1025,3 +1025,5 @@ def generate_recommendations():
         result.append(r)
 
     return result
+def _sc_defaults():
+    return [82.65, 7.51, 24.46, 0.37, 70.72, 18.06]
