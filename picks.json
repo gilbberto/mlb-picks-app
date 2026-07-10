@@ -2375,6 +2375,22 @@
       "profit": -97.66,
       "label": "\ud83d\udd25 High",
       "settled": true
+    },
+    {
+      "id": 142,
+      "date": "2026-07-10",
+      "game": "COL @ SF",
+      "market": "ML",
+      "team": "San Francisco Giants",
+      "detail": "",
+      "model_prob": 0.826,
+      "odds": -155,
+      "stake": 100,
+      "bankroll_before": 1047.19,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
