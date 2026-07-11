@@ -8067,8 +8067,8 @@
       "odds": -155,
       "edge": 22.0,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "823200_total",
@@ -8082,8 +8082,8 @@
       "odds": -120,
       "edge": 21.9,
       "detail": "o8.5",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     }
   ]
 }
