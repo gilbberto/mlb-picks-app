@@ -7707,8 +7707,8 @@
       "odds": -160,
       "edge": 11.5,
       "detail": "",
-      "result": null,
-      "settled": false
+      "result": "W",
+      "settled": true
     },
     {
       "id": "822709_total",
@@ -7722,8 +7722,8 @@
       "odds": -110,
       "edge": 24.9,
       "detail": "o10.0",
-      "result": null,
-      "settled": false
+      "result": "L",
+      "settled": true
     },
     {
       "id": "824817_moneyline",
