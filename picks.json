@@ -2476,6 +2476,22 @@
       "profit": null,
       "label": "\ud83d\udd25 High",
       "settled": false
+    },
+    {
+      "id": 148,
+      "date": "2026-07-11",
+      "game": "NYY @ WSH",
+      "market": "ML",
+      "team": "New York Yankees",
+      "detail": "",
+      "model_prob": 0.866,
+      "odds": -200,
+      "stake": 100,
+      "bankroll_before": 931.94,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
