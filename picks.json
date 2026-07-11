@@ -2460,6 +2460,22 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 1377
+    },
+    {
+      "id": 147,
+      "date": "2026-07-11",
+      "game": "LAA @ MIN",
+      "market": "ML",
+      "team": "Minnesota Twins",
+      "detail": "",
+      "model_prob": 0.886,
+      "odds": -190,
+      "stake": 100,
+      "bankroll_before": 931.94,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
