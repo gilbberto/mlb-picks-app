@@ -2526,6 +2526,22 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 1413
+    },
+    {
+      "id": 151,
+      "date": "2026-07-12",
+      "game": "HOU @ TEX",
+      "market": "ML",
+      "team": "Texas Rangers",
+      "detail": "",
+      "model_prob": 0.716,
+      "odds": -140,
+      "stake": 68.99,
+      "bankroll_before": 864.12,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
