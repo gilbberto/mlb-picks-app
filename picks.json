@@ -2543,6 +2543,22 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 1414
+    },
+    {
+      "id": 152,
+      "date": "2026-07-12",
+      "game": "NYY @ WSH",
+      "market": "ML",
+      "team": "Washington Nationals",
+      "detail": "",
+      "model_prob": 0.692,
+      "odds": -115,
+      "stake": 73.07,
+      "bankroll_before": 864.12,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
