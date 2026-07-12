@@ -2509,6 +2509,22 @@
       "profit": null,
       "label": "\ud83d\udd25 High",
       "settled": false
+    },
+    {
+      "id": 150,
+      "date": "2026-07-12",
+      "game": "ATH @ CWS",
+      "market": "ML",
+      "team": "Athletics",
+      "detail": "",
+      "model_prob": 0.753,
+      "odds": 110,
+      "stake": 100,
+      "bankroll_before": 864.12,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
