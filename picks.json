@@ -2493,6 +2493,22 @@
       "label": "\ud83d\udd25 High",
       "settled": true,
       "telegram_msg_id": 1380
+    },
+    {
+      "id": 149,
+      "date": "2026-07-12",
+      "game": "MIL @ PIT",
+      "market": "ML",
+      "team": "Pittsburgh Pirates",
+      "detail": "",
+      "model_prob": 0.783,
+      "odds": -125,
+      "stake": 100,
+      "bankroll_before": 864.12,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
