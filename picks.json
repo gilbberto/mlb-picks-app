@@ -2411,23 +2411,6 @@
       "telegram_msg_id": 1343
     },
     {
-      "id": 144,
-      "date": "2026-07-10",
-      "game": "MIL @ PIT",
-      "market": "ML",
-      "team": "Pittsburgh Pirates",
-      "detail": "",
-      "model_prob": 0.753,
-      "odds": -125,
-      "stake": 100,
-      "bankroll_before": 1047.19,
-      "result": null,
-      "profit": null,
-      "label": "\ud83d\udd25 High",
-      "settled": false,
-      "telegram_msg_id": 1344
-    },
-    {
       "id": 145,
       "date": "2026-07-10",
       "game": "SEA @ TB",
