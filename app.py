@@ -2246,6 +2246,8 @@ def main():
                     "reason": reason,
                 })
 
+        html_rows = ""
+        _reasons_list = []
         if recs and _get_perms(st.session_state.user).get("recommendations", True):
             # One recommendation per game (best edge)
             best_per_game = {}
@@ -2274,8 +2276,6 @@ def main():
                 ept = ep.get("team", "").strip()
                 if epg and epm and ept:
                     existing.add((epg, epm, ept))
-            html_rows = ""
-            _reasons_list = []
             for i, r in enumerate(recs[:4]):
                 is_regd = (r["game"].strip(), r["market"].strip(), r["pick"].strip()) in existing
                 icon = "🔥🔥🔥"
