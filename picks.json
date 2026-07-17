@@ -2577,6 +2577,22 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 1444
+    },
+    {
+      "id": 154,
+      "date": "2026-07-17",
+      "game": "LAD @ NYY",
+      "market": "ML",
+      "team": "New York Yankees",
+      "detail": "",
+      "model_prob": 0.743,
+      "odds": -105,
+      "stake": 100,
+      "bankroll_before": 1000,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
