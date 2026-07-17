@@ -2611,6 +2611,22 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 1446
+    },
+    {
+      "id": 156,
+      "date": "2026-07-17",
+      "game": "CIN @ COL",
+      "market": "ML",
+      "team": "Colorado Rockies",
+      "detail": "",
+      "model_prob": 0.74,
+      "odds": -115,
+      "stake": 100,
+      "bankroll_before": 1000,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
