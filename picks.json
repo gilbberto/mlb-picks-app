@@ -2678,6 +2678,22 @@
       "profit": null,
       "label": "\ud83d\udd25 High",
       "settled": false
+    },
+    {
+      "id": 160,
+      "date": "2026-07-18",
+      "game": "WSH @ ATH",
+      "market": "O/U",
+      "team": "Under",
+      "detail": "u11.5",
+      "model_prob": 0.702,
+      "odds": -118,
+      "stake": 68.21,
+      "bankroll_before": 776.92,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
