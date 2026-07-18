@@ -2645,6 +2645,22 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 1483
+    },
+    {
+      "id": 158,
+      "date": "2026-07-18",
+      "game": "DET @ LAA",
+      "market": "ML",
+      "team": "Detroit Tigers",
+      "detail": "",
+      "model_prob": 0.814,
+      "odds": -200,
+      "stake": 85.73,
+      "bankroll_before": 776.92,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
