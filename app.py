@@ -199,7 +199,7 @@ C = {
 
 # ─── MLB Stats API ───
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=1800)
 def fetch_todays_schedule(date_str=""):
     today = date_str or datetime.now(TZ).strftime("%m/%d/%Y")
     url = f"{MLB_API_BASE}/schedule?sportId=1&date={today}&hydrate=probablePitcher"
@@ -1509,6 +1509,7 @@ def main():
                 r = requests.get(f"https://api.the-odds-api.com/v4/sports/baseball_mlb/odds?regions=us&markets=h2h,spreads,totals&oddsFormat=american&apiKey={ODDS_API_KEY}", timeout=10)
                 if r.status_code == 200:
                     _save_odds_cache(r.json())
+                    st.rerun()  # reload with fresh odds + schedule
                 else:
                     st.warning(f"⚠️ Odds del {cache_date}. API no disponible (error {r.status_code}).")
         except Exception as e:
