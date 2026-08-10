@@ -31,9 +31,20 @@ REV_TEAM = {v.lower(): k for k, v in TEAM_NAMES.items()}
 # ─── Calibration ───
 # Based on XGBoost validation on 262 games (2026 season)
 def calibrate_ml(prob):
-    """Raw XGBoost probability — no calibration.
-    Piecewise calibration was shrinking favorites (75%→69%) creating underdog bias."""
-    return prob
+    """Piecewise calibration. XGBoost overestimates high probabilities.
+    70% model → 65% actual, 80% model → 72% actual."""
+    if prob < 0.50:
+        return 1.0 - calibrate_ml(1.0 - prob)
+    if prob < 0.55:
+        t = (prob - 0.50) / 0.05
+        return 0.525 + t * 0.035  # 0.50→0.525, 0.55→0.560
+    if prob < 0.65:
+        t = (prob - 0.55) / 0.10
+        return 0.560 + t * 0.060  # 0.55→0.560, 0.65→0.620
+    if prob < 0.80:
+        t = (prob - 0.65) / 0.15
+        return 0.620 + t * 0.105  # 0.65→0.620, 0.80→0.725
+    return min(0.725 + (prob - 0.80) * 0.25, 0.85)  # cap at 85%
 
 def calibrate_rl(prob):
     """Calibrate RL probability. XGBoost (35 features, 8198 games 2023-2026).
@@ -52,8 +63,22 @@ def calibrate_rl(prob):
     return min(0.46 + (prob - 0.55) * 0.30, 0.70)  # 0.55->0.46, 0.70->0.51
 
 def calibrate_ou(prob):
-    """Raw O/U probability — no calibration."""
-    return prob
+    """Piecewise O/U calibration. Model overconfident above 70%.
+    70% model → 56% actual, 80% model → 71% actual."""
+    if prob < 0.50:
+        return 1.0 - calibrate_ou(1.0 - prob)
+    if prob < 0.60:
+        return prob
+    if prob < 0.70:
+        t = (prob - 0.60) / 0.10
+        return 0.60 + t * 0.05
+    if prob < 0.80:
+        t = (prob - 0.70) / 0.10
+        return 0.65 + t * 0.03
+    if prob < 0.90:
+        t = (prob - 0.80) / 0.10
+        return 0.68 + t * 0.04
+    return min(0.72 + (prob - 0.90) * 0.10, 0.75)
 
 # ─── Kelly Criterion ───
 def american_to_prob(odds):
