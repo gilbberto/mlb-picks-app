@@ -2712,6 +2712,22 @@
       "label": "\ud83d\udd25 High",
       "settled": false,
       "telegram_msg_id": 1520
+    },
+    {
+      "id": 162,
+      "date": "2026-08-10",
+      "game": "PHI @ STL",
+      "market": "ML",
+      "team": "St. Louis Cardinals",
+      "detail": "",
+      "model_prob": 0.674,
+      "odds": 105,
+      "stake": 90.97,
+      "bankroll_before": 1000,
+      "result": null,
+      "profit": null,
+      "label": "\ud83d\udd25 High",
+      "settled": false
     }
   ],
   "weekly_bankroll": 1000,
