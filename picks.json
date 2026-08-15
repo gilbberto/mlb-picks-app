@@ -1,5 +1,5 @@
 {
-  "bankroll": -14782.65,
+  "bankroll": -14842.1,
   "history": [
     {
       "id": 1,
@@ -2741,10 +2741,10 @@
       "odds": 125,
       "stake": 59.45,
       "bankroll_before": 1000,
-      "result": null,
-      "profit": null,
+      "result": "L",
+      "profit": -59.45,
       "label": "\ud83d\udd25 High",
-      "settled": false,
+      "settled": true,
       "telegram_msg_id": 1522
     }
   ],
